@@ -54,7 +54,6 @@ plainwhite:
 # - about.md
 
 # Build settings
-gem "plainwhite"
 theme: plainwhite
 
 plugins:
