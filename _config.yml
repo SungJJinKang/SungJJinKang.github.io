@@ -60,3 +60,6 @@ theme: plainwhite
 plugins:
   - jekyll-seo-tag
 #  - jekyll-feed
+
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "https://sungjjinkang.github.io/." # the base hostname & protocol for your site
