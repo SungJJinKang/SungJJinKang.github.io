@@ -2,7 +2,7 @@
 layout: post
 title:  "첫번째 글, 새로운 프로젝트 시작"
 date:   2021-01-07
-categories: daylife
+categories: Doom3
 ---
 첫번째 글
 
