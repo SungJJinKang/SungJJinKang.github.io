@@ -37,11 +37,18 @@ for(int i = 0 ; i < 6 ; i++)
 ```
 
 이렇게 말이다.
-위의 코드는 당연히 컴파일 오류가 뜬다. template argument는 컴파일 타임에 결정되야하는데 C++에서 for constexpr 같은 기능을 지원하는 것도 아니기 때문에 이러한 작업을 도와주는 라이브러리 찾아보았다
-이걸 도와주는 라이브러리는 몇개 있지만 나는 **Loop variable ( for(int i = 0 i < 10 ; i++) 에서 i를 의미하는 명칭 )**을 Loop Job 내에서 Constant value로 사용해야하는데 이것 까지 지원되는 라이브러리를 찾지 못하여 직접 만들기로 하였다.
+
+위의 코드는 당연히 컴파일 오류가 뜬다.
+
+template argument는 컴파일 타임에 결정되야하는데 C++에서 for constexpr 같은 기능을 지원하는 것도 아니기 때문에 이러한 작업을 도와주는 라이브러리 찾아보았다.
+
+이걸 도와주는 라이브러리는 몇개 있지만 나는 Loop variable ( for(int i = 0 i < 10 ; i++) 에서 i를 의미하는 명칭 )을 Loop Job 내에서 Constant value로 사용해야하는데 이것 까지 지원되는 라이브러리를 찾지 못하여 직접 만들기로 하였다.
+
 for loop의 초기값과 조건값, 증감값을 모두 non type template argumnet로 전달해 컴파일 타입에 결정되게 하고 내부적으로는 recursive function 형태로 Loop를 실행하는 것이다.
-거기다가 Loop variable의 type도 integer부터 enum까지 다양한 타입을 지원할 예정이다
-아쉽게도 floating 타입은 값이 컴파일 타입에 결정되지 않아 template argumnet로 전달할 수 없기 때문에 floating loop variable은 지원하지 않는다 (C++20에서는 floating point의 value가 컴파일 타임  )
+
+거기다가 Loop variable의 type도 integer부터 enum까지 다양한 타입을 지원할 예정이다.
+
+아쉽게도 floating 타입은 값이 컴파일 타입에 결정되지 않아 template argumnet로 전달할 수 없기 때문에 floating loop variable은 지원하지 않는다. (C++20에서는 floating point의 value가 컴파일 타임  )
 
 몇시간 동안 작업한 끝에 아래와 같은 함수를 만들 수 있었다.
 
@@ -78,19 +85,26 @@ ForLoop_CompileTime<int>>::Loop<1, 10, 3>([](int loopVariable) { std::cout << lo
 ```
 
 상당히 복잡해 보이지만 기능은 간단하다.
+
 함수 Loop의 non type template argumnet로 전달된 start, end, increment, Callable Object T, argument를 통해 컴파일 타입의 Loop를 재귀적함수로 구현하는 것이다.
+
 std::invoke를 통해 function parameter로 전달된 f와 args를 실행하고 if constexpr을 통해 다음 Loop를 실행할 조건이 충족하는지를 검사하고 다시 재귀적으로 Loop함수를 호출해 주는 것이다.
+
 std::invoke를 제외한 나머지 것들은 모두 컴파일 타임에 코드가 생성된다.
 
+
 그런데 문제가 생겼다. CallableObject 형태로 전달한 Function 내에서 현재 Loop 단계의 Loop Variable을 사용할 수 있어야 한다. 그것도 Constant Variable로 말이다.
+
 위 코드에서 두 개의 함수 중 아래 함수는 Loop Variable를 CallableObject 내에서 사용할 수는 있지만 그것이 Constant Variable은 아니다. 즉 컴파일 타임에 결정되지 않는 다는 것이다.
 
 여기서 엄청나게 머리를 싸맸다.
+
 그리고 예전에 배운 Functor을 떠올렸다.
+
 Functor의 non type template argumnet로 Loop Variable을 전달해서 컴파일 타임에 모든 것들이 실행되게 해주는 것이다.
 후딱 만들어 보았다.
 
-```c+++
+```c++
 template <LoopVariableType start, LoopVariableType end, LoopVariableType increment, template<LoopVariableType> typename Functor, std::enable_if_t<start <= end, bool> = true >
 static void LoopWithLoopVariable()
 {
@@ -125,7 +139,9 @@ int main()
 ```
 
 Functor을 활용하면 위 코드에서 보이듯이 loopVariable이 컴파일 타입에 결정되고 반복되는 작업 내에서 활용할 수 있다.
+
 물론 위의 예제를 구현하기 위해서 이 라이브러리를 사용할 필요는 없다. 그냥 예제일 뿐이니 이해해주시길 바랍니다.
+
 그럼 이제 내 Doom 코드에서 사용해보자.
 
 ```c++
@@ -180,7 +196,9 @@ ForLoop_CompileTime<AssetType>::LoopWithLoopVariable<FirstElementOfAssetType, La
 ```
 
 위의 코드를 아래의 코드 같이 짦게 만들 수 있었다.
+
 코드 줄 수는 큰 차이가 없어보이지만 enum의 element가 지금 보다 훨씬 늘어나고 반복하는 작업의 line수가 더 많아 진다고 생각해보자 생각해보자.
+
 그럼 위의 코드는 정말 지저분해질 것이다.
 
 아래의 코드가 매번 Functor을 만들어줘야하는 것이 귀찮을 수도 있지만 코드가 훨씬 깔끔해지고 가독성이 높아진다.
