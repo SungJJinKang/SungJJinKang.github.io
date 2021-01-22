@@ -55,7 +55,7 @@ for loop의 초기값과 조건값, 증감값을 모두 non type template argumn
 
 몇시간 동안 작업한 끝에 아래와 같은 함수를 만들 수 있었다.
 
-{% highlight c++ %}
+```c++
 template <typename LoopVariableType>
 struct ForLoop_CompileTime<typename LoopVariableType, std::enable_if_t<std::is_integral_v<LoopVariableType>> >
 {
@@ -85,7 +85,7 @@ struct ForLoop_CompileTime<typename LoopVariableType, std::enable_if_t<std::is_i
 int a = 0;
 ForLoop_CompileTime<int>>::Loop<1, 5, 2>([&a]() { a += 1; std::cout << a << std::endl;  }); // output : 1, 2, 3
 ForLoop_CompileTime<int>>::Loop<1, 10, 3>([](int loopVariable) { std::cout << loopVariable << std::endl;  }); // output : 1, 4, 7, 10
-{% endhighlight %}
+```
 
 상당히 복잡해 보이지만 기능은 간단하다.
 
