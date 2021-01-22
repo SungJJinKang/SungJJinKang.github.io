@@ -6,6 +6,7 @@ categories: C++
 ---
 
 순조롭게 Doom From Scratch를 개발하던 중 귀찮은일이 생겼다.
+
 Enum Type value를 template argument로 받는 템플릿 function을 Enum의 모든 Element에 대해 한번씩 호출해줘야하는 일이 생겼다.
 물론 아래의 방법과 같이 수동으로 내가 직접해주어도 된다.
 
@@ -27,7 +28,9 @@ ImportAssetAndAddToContainer<Asset::AssetType::TEXTURE>(AssetPaths[Asset::AssetT
 ImportAssetAndAddToContainer<Asset::AssetType::THREE_D_MODEL>(AssetPaths[Asset::AssetType::THREE_D_MODEL]);
 ImportAssetAndAddToContainer<Asset::AssetType::SHADER>(AssetPaths[Asset::AssetType::SHADER]);
 ```
-누가봐도 지저분하다. 그래서 결국 나는 ForLoop문을 Compile Time에 돌아가게 하여 그 Loop 변수를 템플릿 argument로 넘겨줄 생각이다
+누가봐도 지저분하다.
+
+그래서 결국 나는 ForLoop문을 Compile Time에 돌아가게 하여 그 Loop 변수를 템플릿 argument로 넘겨줄 생각이다.
 
 ```c++
 for(int i = 0 ; i < 6 ; i++)
