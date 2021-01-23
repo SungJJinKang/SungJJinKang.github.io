@@ -57,93 +57,49 @@ for loop의 초기값과 조건값, 증감값을 모두 non type template argumn
 
 ```c++
 template <typename LoopVariableType>
-struct ForLoop_CompileTime<typename LoopVariableType, std::enable_if_t<std::is_integral_v<LoopVariableType>> >
+struct ForLoop_CompileTime<typename LoopVariableType, std::enable_if_t<std::is_enum_v<LoopVariableType>> >
 {
-	template <LoopVariableType start, LoopVariableType end, LoopVariableType increment, typename F, typename... Args, std::enable_if_t<start <= end, bool> = true >
-	static void Loop(F && f, Args&&... args)
-	{
-		std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+	using enum_underlying_type = std::underlying_type_t<LoopVariableType>;
 
-		if constexpr (start + increment <= end)
+	template <LoopVariableType start, LoopVariableType end, typename enum_underlying_type increment, template<LoopVariableType> typename Functor, typename... Args, std::enable_if_t<start <= end, bool> = true >
+	static void Loop(Args&&... args)
+	{
+		Functor<start>()(std::forward<Args>(args)...);
+
+		if constexpr (static_cast<enum_underlying_type>(start) + increment <= static_cast<enum_underlying_type>(end))
 		{
-			Loop<start + increment, end, increment>(std::forward<F>(f), std::forward<Args>(args)...);
+			Loop<static_cast<LoopVariableType>(static_cast<enum_underlying_type>(start) + increment), end, increment, Functor>(std::forward<Args>(args)...);
 		}
 	}
+};
 
-    template <LoopVariableType start, LoopVariableType end, LoopVariableType increment, typename F, typename... Args, std::enable_if_t<start <= end, bool> = true  >
-	static void LoopWithLoopVariable(F&& f, Args&&... args)
-	{
-		std::invoke(std::forward<F>(f), start, std::forward<Args>(args)...);
-
-		if constexpr (start + increment <= end)
-		{
-			LoopWithLoopVariable<start + increment, end, increment>(std::forward<F>(f), std::forward<Args>(args)...);
-		}
-	}
-}
-
-int a = 0;
-ForLoop_CompileTime<int>>::Loop<1, 5, 2>([&a]() { a += 1; std::cout << a << std::endl;  }); // output : 1, 2, 3
-ForLoop_CompileTime<int>>::Loop<1, 10, 3>([](int loopVariable) { std::cout << loopVariable << std::endl;  }); // output : 1, 4, 7, 10
-```
-
-상당히 복잡해 보이지만 기능은 간단하다.
-
-함수 Loop의 non type template argumnet로 전달된 start, end, increment, Callable Object T, argument를 통해 컴파일 타입의 Loop를 재귀적함수로 구현하는 것이다.
-
-std::invoke를 통해 function parameter로 전달된 f와 args를 실행하고 if constexpr을 통해 다음 Loop를 실행할 조건이 충족하는지를 검사하고 다시 재귀적으로 Loop함수를 호출해 주는 것이다.
-
-std::invoke를 제외한 나머지 것들은 모두 컴파일 타임에 코드가 생성된다.
-
-
-그런데 문제가 생겼다. CallableObject 형태로 전달한 Function 내에서 현재 Loop 단계의 Loop Variable을 사용할 수 있어야 한다. 그것도 Constant Variable로 말이다.
-
-위 코드에서 두 개의 함수 중 아래 함수는 Loop Variable를 CallableObject 내에서 사용할 수는 있지만 그것이 Constant Variable은 아니다. 즉 컴파일 타임에 결정되지 않는 다는 것이다.
-
-여기서 엄청나게 머리를 싸맸다.
-
-그리고 예전에 배운 Functor을 떠올렸다.
-
-Functor의 non type template argumnet로 Loop Variable을 전달해서 컴파일 타임에 모든 것들이 실행되게 해주는 것이다.
-후딱 만들어 보았다.
-
-```c++
-template <LoopVariableType start, LoopVariableType end, LoopVariableType increment, template<LoopVariableType> typename Functor, std::enable_if_t<start <= end, bool> = true >
-static void LoopWithLoopVariable()
+enum EnumTest
 {
-	Functor<start>()();
-
-	if constexpr (start + increment <= end)
-	{
-		LoopWithLoopVariable<start + increment, end, increment, Functor>();
-	}
+	A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P
 }
 
-template <int value>
-constexpr void PrintSquare()
-{
-	constexpr int result = value * value; // This value is evaluated at compile time
-	std::cout << result << std::endl;
-}
-
-template<int loopVariable>
+template<EnumTest enumValue>
 struct LoopJobFunctor
 {
 	constexpr void operator()()
 	{
-		PrintSquare<loopVariable>();
+		Function<enumValue>();
 	}
 };
 
 int main()
 {
-	ForLoop_CompileTime<int>::LoopWithLoopVariable<0, 10, 1, LoopJobFunctor>();
+	ForLoop_CompileTime<EnumTest>::Loop<EnumTest::A, EnumTest::P, 1, LoopJobFunctor>();
 }
 ```
 
-Functor을 활용하면 위 코드에서 보이듯이 loopVariable이 컴파일 타입에 결정되고 반복되는 작업 내에서 활용할 수 있다.
+상당히 복잡해 보이지만 기능은 간단하다.
 
-물론 위의 예제를 구현하기 위해서 이 라이브러리를 사용할 필요는 없다. 그냥 예제일 뿐이니 이해해주시길 바랍니다.
+함수 Loop의 non type template argumnet로 전달된 start, end, increment, Functor, argument를 통해 컴파일 타입의 Loop를 재귀적함수로 구현하는 것이다.
+
+Non type template argument를 가지는 Functor을 이용하면 looped value를 컴파일 타임에 가져갈 수 있다.
+
+매번 Functor을 만드는 것이 약간은 귀찮게 보일 수 있지만 모든 Enum element를 일일이 써주는 것보다는 훨씬 편하다고 생각한다.
 
 그럼 이제 내 Doom 코드에서 사용해보자.
 
@@ -194,18 +150,58 @@ struct LoopJobFunctor
 static constexpr inline AssetType FirstElementOfAssetType = AssetType::AUDIO;
 static constexpr inline AssetType LastElementOfAssetType = AssetType::SHADER; // enum의 element가 추가되면 이것 일일이 바꾸어 줘야한다 ( 아쉽게도 현재로서는 enum의 마지막 element를 자동으로 얻을 수 있는 방법이 없어보인다.)
 
-ForLoop_CompileTime<AssetType>::LoopWithLoopVariable<FirstElementOfAssetType, LastElementOfAssetType, 1, LoopJobFunctor>();
+ForLoop_CompileTime<AssetType>::Loop<FirstElementOfAssetType, LastElementOfAssetType, 1, LoopJobFunctor>();
 
 ```
 
 위의 코드를 아래의 코드 같이 짦게 만들 수 있었다.
 
-코드 줄 수는 큰 차이가 없어보이지만 enum의 element가 지금 보다 훨씬 늘어나고 반복하는 작업의 line수가 더 많아 진다고 생각해보자 생각해보자.
-
-그럼 위의 코드는 정말 지저분해질 것이다.
+코드 줄 수는 큰 차이가 없어보이지만 enum의 element가 50개라고 생각해보자. Functor의 작업에 대해 일일히 50번을 코드로 복사 붙여넣기 한다고 생각하면 위의 코드는 정말 지저분해질 것이다
 
 아래의 코드가 매번 Functor을 만들어줘야하는 것이 귀찮을 수도 있지만 코드가 훨씬 깔끔해지고 가독성이 높아진다.
 
 라이브러리는 깃허브에 올려두었으니 필요하면 가져다 쓰기를 바랍니다...
 
 [Github Repo](https://github.com/SungJJinKang/ForLoop_Compile_Time)
+
+
+------------------
+
+이 라이브러리를 레딧에 올려보니 어떤 분이 이런 코드를 올려주었다.
+
+솔직히 나는 std::integer_sequence 이라는게 있는지도 몰랐다...
+
+정말 C++을 파면 팔 수록 C++은 너무 방대하다는 느낌이 든다.
+
+
+솔직히 내 코드가 가독성이 더 좋고 쉽게 읽힌다고 생각한다.
+
+```c++
+// Generic, reusable utility
+
+template<auto Offset, typename IntSeq>
+struct offset_integer_sequence {};
+
+template<auto Offset, typename IntT, IntT ... Ints>
+struct offset_integer_sequence<Offset, std::integer_sequence<IntT, Ints...>> {
+    using type = std::integer_sequence<Int, (Ints + Offset) ...>;
+};
+
+template<auto Offset, typename IntSeq>
+using offset_integer_sequence_t = typename offset_integer_sequence<Offset, IntSeq>::type;
+
+
+// As in the library
+// No super-linear template instantiations (unless the implementation's make_integer_sequence does).
+
+template<typename Functor, typename IntT, IntT ... Indices>
+void apply_functor_helper(std::index_sequence<IntT, Indices ...>) {
+    (Functor<Indices>(), ...);
+}
+
+template<typename Functor, auto Start, auto End>
+void apply_functor() {
+    using int_type = std::common_type_t<Start, End>;
+    apply_functor_helper<Functor>(offset_integer_sequence_t<Start, std::make_integer_sequence<int_type, End - Start>>{});
+}
+```
