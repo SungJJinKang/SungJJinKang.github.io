@@ -20,9 +20,9 @@ categories: Life
 게임 개발 경력
 
 - 2015년 여름 C#, 유니티로 처음 게임 개발에 입문
-- 2015년 여름 : 퇴직 후 치킨집 출시 (1인 개발, Unity) [플레이 스토어](https://play.google.com/store/apps/details?id=kr.Hours30000.ChickenShopAfterRetire)
-- 2017년 겨울 : 킬러를 찾아라1 출시 (1인 개발, Unity) [플레이 스토어](https://play.google.com/store/apps/details?id=com.NintyNineMillion.FindKiller)
-- 2018년 여름 : 킬러를 찾아라2 출시 (1인 개발, Unity) [플레이 스토어](https://play.google.com/store/apps/details?id=com.milli.findkiller2)
+- 2015년 여름 : 퇴직 후 치킨집 출시 (1인 개발, Unity)  [플레이 스토어](https://play.google.com/store/apps/details?id=kr.Hours30000.ChickenShopAfterRetire)
+- 2017년 겨울 : 킬러를 찾아라1 출시 (1인 개발, Unity)  [플레이 스토어](https://play.google.com/store/apps/details?id=com.NintyNineMillion.FindKiller)
+- 2018년 여름 : 킬러를 찾아라2 출시 (1인 개발, Unity)  [플레이 스토어](https://play.google.com/store/apps/details?id=com.milli.findkiller2)
 - 2019년 가을 : GTA5, 레드데드리뎀션 모드 개발 ( Lua )
 - 2020년 겨울 : Doom From Scratch 개발 시작
 
@@ -30,5 +30,6 @@ categories: Life
 
 - C++
 - C#
+- Unity
 
 [Github Page](https://github.com/SungJJinKang)
