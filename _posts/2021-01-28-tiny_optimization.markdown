@@ -22,7 +22,7 @@ vector을 vector<Entity*> 이런식으로 포인터로 해서 삭제할 element�
 이 방법 나쁘지 않다. Entity vector가 필요할 때 그냥 nullptr 체크를 하면 빈 element는 걸러낼 수 있다.   
 그치만 성능이 생명인 게임에서 이러한 null 체크 또한 쌓이면 큰 오버헤드가 될 수 있다.   
 
-그래서 생각해낸게 그냥 vector의 맨마지막 element를 삭제할 element 자리에 move 해주는 것이다.   
+그래서 생각해낸게 그냥 삭제할 element와 vector의 마지막 element를 swap해주고 그 후 마지막 element를 pop_back 해주는 것이다.
 그럼 중간에 빈 element도 생기지 않고 깔끔하게 이 문제를 해결할 수 있다.   
 만약 vector에 1000개의 element가 있는데 첫번째 element를 제거하고자 한다고 하자.   
 만약 vector::erase를 사용하였다면 총 999번의 reallocation(move)가 발생한다.   
