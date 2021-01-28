@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "매우 사소하지만 성능에 영향이 큰 최적화 ( std::vector )"
+title:  "빠르게 vector의 element 제거하기 ( vector::erase )"
 date:   2021-01-28
 categories: C++
 ---
