@@ -24,8 +24,10 @@ vector을 vector<Entity*> 이런식으로 포인터로 해서 삭제할 element�
 
 그래서 생각해낸게 그냥 vector의 맨마지막 element를 삭제할 element 자리에 move 해주는 것이다.   
 그럼 중간에 빈 element도 생기지 않고 깔끔하게 이 문제를 해결할 수 있다.   
-물론 vector의 element들의 순서를 유지해야한다면 그냥 첫번째 방법을 사용해도 된다.   
+만약 vector에 1000개의 element가 있는데 첫번째 element를 제거하고자 한다고 하자.   
+만약 vector::erase를 사용하였다면 총 999번의 reallocation(move)가 발생한다.   
+그러나 내가 만든 방법을 사용하면 단 3번의 reallocation이면 첫번째 element를 제거할 수 있다. ( swap의 원리를 생각해보면 왜 3번인지 알 수 있을 것이다 )   
 
 아래의 깃허브 주소를 가보면 필자가 구현한 방법을 볼 수 있다.   
-[Github Repo](https://github.com/SungJJinKang/Voxel_Doom3_From_Scratch/blob/main/Doom3/Source/Core/CoreComponent/World.cpp)
+[vector_swap_erase](https://github.com/SungJJinKang/vector_swap_erase)
 
