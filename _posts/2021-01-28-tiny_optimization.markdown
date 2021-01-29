@@ -23,10 +23,10 @@ vector을 vector<Entity*> 이런식으로 포인터로 해서 삭제할 element�
 그치만 성능이 생명인 게임에서 이러한 null 체크 또한 쌓이면 큰 오버헤드가 될 수 있다.   
 
 **그래서 생각해낸게 그냥 삭제할 element와 vector의 마지막 element를 swap해주고 그 후 마지막 element를 pop_back 해주는 것이다.
-그럼 중간에 빈 element도 생기지 않고 깔끔하게 이 문제를 해결할 수 있다.   
+그럼 중간에 빈 element도 생기지 않고 깔끔하게 이 문제를 해결할 수 있다.**      
 만약 vector에 1000개의 element가 있는데 첫번째 element를 제거하고자 한다고 하자.   
-만약 vector::erase를 사용하였다면 총 999번의 reallocation(move)가 발생한다.   
-그러나 내가 만든 방법을 사용하면 단 3번의 reallocation이면 첫번째 element를 제거할 수 있다. ( swap의 원리를 생각해보면 왜 3번인지 알 수 있을 것이다 )**      
+만약 vector::erase를 사용하였다면 총 999번의 reallocation(move)가 발생한다. ( 이 경우 그냥 vector 내부의 start 포인터의 값에 1을 더해주면 되려나?? 나중에 고민해보아야 겠다. )
+그러나 내가 만든 방법을 사용하면 단 3번의 reallocation이면 첫번째 element를 제거할 수 있다. ( swap의 원리를 생각해보면 왜 3번인지 알 수 있을 것이다 )    
 
 
 아래의 깃허브 주소를 가보면 필자가 구현한 방법을 볼 수 있다.   
