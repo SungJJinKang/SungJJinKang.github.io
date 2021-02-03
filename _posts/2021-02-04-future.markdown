@@ -1,37 +1,22 @@
 ---
 layout: post
-title:  "1학기 동안 읽어보거나 공부할 것들"
-date:   2021-01-29
+title:  "공부해나갈 방향에 대한 고민"
+date:   2021-02-04
 categories: Computer Science
 ---
 
-책, 텍스트 자료 :   
+2016년 부터 작년까지 유니티 엔진을 이용해서 게임을 공부해왔지만 최근에 와서 다시 보니 실제로 배운 것은 많이 없는 것 같다.    
+엔진이 모든걸 하다보니 나는 코딩을 하면서 딱히 생각을 많이하지 않아도 됬었다.    
+그렇게 유니티 엔진을 사용해서 게임도 여러개 출시해보면서 나름 플레이 스토어 인기 게임 순위 5등 까지도 올라가보고 40만 다운로드까지 올라가며 나한테는 어마어마한 성공이었지만 지금 생각해보면 그냥 게임 개발이 좋았던 것이지 프로그래밍에는 흥미가 적었던 것이 아니었는가 하는 생각이 들기도 한다.   
 
-컴퓨터 구조 및 설계 ( David A. Patterson )   
-Operating Sytem Concepts ( ABRAHAM SILBERSCHATZ, ... )   
-Fundamentals of Computer Graphics ( Steve Marschner, ...)   
+그러다 보니 부족함을 많이 느꼈고 얼마 전 부터 뒷단에서 어떻게 게임이랑 게임엔진이 돌아가는 지 공부하고 있는 데 이렇게 다양한 기법들과 기술들이 들어가 있다는 것을 깨닫고 나니 최근 몇년간 게임 개발을 해왔던 것이 뭔가 다 시간 낭비가 아니었을까 하는 생각도 든다.  
+정말 공부할 것들도 많고 방대하다. 그치만 재밌다...   
 
-[Occulusion culling 1](https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful)   
-[Occulusion culling 2](http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch29.html)   
-[Occulusion culling 3](https://mkblog.co.kr/2019/09/24/gpu-occlusion-culling-early-z-vs-occlusion-queries/)   
-[Occulusion culling 4](https://megayuchi.com/2017/10/27/5068/)      
+내가 내 미래에 대해 생각을 해보자면 게임 엔진 개발자 쪽으로 공부를 해나가는 게 좋을 것 같다는 생각이 든다.   
+물론 실제 회사에 들어가서 게임엔진을 만들어 볼 일은 많지 않을 수 있다. 왜냐하면 대부분의 게임회사들이 상용엔진을 사용하기 때문이다.   
+그렇지만 내가 생각하기에는 큰 규모의 회사들은 자신들의 요구조건에 맞게 그러한 엔진을 고쳐쓴다. 그리고 모바일 게임이라도 날이 갈 수록 고사양 모바일 게임이 나오고 있기 때문에 최적화에 대한 요구가 날이 갈 수록 커지지 않을까 하는 생각이 든다. 리니지 모바일이나 원신 같은 게임만 봐도 모바일 환경에서 정말 휴대폰의 성능을 극한까지 끌어다 쓴다.   
+이러한 것을 보았을 때 모바일 게임이 대세이고 앞으로도 대세일 상황에서 더 극한의 최적화를 요구할 것이고 그렇게 되면 엔진 개발자 혹은 상용엔진을 고칠 수 있는 능력을 가진 프로그래머가 더 필요하지 않을까 하는 생각이든다.     
 
-[Frustum culling 1](https://www.braynzarsoft.net/viewtutorial/q16390-34-aabb-cpu-side-frustum-culling)   
-[Frustum culling 2](https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/)      
+단순히 게임플레이 프로그래머로서는 살아남을 수 없다.   
+게임 성능을 극한까지 끌어 올릴 수 있는 기술을 가져야 오래오래 살아남을 수 있지 않을까 싶다...   
 
-[Memory Allocator, Memory Pooling 1](http://ohyecloudy.com/pnotes/archives/250/)   
-[Memory Allocator, Memory Pooling 2](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1850.pdf)   
-[Memory Allocator, Memory Pooling 3](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html)     
-
-영상 :   
-
-[원신 렌더링 기법들](https://youtu.be/00QugD5u1CU)   
-[CppCon 2016: Nicolas Fleury “Rainbow Six Siege: Quest for Performance"](https://www.youtube.com/watch?v=tD4xRNB0M_Q)
-[CppCon 2014: Nicolas Fleury "C++ in Huge AAA Games"](https://youtu.be/qYN6eduU06s)
-[Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next”](https://youtu.be/6hC9IxqdDDw)
-[CppCon 2016: Jason Jurecka “Game engine using STD C++ 11"](https://youtu.be/8AjRD6mU96s)   
-
-
-다 본것들은 줄 그어주자..   
-많아 보이지만 웹페이지 같은 것들은 몇시간이면 다 읽을 수 있는 정도의 분량이다.   
-비대면 수업도 많아서 짬짬히 시간내서 보자!!.

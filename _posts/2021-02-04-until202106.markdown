@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "2021학년도 1학기 동안 읽어보거나 공부할 것들"
-date:   2021-01-29
+date:   2021-02-04
 categories: Computer Science
 ---
 
@@ -25,11 +25,11 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 
 영상 :   
 
-[원신 렌더링 기법들](https://youtu.be/00QugD5u1CU)   
-[CppCon 2016: Nicolas Fleury “Rainbow Six Siege: Quest for Performance"](https://www.youtube.com/watch?v=tD4xRNB0M_Q)
-[CppCon 2014: Nicolas Fleury "C++ in Huge AAA Games"](https://youtu.be/qYN6eduU06s)
-[Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next”](https://youtu.be/6hC9IxqdDDw)
-[CppCon 2016: Jason Jurecka “Game engine using STD C++ 11"](https://youtu.be/8AjRD6mU96s)   
+[원신 렌더링 기법들](https://youtu.be/00QugD5u1CU)      
+[CppCon 2016: Nicolas Fleury “Rainbow Six Siege: Quest for Performance"](https://www.youtube.com/watch?v=tD4xRNB0M_Q)   
+[CppCon 2014: Nicolas Fleury "C++ in Huge AAA Games"](https://youtu.be/qYN6eduU06s)   
+[Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next”](https://youtu.be/6hC9IxqdDDw)   
+[CppCon 2016: Jason Jurecka “Game engine using STD C++ 11"](https://youtu.be/8AjRD6mU96s)    
 
 
 ~~다 본것들은 줄 그어주자..~~   
