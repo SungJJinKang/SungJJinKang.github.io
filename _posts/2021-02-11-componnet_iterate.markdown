@@ -46,7 +46,7 @@ class ComponentStaticIterater //Never inherit Component
 
 private:
 
-    inline container_type mComponents{};
+    static inline container_type mComponents{};
 
     constexpr virtual void AddComponentToStaticContainer()
     {
