@@ -22,16 +22,17 @@ for(auto& entity : GetAllSpawnedEntity())
 }
 ```	  
 
-만약 이런식으로 Iterate를 돈다면 매우 매우 느릴 것이다. 
+만약 이런식으로 Iterate를 돈다면 매우 매우 느릴 것이다.
 내가 고안한 방법으로 하면 그냥 vector를 iterate 하듯이 매우 빠르게 모든 Entity의 RenderComponent의 Update 함수를 호출할 수 있다.   
 
 ```c++   
-auto iter_begin_end = ComponentStaticIterater<RendererComponent>::GetIter();
-for(auto iter = iter_begin_end->begin() ; iter != iter_begin_end->end() ; ++iter)
+auto rendererComponentPair = ComponentStaticIterater<RenderingComponent>::GetAllComponentsWithLayerIndex(i);
+auto components = rendererComponentPair.first;
+size_t length = rendererComponentPair.second;
+for (size_t i = 0; i < length; ++i)
 {
-    (*iter)->Update();
+    components[i]->UpdateComponent();
 }
-
 ```	   
 
 구현 방법은 아래와 같다.   
@@ -41,10 +42,10 @@ static 변수에 생성된 인스턴스들을 캐싱해두고 그 변수에 직�
 template <typename T>
 class ComponentStaticIterater //Never inherit Component
 {
-	using this_type = typename ComponentStaticIterater<T>;
-	using container_type = typename std::vector<T*>;
-
-private:
+    using this_type = typename ComponentStaticIterater<T>;
+    using container_type = typename std::vector<T*>;
+    
+    private:
 
     static inline container_type mComponents{};
 
@@ -61,7 +62,7 @@ private:
         std::vector_swap_erase(this_type::mComponents, iter);
     }
 
-protected:
+    protected:
 
     constexpr ComponentStaticIterater()
     {
@@ -73,12 +74,15 @@ protected:
         this->RemoveComponentToStaticContainer();
     }
 
-public:
+    public:
 
-	[[nodiscard]] static constexpr std::pair<typename container_type::iterator, typename container_type::iterator> GetIter()
-	{
-			return std::make_pair(this_type::mComponents.begin(), this_type::mComponents.end());
-	}
+            
+    [[nodiscard]] static constexpr std::pair<T**, size_t> GetAllComponents()
+    {
+        return std::make_pair(this_type::mComponents.data(), this_type::mComponents.size());
+    }
+
+        
 };
 ```
 
