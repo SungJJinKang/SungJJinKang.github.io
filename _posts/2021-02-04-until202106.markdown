@@ -30,7 +30,8 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 [CppCon 2014: Nicolas Fleury "C++ in Huge AAA Games"](https://youtu.be/qYN6eduU06s)   
 [Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next”](https://youtu.be/6hC9IxqdDDw)   
 [CppCon 2016: Jason Jurecka “Game engine using STD C++ 11"](https://youtu.be/8AjRD6mU96s)    
-
+[The most important talk on programming by Jonathan Blow](https://youtu.be/dS6rCaDSwW8)    
+[How to succeed in the games industry - Programming tips from Jonathan Blow](https://youtu.be/RLI1VyPpRd8)    
 
 ~~다 본것들은 줄 그어주자..~~   
 많아 보이지만 웹페이지 같은 것들은 몇시간이면 다 읽을 수 있는 정도의 분량이다.   
