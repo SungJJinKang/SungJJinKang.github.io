@@ -11,10 +11,11 @@ categories: Computer Science
 Operating Sytem Concepts ( ABRAHAM SILBERSCHATZ, ... )   
 Fundamentals of Computer Graphics ( Steve Marschner, ...)   
 
-[Occulusion culling 1](https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful)   
-[Occulusion culling 2](http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch29.html)   
-[Occulusion culling 3](https://mkblog.co.kr/2019/09/24/gpu-occlusion-culling-early-z-vs-occlusion-queries/)   
-[Occulusion culling 4](https://megayuchi.com/2017/10/27/5068/)      
+[Occulusion culling 1](https://youtu.be/TG308pW0GY8)    
+[Occulusion culling 2](https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful)   
+[Occulusion culling 3](http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch29.html)   
+[Occulusion culling 4](https://mkblog.co.kr/2019/09/24/gpu-occlusion-culling-early-z-vs-occlusion-queries/)   
+[Occulusion culling 5](https://megayuchi.com/2017/10/27/5068/)      
 
 [Frustum culling 1](https://www.braynzarsoft.net/viewtutorial/q16390-34-aabb-cpu-side-frustum-culling)   
 [Frustum culling 2](https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/)      
