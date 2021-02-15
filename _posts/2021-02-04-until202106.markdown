@@ -11,8 +11,10 @@ categories: Computer Science
 Operating Sytem Concepts ( ABRAHAM SILBERSCHATZ, ... )   
 Fundamentals of Computer Graphics ( Steve Marschner, ...)   
 
-[Bounding Volume 1 (AABB)](https://www.braynzarsoft.net/viewtutorial/q16390-25-bounding-volumes)
-[Bounding Volume 2 (AABB)](https://www.braynzarsoft.net/viewtutorial/q16390-26-bounding-volume-collision-detection)
+[AABB](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)    
+[Bounding Volume](http://www.pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies.html#)    
+[Bounding Volume 1 (AABB)](https://www.braynzarsoft.net/viewtutorial/q16390-25-bounding-volumes)     
+[Bounding Volume 2 (AABB)](https://www.braynzarsoft.net/viewtutorial/q16390-26-bounding-volume-collision-detection)      
 [Occulusion culling 1](https://youtu.be/TG308pW0GY8)      
 [Occulusion culling 2](https://www.youtube.com/watch?v=U20dIA3SLTs)      
 [Occulusion culling 3](https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful)     
