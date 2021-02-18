@@ -1,0 +1,32 @@
+---
+layout: post
+title:  "AABB에 대한 간단한 설명"
+date:   2021-02-18
+categories: Computer Science
+---
+
+게임을 개발하다 보니 게임 내 물리 법칙을 넣어야할 떄가 왔다. 또한 렌더링을 빠르게 하기 위하서는 월드의 있는 여러 오브젝트들을 트리 형식으로 여러 레이어로 나누어서 화면상에 보일 오브젝트들만 GPU에 넘겨줘야한다. (등 뒤에 있는 오브젝트를 쓸 데 없이 GPU에 넘겨줄 필요는 없으니깐 말이다.) 화면 상에 오브젝트가 보이는지를 체크하기 위해서는 카메라의 뷰프러스텀과 비교를 해야하는 데 이를 위해서는 AABB라는 오브젝트를 네모난 상자로 간단히 표현한 개념을 이용해서 빠르게 체크할 수 있다.   
+
+서론이 길었다. 바로 AABB가 무엇인지에 대해 내가 이해한 바를 설명하겠다.   
+---------
+|       |
+|       |
+|       |
+---------
+
+반드시 축과 평행해야한다.
+단 두 Point로 해당 오브젝트가 차지하는 공간을 표현할 수 있음. (minX, minY, minZ) (maxX, maxY, maxZ)
+
+
+월드에 1000개의 오브젝트가 있는 데 충돌 검사한다고 1000개 다 일일이 비교한다?? 미친짓이다.   
+그래서 월드 내 오브젝트들을 몇개의 AABB 그룹으로 나눈다. 이러한 그룹을 층층히 여러 레이어로 만들어서 가장 큰 그룹부터 해서 그 속의 작은 그룹들 순으로 차근차근 비교해나가면서 원하는 오브젝트를 찾는 것이다. 이런 식으로 최대한 AABB 충돌 테스트를 줄여 성능을 높이는 것이다.
+이렇게 AABB를 그룹화하여 레이어를 쌓는 것을 BVH Bounding Volume Hierarchy라고 한다.   
+
+이러한 AABB그룹 혹은 Transform을 iteration 돌 때 최대한 캐쉬 히트율을 높이는게 중요할 듯.
+
+복잡한 모양의 convex hull도 우선 AABB로 체크한 후 그 복잡한 모양을 체크함 ( AABB에서 최대한 걸리지면 성능상 이득 )
+
+Reference :   
+
+[AABB](https://www.azurefromthetrenches.com/introductory-guide-to-aabb-tree-collision-detection/)      
+[BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)   

@@ -115,12 +115,13 @@ X64 GCC와 ARM CLANG 컴파일러가 같은 기능을 다르게 처리하는 것
 내가 함수 function에 전달한 ENUM_TEST::A과 ENUM_CLASS_TEST::A은 엄밀히 따지만 다른 enum 형에 속한다.     
 그래서 GCC는 당연히 edi 레지스터에 매개변수 2를 매번 저장하였다.      
 
-반면 CLANG은 r0 레지스터에 2(ENUM_TEST::A가 2이다)라는 상수값을 넣고 첫 함수에서 매개 변수로 스택에 값을 전달 해준 다음 그 다음 함수인 function(static_cast<unsigned int>(ENUM_CLASS_TEST::A)); 를 호출 할 때 ~~이전에 넣어둔 함수 스택 값을 그대로 사용하는 것이다.~~ 어차피 ENUM_TEST::A과 ENUM_CLASS_TEST::A은 상수 값으로는 같으므로 매개변수로 전달할 스택의 값을 건들지 않고 그대로 사용한 것이다.    
+반면 CLANG은 r0 레지스터에 2(ENUM_TEST::A가 2이다)라는 상수값을 넣고 첫 함수에서 매개 변수로 스택에 값을 전달 해준 다음 그 다음 함수인 function(static_cast<unsigned int>(ENUM_CLASS_TEST::A)); 를 호출 할 때 ~~이전에 넣어둔 함수 스택 값을 그대로 사용하는 것이다.~~ 어차피 ENUM_TEST::A과 ENUM_CLASS_TEST::A은 상수 값으로는 같으므로 그냥 이전 함수를 위해 전달했던 값을 그대로 사용하는 것이다.       
 필자가 생각하기에는 CLANG의 방식의 GCC보다 빠를 것이라고 생각하는데 희한하게 CLANG은 ldr     r0, [sp, #4] 코드로 스택의 값을 다시 r0에 전달해 주었다. 도대체 왜 이게 필요한 것인지는 모르겠다....    
 
 어쨋든 한번 궁금해서 실험해 본 것이 두 컴파일러가 같은 코드를 다른 방식으로 해결한다는 재미있는 사실을 발견하였다.   
+이게 그냥 컴파일러의 차이인지 아니면 X64, ARM의 아키텍쳐의 차이 때문인지는 솔직히 잘 모르겠다.   
 
-매개변수로 다른 값을 전달해주니 ARM CLANG도 GCC와 같이 매번 r0 레지스터에 상수값을 넣어주는 것을 볼 수 있다.   
+매개변수로 두 함수에 다른 값을 전달해주니 ARM CLANG도 GCC와 같이 매번 r0 레지스터에 상수값을 넣어주는 것을 볼 수 있다.   
 ```c++
 function(ENUM_TEST::A); // 2
 function(static_cast<unsigned int>(ENUM_CLASS_TEST::B)); // 3
