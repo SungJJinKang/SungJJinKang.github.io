@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "자기 소개"
+title:  "Introduce"
 date:   2021-01-05
 categories: Life
 ---

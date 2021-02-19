@@ -2,7 +2,7 @@
 layout: post
 title:  "공부해나갈 방향에 대한 고민"
 date:   2021-02-04
-categories: Computer Science
+categories: ComputerScience
 ---
 
 2016년 부터 작년까지 유니티 엔진을 이용해서 게임을 공부해왔지만 최근에 와서 다시 보니 실제로 배운 것은 많이 없는 것 같다.    

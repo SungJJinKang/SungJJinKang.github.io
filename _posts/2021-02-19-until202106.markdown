@@ -2,7 +2,7 @@
 layout: post
 title:  "2021학년도 1학기 동안 읽어보거나 공부할 것들"
 date:   2021-02-19
-categories: Computer Science
+categories: ComputerScience
 ---
 
 책, 텍스트 자료 :   
