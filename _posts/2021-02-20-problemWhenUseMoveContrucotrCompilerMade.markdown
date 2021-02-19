@@ -24,7 +24,8 @@ class A
 private:
 	static inline int BufferCount = 0;
 	int mBufferID;
-        std::vector<Texture> mTextures{};
+    std::vector<Texture> mTextures{};
+	
 	void GenerateBuffer()
 	{
 		this->mBufferID = A::BufferCount++;
@@ -34,12 +35,12 @@ private:
 	{
 		std::cout << "Release Buffer : " << this->mBufferID << std::endl;
 	}
+
 public:
 	A()
 	{
 		this->GenerateBuffer();
 	}
-
 	~A()
 	{
 		this->ReleaseBuffer();
