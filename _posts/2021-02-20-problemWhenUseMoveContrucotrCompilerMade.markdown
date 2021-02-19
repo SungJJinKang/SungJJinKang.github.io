@@ -69,6 +69,80 @@ Release Buffer : 0
 Release Buffer : 1
 
 ```    
+output에서 보이듯이 reallocation 과정에서 Buffer과 Release된 것을 알 수 있다.     
+
+아래는 필자가 해결책으로 만들 간단한 클래스이다.    
+
+```c++
+template <typename T>
+class ZeroResetMoveContainer
+{
+	private:
+		T data;
+	public:
+	ZeroResetMoveContainer() : data{ 0 }
+	{}
+			
+	ZeroResetMoveContainer(const ZeroResetMoveContainer&)
+	{
+		NODEFAULT; 
+		// Don't try ZeroResetMoveContainer
+		// Think if you copy ZeroResetMoveContainer and Copyed Object is destroyed
+		// Other ZeroResetMoveContainer Objects can't know their bufferId is invalidated.
+		// This will make bugs hard to find, debug
+	}
+	ZeroResetMoveContainer(ZeroResetMoveContainer&& bufferID) noexcept
+	{
+		this->data = bufferID.data;
+		bufferID.data = 0;
+	}
+
+	ZeroResetMoveContainer& operator=(const ZeroResetMoveContainer&)
+	{
+		NODEFAULT;
+		// Don't try ZeroResetMoveContainer
+		// Think if you copy ZeroResetMoveContainer and Copyed Object is destroyed
+		// Other ZeroResetMoveContainer Objects can't know their bufferId is invalidated.
+		// This will make bugs hard to find, debug
+	}
+	ZeroResetMoveContainer& operator=(ZeroResetMoveContainer&& bufferID) noexcept
+	{
+		this->data = bufferID.data;
+		bufferID.data = 0;
+		return *this;
+	}
+
+	ZeroResetMoveContainer(T ID) : data{ ID }
+	{}
+	void operator=(T iD) noexcept
+	{
+		this->data = iD;
+	}
+
+	operator T()
+	{
+		return this->data;
+	}
+
+	operator T*()
+	{
+		return &(this->data);
+	}
+
+	T& GetReference()
+	{
+		return this->data;
+	}
+
+	const T& GetReference() const
+	{
+		return this->data;
+	}
+};
+
+using BufferID = typename ZeroResetMoveContainer<unsigned int>;
+}
+```
 
 
 오늘의 교훈 : vector에 오브젝트 포인터가 아닌 클래스 오브젝트를 저장하려면 Move constructor을 잘 정의해야 불필요한 오버헤드를 줄일 수 있다.    
