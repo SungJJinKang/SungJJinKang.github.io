@@ -10,7 +10,8 @@ categories: C++
 
 필자도 진행 중인 게임 프로젝트에서 수 많은 opengl 관련 call들의 변수를 enum class로 만들어서 그래픽 api call을 할 때 매번 어떤 변수를 넣을 지 일일이 찾을 필요 없이 매개변수의 enum class type을 따라 정해져 있는 parameter을 전달해 실수도 엄청 줄이고 개발 시간도 높일 수 있었다.    
 
-필자는 궁금했다. 과연 enum class를 사용하는 것이 혹시 성능 저하를 유발하는 것이 아닌가이다. 실험을 해보니 enum과 enumclass의 성능저하는 없었고 어셈블리 코드에서도 똑같은 코드를 보여 주었다.   
+필자는 궁금했다. 과연 enum class를 사용하는 것이 혹시 성능 저하를 유발하는 것이 아닌가이다.    
+실험을 해보니 enum과 enumclass의 성능저하는 없었고 어셈블리 코드에서도 똑같은 코드를 보여 주었다.   
 컴파일러가 알아서 enum, enum class 값에 맞는 상수 값을 전달해준다. 즉 명령어 코드 상에는 차이가 없다.   
 
 ```c++
@@ -46,12 +47,13 @@ int main()
 
 ```
 
+
 ```
 function(unsigned int):
         push    rbp
         mov     rbp, rsp
         mov     DWORD PTR [rbp-4], edi // edi에서 함수 내부 스택으로 데이터 옮김
-        mov     eax, DWORD PTR [rbp-4]
+        mov     eax, DWORD PTR [rbp-4] // 연산을 위해 연산 레지스터 eax로 스택에 저장된 매개변수 값을 옮김
         add     eax, 1
         pop     rbp
         ret
@@ -69,11 +71,13 @@ main:
 
 
 번외로 여러 컴파일러로 컴파일을 해보면서 재밌는 사실도 발견하였다.   
+X64 GCC와 ARM CLANG 컴파일러가 매개 변수를 전달하는 과정에서 약간은 다른 방식으로 매개 변수를 전달하는 것을 알 수 있었다.   
 
 ```c++
 function(ENUM_TEST::A); // 2
 function(static_cast<unsigned int>(ENUM_CLASS_TEST::A)); // 2
 ```   
+
 
 X64 GCC
 ```
@@ -90,20 +94,19 @@ push    rbp
 
 ARM CLANG
 ```
-
 function(unsigned int):
-        sub     sp, sp, #4
+        sub     sp, sp, #4 // 매개변수가 저장된 위치로 스택 포인터 이동
         str     r0, [sp]
-        add     sp, sp, #4
+        add     sp, sp, #4 // 스택 포인터 원상태로 복구
         bx      lr
 main:
         push    {r11, lr}
         mov     r11, sp
         sub     sp, sp, #8
-        mov     r0, #2
-        str     r0, [sp, #4]    // !!!!
+        mov     r0, #2 // 레지스터 r0에 상수 2 저장
+        str     r0, [sp, #4]    // !!!! 현재 스택 포인터 - 4 에 위치에 매개변수 전달.
         bl      function(unsigned int)
-        ldr     r0, [sp, #4]    // ???
+        ldr     r0, [sp, #4]    // ??
         bl      function(unsigned int)
         mov     r0, #0
         mov     sp, r11
@@ -111,7 +114,6 @@ main:
         bx      lr
 ```
 
-X64 GCC와 ARM CLANG 컴파일러가 같은 기능을 다르게 처리하는 것을 볼 수 있다.   
 내가 함수 function에 전달한 ENUM_TEST::A과 ENUM_CLASS_TEST::A은 엄밀히 따지만 다른 enum 형에 속한다.     
 그래서 GCC는 당연히 edi 레지스터에 매개변수 2를 매번 저장하였다.      
 
