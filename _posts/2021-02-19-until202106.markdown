@@ -27,6 +27,8 @@ https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-col
 [Frustum culling 1](https://www.braynzarsoft.net/viewtutorial/q16390-34-aabb-cpu-side-frustum-culling)   
 [Frustum culling 2](https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/)      
 
+[Realtime Ray Tracing and Interactive Global Illumination, Ingo Wald, 2004](http://www.sci.utah.edu/~wald/PhD/wald_phd.pdf)
+
 [Memory Allocator, Memory Pooling 1](http://ohyecloudy.com/pnotes/archives/250/)   
 [Memory Allocator, Memory Pooling 2](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1850.pdf)   
 [Memory Allocator, Memory Pooling 3](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html)     
