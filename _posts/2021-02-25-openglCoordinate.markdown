@@ -2,7 +2,7 @@
 layout: post
 title:  "Open GL Coordinate 정리"
 date:   2021-02-20
-categories: C++
+categories: OpenGL
 ---
 
 Open GL은 메쉬를 그리기 위해 3D모델의 local vertex position들을 여러번 변환하여 카메라에 그려준다. 그 과정에서 다양한 Coordinate들이 발생하는 데 그 종류와 변환 방법을 알아보자.     
