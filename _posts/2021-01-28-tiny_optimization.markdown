@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "빠르게 vector의 element 제거하기 ( vector::erase )"
+title:  "vector의 중간에 있는 element 빠르게 제거하기 ( swap_erase )"
 date:   2021-01-28
 categories: C++
 ---
