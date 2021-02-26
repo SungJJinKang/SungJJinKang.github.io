@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Open GL Coordinate 정리"
-date:   2021-02-20
+date:   2021-02-25
 categories: OpenGL
 ---
 
