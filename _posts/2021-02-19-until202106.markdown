@@ -13,8 +13,8 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 
 [3D Collision](https://gdbooks.gitbooks.io/3dcollisions/content/)
 ~~[Raycast에 대한 아주 기본적인 이해](https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection)~~     
-[Dynamic BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)    
-https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms    
+[Dynamic BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)        
+[Collision Query](https://docs.unity3d.com/Packages/com.unity.physics@0.3/manual/collision_queries.html)       
 
 
 [Occulusion culling 1](https://youtu.be/TG308pW0GY8)      
