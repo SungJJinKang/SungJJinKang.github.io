@@ -7,12 +7,12 @@ categories: C++
 
 이 글은 내가 C++ 코드를 작성하면서 실수를 줄이고 실수로 발생하는 memory leak을 막기 위해 하였던 여러 방법들과 RAII기법들을 소개하고자한다.    
 
-1. 스마트 포인터를 적극 활용하자.    
+## 스마트 포인터를 적극 활용하자.    
 
 두말하면 입 아프다 스마트 포인터는 실수가능성을 줄여줘 무심코 생기는 memory leak을 줄여준다.     
 
 
-2. 포인터의 array는 std::unique_ptr을 사용하자.      
+## 포인터의 array는 std::unique_ptr을 사용하자.      
 
 보통 dynamic한 array를 사용하기 위해서는 정말 plain 하게 그냥 이중포인터에 배열을 allocate하거나 포인터를 타입으로 한 vector을 사용한다. 하지만 두개 다 리소스 관리 측면에서 좋지 못하고 잘못하면 memory leak을 발생시킨다. 첫번째 경우는 당연히 해제를 프로그래머가 직접 메모리를 해제시켜야 해서 까먹엇을 때 메모리 누수가 발생한다. 두번째 방법은 자칫 착각할 수 있지만 vector가 파괴되면서 vector가 해제시켜주는 메모리는 그 타입의 data가 아닌 해당 type의 포인터들의 배열을 해제시켜주는 것이다. 포인터가 가리키는 실제 데이터는 해제가 되지 않는다.
 ```c++
@@ -20,11 +20,11 @@ std::unique_ptr<int[]> variable
 ```       
 
 
-3. enum class를 사용하자.      
+## enum class를 사용하자.      
 
 enum class를 사용하자. 무심코 형변환하는 일이 없어진다. enum을 사용했을 때와 enum class를 static_cast로 변환하여 사용하였을 때 오버헤드의 차이는 전혀 없다. 필자의 이전 글을 읽어보면 자세한 내용이 나와있다.      
 
 
-4. 클래스의 모든 멤버변수의 move, copy semantic을 잘 정의하고 클래스는 그냥 =default를 통해 컴파일러가 만들어주는 move, copy semantic을 사용하려 노력하자.       
+## 클래스의 모든 멤버변수의 move, copy semantic을 잘 정의하고 클래스는 그냥 =default를 통해 컴파일러가 만들어주는 move, copy semantic을 사용하려 노력하자.       
 
 클래스의 move, copy semantic을 프로그래머가 직접 작성하는 것은 여간 귀찮은 일이 아니고 또한 실수할 시 memory leak이 발생할 가능성도 크다. 그래서 필자는 최대한 클래스의 copy, move semantic을 컴파일러가 자동으로 만들어 주는 것을 사용하려 노력한다. 그렇지만 이를 위한 요구조건이 있는 데 해당 클래스의 모든 멤버변수가 move, copy semantic을 가지고 있어야한다. 클래스를 짤 때 처음에 move, copy semantic을 잘 구성해두면 나중에 귀찮은 일이 현저히 줄어든다.            
