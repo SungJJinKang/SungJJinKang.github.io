@@ -16,6 +16,11 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 [Dynamic BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)        
 [Collision Query](https://docs.unity3d.com/Packages/com.unity.physics@0.3/manual/collision_queries.html)       
 
+[C++ 표준 stl이 왜 구린가?? EASTL의 장점](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html#better_allocator_model)       
+[EASTL Allocator](http://ohyecloudy.com/pnotes/archives/250/)       
+[Memory Allocator, Memory Pooling 1](http://ohyecloudy.com/pnotes/archives/250/)      
+[Memory Allocator, Memory Pooling 2](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1850.pdf)   
+[Memory Allocator, Memory Pooling 3](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html)    
 
 [Occulusion culling 1](https://youtu.be/TG308pW0GY8)      
 [Occulusion culling 2](https://www.youtube.com/watch?v=U20dIA3SLTs)      
@@ -29,9 +34,7 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 
 [Realtime Ray Tracing and Interactive Global Illumination, Ingo Wald, 2004](http://www.sci.utah.edu/~wald/PhD/wald_phd.pdf)
 
-[Memory Allocator, Memory Pooling 1](http://ohyecloudy.com/pnotes/archives/250/)   
-[Memory Allocator, Memory Pooling 2](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1850.pdf)   
-[Memory Allocator, Memory Pooling 3](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html)     
+ 
 
 영상 :   
 

@@ -11,7 +11,7 @@ categories: C++
 필자는 기본적으로 생산성과 실수를 줄이기 위해 최대한 내가 Move constructor을 따로 정의하지 않고 컴파일러가 알아서 만들어 주는 Move Constructor, Copy Constructor을 사용하고 노력하였다.   
 컴파일러를 만드는 천재 프로그래머들을 믿고 맡긴 것이다. 그런데 여기서 문제가 발생하였다. 컴파일러가 자동으로 생성해주는 Move Constructor을 멤버 변수들을 타입에 맞는 Move semantic을 사용하여 Move를 한다.     
 **나는 당연히 다른 클래스들의 Move semantic 처럼 int 타입의 멤버 변수도 move 후 0으로 초기화를 해줄 것이라고 생각했다.**     
-그러나 컴파일러는 그렇게 하지 행동하지 않았다. 굳이 불필요하게 int 타입을 0으로 초기화 시켜줄 필요가 없는 것이었다. 내가 컴파일러를 만든다고 해도 굳이 0으로 초기화를 하는 명령어를 넣지는 않았을 것 같다.    
+**그러나 컴파일러는 그렇게 하지 행동하지 않았다. 굳이 불필요하게 int 타입을 0으로 초기화 시켜줄 필요가 없는 것이었다. 내가 컴파일러를 만든다고 해도 굳이 0으로 초기화를 하는 명령어를 넣지는 않았을 것 같다.**
 결국에는 0으로 초기화 되지 않은 기존의 오브젝트는 원래의 버퍼 ID를 가지고 있었고 reallocation이 끝난 후 파괴되면서 소멸자가 호출되어 버퍼가 Release되었던 것이다.    
 버퍼를 관리하는 오브젝트가 파괴되면 자동으로 버퍼를 Release해주는 그래픽스 API를 호출하는 것 자체는 리소스 관리 측면에서 실수를 줄여줘 매우 좋은 디자인이라 생각한다. ( 필자는 dynamic array의 경우에도 unique_ptr을 적극 활용하여서 실수로 memory leak이 발생할 것을 막기 위해 노력해왔다. )  
 
@@ -77,71 +77,74 @@ output에서 보이듯이 reallocation 과정에서 Buffer과 Release된 것을 
 template <typename T>
 class ZeroResetMoveContainer
 {
-	private:
-		T data;
-	public:
-	ZeroResetMoveContainer() : data{ 0 }
+private:
+	T mData;
+public:
+	constexpr ZeroResetMoveContainer() : mData{ NULL }
 	{}
-			
-	ZeroResetMoveContainer(const ZeroResetMoveContainer&)
+
+	constexpr ZeroResetMoveContainer(const ZeroResetMoveContainer& bufferID)
 	{
-		NODEFAULT; 
-		// Don't try ZeroResetMoveContainer
-		// Think if you copy ZeroResetMoveContainer and Copyed Object is destroyed
-		// Other ZeroResetMoveContainer Objects can't know their bufferId is invalidated.
-		// This will make bugs hard to find, debug
+		this->mData = bufferID.mData;
 	}
-	ZeroResetMoveContainer(ZeroResetMoveContainer&& bufferID) noexcept
+	constexpr ZeroResetMoveContainer(ZeroResetMoveContainer&& bufferID) noexcept
 	{
-		this->data = bufferID.data;
-		bufferID.data = 0;
+		this->mData = std::move(bufferID.mData);
+		bufferID.mData = NULL;
 	}
 
-	ZeroResetMoveContainer& operator=(const ZeroResetMoveContainer&)
+	constexpr ZeroResetMoveContainer& operator=(const ZeroResetMoveContainer& bufferID)
 	{
-		NODEFAULT;
-		// Don't try ZeroResetMoveContainer
-		// Think if you copy ZeroResetMoveContainer and Copyed Object is destroyed
-		// Other ZeroResetMoveContainer Objects can't know their bufferId is invalidated.
-		// This will make bugs hard to find, debug
+		this->mData = bufferID.mData;
+		return *this;
 	}
-	ZeroResetMoveContainer& operator=(ZeroResetMoveContainer&& bufferID) noexcept
+	constexpr ZeroResetMoveContainer& operator=(ZeroResetMoveContainer&& bufferID) noexcept
 	{
-		this->data = bufferID.data;
-		bufferID.data = 0;
+		this->mData = std::move(bufferID.mData);
+		bufferID.mData = NULL;
 		return *this;
 	}
 
-	ZeroResetMoveContainer(T ID) : data{ ID }
+	constexpr ZeroResetMoveContainer(T data) : mData{ data }
 	{}
-	void operator=(T iD) noexcept
+
+	constexpr void operator=(const T& data)
 	{
-		this->data = iD;
+		this->mData = data;
+	}
+	constexpr void operator=(T&& data) noexcept
+	{
+		this->mData = std::move(data);
+		data = NULL;
 	}
 
-	operator T()
+	constexpr operator T()
 	{
-		return this->data;
+		return this->mData;
+	}
+	constexpr operator T& () const
+	{
+		return this->mData;
 	}
 
-	operator T*()
+	constexpr T* operator& ()
 	{
-		return &(this->data);
+		return &(this->mData);
+	}
+	constexpr const T* operator& () const
+	{
+		return &(this->mData);
 	}
 
-	T& GetReference()
+	constexpr T Get()
 	{
-		return this->data;
+		return this->mData;
 	}
-
-	const T& GetReference() const
+	constexpr const T Get() const
 	{
-		return this->data;
+		return this->mData;
 	}
 };
-
-using BufferID = typename ZeroResetMoveContainer<unsigned int>;
-}
 ```
 
 

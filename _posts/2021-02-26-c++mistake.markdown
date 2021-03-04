@@ -15,9 +15,9 @@ categories: C++
 
 --------------------------------------
 
-## 포인터의 array는 std::unique_ptr을 사용하자.      
+## new[] 대신 std::unique_ptr을 사용하자.      
 
-보통 dynamic한 array를 사용하기 위해서는 정말 plain 하게 그냥 이중포인터에 배열을 allocate하거나 포인터를 타입으로 한 vector을 사용한다. 하지만 두개 다 리소스 관리 측면에서 좋지 못하고 잘못하면 memory leak을 발생시킨다. 첫번째 경우는 당연히 해제를 프로그래머가 직접 메모리를 해제시켜야 해서 까먹엇을 때 메모리 누수가 발생한다. 두번째 방법은 자칫 착각할 수 있지만 vector가 파괴되면서 vector가 해제시켜주는 메모리는 그 타입의 data가 아닌 해당 type의 포인터들의 배열을 해제시켜주는 것이다. 포인터가 가리키는 실제 데이터는 해제가 되지 않는다.
+보통 dynamic한 array를 사용하기 위해서는 정말 plain 하게 new로 배열을 allocate한다. 하지만 프로그래머가 실수로 memory leak을 발생시킬 가능성이 높다. std::vector가 대안이 될 수 있지만 vector를 reserve 해주지 않는 경우 reallocation을 할 가능성이 있다. 그래서 고정된 사이즈의 배열을 dynamic 하게 allocate하는 경우에는 unique_ptr을 사용하여 memory leak 발생가능성을 줄이도록 하자.
 ```c++
 std::unique_ptr<int[]> variable
 ```       
@@ -36,3 +36,5 @@ enum class를 사용하자. 무심코 형변환하는 일이 없어진다. enum�
 
 --------------------------------------
 
+## vector은 무조건 reserve하자.   
+vector 사이즈가 커지다보면 reallocation이 발생하는 데 만약 move semantic이 제대로 정의 되어있지 않으면 overhead가 매우 커지게 된다. 그래서 가능하다면 vector은 생성 후 reserve를 하자.    

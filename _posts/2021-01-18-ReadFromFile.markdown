@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "C++ 파일시스템에서 파일 전체를 긁어올 때 실수하는 점"
+title:  "C++ 파일시스템에서 파일 전체를 긁어올 때 실수하는 점 ( vector::reserve()의 중요성 )"
 date:   2021-01-18
 categories: C++
 ---
