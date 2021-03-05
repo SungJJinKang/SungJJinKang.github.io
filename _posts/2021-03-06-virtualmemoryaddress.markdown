@@ -87,5 +87,7 @@ This is to allow the logical address space of a process to be noncontiguous, whi
 용어 정리 :         
 Page Directory, Page Table, Page Table Entry, Page(Page Frame)은 각각 다른 것을 나타내는 용어다.   
 
-Reference :      
-[https://en.wikipedia.org/wiki/Page_table#Page_table_types](https://en.wikipedia.org/wiki/Page_table#Page_table_types)
+메모리에 관해 읽어보면 좋을 것들 :      
+[https://en.wikipedia.org/wiki/Page_table#Page_table_types](https://en.wikipedia.org/wiki/Page_table#Page_table_types)        
+[https://en.wikipedia.org/wiki/C_dynamic_memory_allocation#Implementations](https://en.wikipedia.org/wiki/C_dynamic_memory_allocation#Implementations)         
+[https://en.wikipedia.org/wiki/Memory_management#Fixed-size_blocks_allocation](https://en.wikipedia.org/wiki/Memory_management#Fixed-size_blocks_allocation)       
