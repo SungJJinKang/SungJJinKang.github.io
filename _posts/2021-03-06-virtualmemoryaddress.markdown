@@ -8,17 +8,17 @@ categories: ComputerScience
 우선 가상 메모리 주소를 왜 사용할까?? Physical한 메모리 주소를 사용하려면 프로그램 단에서 일일이 관리해야하는데 이걸 OS단에서 대신 해주어서 프로그램은 자신의 virtual address space만 신경 쓰면된다.   
 또한 virtual address의 사이즈가 실제 physical address보다 클 수 있는 데 이건 실제 physicla 메모리 사이즈보다 메모리를 더 많이 활용하게 해준다. 이건 후에 서술할 virtual memory(disk) 덕분이다.         
 프로그램(프로세스)마다 virtual address space가 각각 자신의 것을 가지고 있는 데 이 virtual address가 같다고 physical address도 같은건 아니다.    
-또한 virtual address는 연속되어 있는 것 처럼 보이지만 이 virtual address가 가리키는 physical address는 연속되어 있지 않고 파편화 되어있는 경우가 많다.     
+또한 virtual address는 연속되어 있는 것 처럼 보이지만 이 virtual address가 가리키는 physical address는 연속되어 있지 않고 파편화 되어있는 경우가 많다.          
 
-X86 OS환경 내에서는 가상 메모리 주소 32비트로 구성되어 있다. 상위 20비트는 페이지의 physical address를 찾는 데 사용하고 하위 12비트는 페이지 내의 우리가 찾는 정확한 physical address를 찾는 데 사용된다.    
+1. X86 OS환경 내에서는 가상 메모리 주소 32비트로 구성되어 있다. 상위 20비트는 페이지의 physical address를 찾는 데 사용하고 하위 12비트는 페이지 내의 우리가 찾는 정확한 physical address를 찾는 데 사용된다.    
 
 우선 최상위 10비트는 Page Directory의 index이다.(Page Directory는 운영체제에 따라 없어서 상위 20비트가 바로 Page Table의 index를 가리키는 경우도 있다.)     
 Page Direcotry는 페이지 테이블의 첫 주소(포인터)들을 가지고 있다. 그럼 최상위 10비트를 가지고 이 Page Direcotry 내의 index를 찾아간다. 그럼 그 위치에는 페이지 테이블의 첫 주소를 가지고 있다.     
 
-그럼 이 주소를 따라가면 페이지 테이블이 나오는 데 이 페이지 테이블은 페이지 테이블 엔트리들로 구성되어 있다. 여기서 다음 10비트가 index로 사용되어 페이지 테이블 엔트리를 찾게된다. 
+2. 그럼 이 주소를 따라가면 페이지 테이블이 나오는 데 이 페이지 테이블은 페이지 테이블 엔트리들로 구성되어 있다. 여기서 다음 10비트가 index로 사용되어 페이지 테이블 엔트리를 찾게된다. 
 이 index를 따라가면 Page Table Entry를 발견하는 데 이 Page Table Entry는 메모리 내에 페이지의 base 주소를 가진다. 이 페이지가 우리가 비로소 찾아왔던 실제 데이터들의 묶음이다(왜 묶음이냐? 페이징 기법이 뭔지를 찾아봐라).    
 
-그리고 마지막 12비트는 이 페이지내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 비로소 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
+3. 그리고 마지막 12비트는 이 페이지내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 비로소 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
 TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20비트를 가지고 찾은 페이지(페이지 프레임)의 physical address를 저장하고 이 값을 가지고 나중에 offset과 합쳐서 실제 페이지 내의 원하는 주소의 physical address를 가진다.        
 
 위에 나온 Page Direcotry, Page Table, Page는 모두 Physical memory 내에 위치해 있다. TLB는 MMU에 있다.    
@@ -43,7 +43,7 @@ TLB내에는 최근에 변환했던 virtual address와 그 physical address가 �
 
 
 
-페이지 테이블내의 각각의 페이지 블록(페이지 테이블 엔트리)는 virtual address와 physical address의 매핑 정보 말고도 추가적인 정보를 가지고 있는 데 그 종류는 아래와 같다.    
+페이지 테이블내의 각각의 페이지 테이블 엔트리는 페이지의 physical address말고도 추가적인 정보를 가지고 있는 데 그 종류는 아래와 같다.    
 
 Reference bit(페이지에 접근이 있었는지, page out할 블록을 정할 떄 사용함),      
 Valid bit(해당 page의 실제 데이터가 메모리에 있는지, page out되어 하드디스크 내 paging file에 있는지),      
@@ -53,6 +53,8 @@ Process ID information(예전에는 모든 프로세스가 하나의 페이지 �
 이 페이지 테이블도 여러 종류가 있는데 그건 아래 주소에서 확인하자. 참고로 x86은 Multi-level이라는 방식을 사용한다.       
 [페이지 테이블 종류](https://en.wikipedia.org/wiki/Page_table#Page_table_types)
 
+용어 정리 :         
+Page Directory, Page Table, Page Table Entry, Page(Page Frame)은 각각 다른 것을 나타내는 용어다.   
 
 Reference :      
 [https://en.wikipedia.org/wiki/Page_table#Page_table_types](https://en.wikipedia.org/wiki/Page_table#Page_table_types)
