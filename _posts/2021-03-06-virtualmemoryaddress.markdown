@@ -12,13 +12,13 @@ categories: ComputerScience
 
 1. X86 OS환경 내에서는 가상 메모리 주소 32비트로 구성되어 있다. 상위 20비트는 페이지의 physical address를 찾는 데 사용하고 하위 12비트는 페이지 내의 우리가 찾는 정확한 physical address를 찾는 데 사용된다.    
 
-우선 최상위 10비트는 Page Directory의 index이다.(Page Directory는 운영체제에 따라 없어서 상위 20비트가 바로 Page Table의 index를 가리키는 경우도 있다.)     
-Page Direcotry는 페이지 테이블의 첫 주소(포인터)들을 가지고 있다. 그럼 최상위 10비트를 가지고 이 Page Direcotry 내의 index를 찾아간다. 그럼 그 위치에는 페이지 테이블의 첫 주소를 가지고 있다.     
+2. 우선 최상위 10비트는 Page Directory의 index이다.(Page Directory는 운영체제에 따라 없어서 상위 20비트가 바로 Page Table의 index를 가리키는 경우도 있다.).     
+Page Direcotry는 페이지 테이블의 base address들을 가지고 있다. 그럼 최상위 10비트를 가지고 이 Page Direcotry 내의 index를 찾아간다. 그럼 그 위치에는 페이지 테이블의 base address를 가지고 있다.     
 
-2. 그럼 이 주소를 따라가면 페이지 테이블이 나오는 데 이 페이지 테이블은 페이지 테이블 엔트리들로 구성되어 있다. 여기서 다음 10비트가 index로 사용되어 페이지 테이블 엔트리를 찾게된다. 
+3. 그럼 이 주소를 따라가면 페이지 테이블이 나오는 데 이 페이지 테이블은 페이지 테이블 엔트리들로 구성되어 있다. 여기서 다음 10비트가 index로 사용되어 페이지 테이블 엔트리를 찾게된다. 
 이 index를 따라가면 Page Table Entry를 발견하는 데 이 Page Table Entry는 메모리 내에 페이지의 base 주소를 가진다. 이 페이지가 우리가 비로소 찾아왔던 실제 데이터들의 묶음이다(왜 묶음이냐? 페이징 기법이 뭔지를 찾아봐라).    
 
-3. 그리고 마지막 12비트는 이 페이지내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 비로소 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
+4. 그리고 마지막 12비트는 이 페이지내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 비로소 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
 TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20비트를 가지고 찾은 페이지(페이지 프레임)의 physical address를 저장하고 이 값을 가지고 나중에 offset과 합쳐서 실제 페이지 내의 원하는 주소의 physical address를 가진다.        
 
 위에 나온 Page Direcotry, Page Table, Page는 모두 Physical memory 내에 위치해 있다. TLB는 MMU에 있다.    
