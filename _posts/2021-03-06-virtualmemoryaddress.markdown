@@ -10,12 +10,23 @@ categories: ComputerScience
 프로그램(프로세스)마다 virtual address space가 각각 자신의 것을 가지고 있는 데 이 virtual address가 같다고 physical address도 같은건 아니다.    
 또한 virtual address는 연속되어 있는 것 처럼 보이지만 이 virtual address가 가리키는 physical address는 연속되어 있지 않고 파편화 되어있는 경우가 많다.     
 
-X86 OS환경 내에서는 가상 메모리 주소 32비트로 구성되어 있는 데 우선 최상위 10비트는 Page Directory의 index이다. 이 Page Directory 내의 index를 따라가면 Page table의 위치를 제공한다.     
-그럼 다음 10비트는 이 Page Table 내의 index이다. 이 index를 따라가면 Page Table Entry를 발견하는 데 이 Page Table Entry는 메모리 내에 4Kb 사이즈 페이지 프레임의 base 주소를 가진다.    
-그리고 마지막 12비트는 이 페이지 프레임 내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
- 
-![3-s2 0-B9780128112779000031-f03-07-9780128112779](https://user-images.githubusercontent.com/33873804/110155324-cee77900-7e28-11eb-9a51-c2300f733589.jpg)                  
+X86 OS환경 내에서는 가상 메모리 주소 32비트로 구성되어 있다. 상위 20비트는 페이지의 physical address를 찾는 데 사용하고 하위 12비트는 페이지 내의 우리가 찾는 정확한 physical address를 찾는 데 사용된다.    
 
+우선 최상위 10비트는 Page Directory의 index이다.(Page Directory는 운영체제에 따라 없어서 상위 20비트가 바로 Page Table의 index를 가리키는 경우도 있다.)     
+Page Direcotry는 페이지 테이블의 첫 주소(포인터)들을 가지고 있다. 그럼 최상위 10비트를 가지고 이 Page Direcotry 내의 index를 찾아간다. 그럼 그 위치에는 페이지 테이블의 첫 주소를 가지고 있다.     
+
+그럼 이 주소를 따라가면 페이지 테이블이 나오는 데 이 페이지 테이블은 페이지 테이블 엔트리들로 구성되어 있다. 여기서 다음 10비트가 index로 사용되어 페이지 테이블 엔트리를 찾게된다. 
+이 index를 따라가면 Page Table Entry를 발견하는 데 이 Page Table Entry는 메모리 내에 페이지의 base 주소를 가진다. 이 페이지가 우리가 비로소 찾아왔던 실제 데이터들의 묶음이다(왜 묶음이냐? 페이징 기법이 뭔지를 찾아봐라).    
+
+그리고 마지막 12비트는 이 페이지내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 비로소 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
+TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20비트를 가지고 찾은 페이지(페이지 프레임)의 physical address를 저장하고 이 값을 가지고 나중에 offset과 합쳐서 실제 페이지 내의 원하는 주소의 physical address를 가진다.        
+
+위에 나온 Page Direcotry, Page Table, Page는 모두 Physical memory 내에 위치해 있다. TLB는 MMU에 있다.    
+
+ 
+![24467A4E579115AB09 (1)](https://user-images.githubusercontent.com/33873804/110157365-6c43ac80-7e2b-11eb-884b-8d9e3efeb7ca.png)    
+[https://introfor.tistory.com/70](https://introfor.tistory.com/70)      
+        
 
 자 그럼 가상 메모리 주소를 어떻게 Physical한 주소로 변환할까?       
 
@@ -24,11 +35,9 @@ TLB내에는 최근에 변환했던 virtual address와 그 physical address가 �
 그럼 MMU는 우선 이 TLB를 먼저 탐색한다.      
 만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다.       
 
-2. 그런데 만약 TLB에 없다면 MMU는 이제 실제 메모리로 가서 메모리 내의 페이지 테이블을 확인한다. virtual address의 페이지 넘버를 가지고 메모리 내 페이지 테이블 블록(엔트리)을 확인한다. 이 페이지 테이블 블록(엔트리)가 메모리의 데이터(!)를 가지고 있는 것은 아니다(!!). 각 블록은 virtual address에 상응하는 physical memory 주소(!!!)를 가지고 있다.            
-이 페이지 테이블 블록은 대개 4KB 정도의 사이지를 가진다. 그 이유는 우선 
-이 페이지 테이블을 검색하여 원하는 위치의 테이블 블록(페이지)를 확인하고 이 페이지 블록이 가리키는 physical address를 반환한다.     
+2. 그런데 만약 TLB에 없다면 MMU는 virtual address의 상위 10비트를 가지고 메모리 내의 페이지 테이블을 확인한다. 그리고 중간 10비트로 페이지 테이블 내의 페이지 테이블 엔트리를 찾는다. 이 페이지 테이블 엔트리는 4KB 사이즈의 페이지의 base 주소를 가지고 있다. 이 페이지가 비로소 우리가 찾아왔던 실제 메모리 데이터들이다. 이 4KB의 페이지 내에서 마지막 12비트를 offset으로 사용하여 페이지 내의 목표로 했던 physical address를 TLB에 반환한다.
 
-3. 여기서 중요한 내용이 나오는 데 원하는 데이터가 메모리 내에 없을 수도 있다. 이게 무슨 말인가? 메모리에 없다면 어디 있나?? 바로 하드디스크와 같은 디스크에 메모리 내용을 임시로 저장해 둘 수 있다. virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부족하다면 컴퓨터는 메모리에서 오래 동안 사용되지 않은 데이트 블록(페이지)를 디스크 내에 paging file에 임시로 저장해 둔다. 이를 page out이라고도 한다. 이렇게 메모리 블록이 page out되어 있는 경우에는 disk의 paging file에서 다시 메모리로 page in을 하여 우선 데이터를 메모리로 복사한 후 다시 page table로 부터 physical address를 가져온다.     
+3. 여기서 중요한 내용이 나오는 데 원하는 페이지가 메모리 내에 없을 수도 있다. 이게 무슨 말인가? 메모리에 없다면 어디 있나?? 바로 하드디스크와 같은 디스크에 메모리 내용을 임시로 저장해 둘 수 있다. virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부족하다면 컴퓨터는 메모리에서 오래 동안 사용되지 않은 페이지(4KB)를 디스크 내에 paging file에 임시로 저장해 둔다. 이를 page out이라고도 한다. 이렇게 메모리 블록이 page out되어 있는 경우에는 disk의 paging file에서 다시 메모리로 page in을 하여 데이터를 disk에 저장되어 있는 페이지를 메모리로 복사한다(페이지 단위로 저장하고 로드한다. 대개 4KB이다). 그럼 이제 디스크에서 불러온 이 페이지의 physical address를 페이지 테이블에 업데이트하고 난 후 이 페이지 주소를 반환한다. ( 여기서 TLB 존재이유가 나온다. TLB가 있으면 이렇게 복잡한 페이지를 찾는 과정을 안거쳐도 되는 것이다. )
 
 4. 여기서 중요한건 메모리에서 바로가져오든 page in해서 주소를 가져오든 반드시 TLB에 그 변환을 기록해야한다. 이 기록을 한 후 MMU는 처음부터 TLB를 뒤진다. 그럼 당연히 방금 전에 TLB에 기록했으니 그 기록을 보고 MMU는 physical memory에 접근한다.      
 
