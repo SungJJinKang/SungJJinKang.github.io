@@ -173,8 +173,8 @@ ForLoop_CompileTime<AssetType>::Loop<FirstElementOfAssetType, LastElementOfAsset
 
 정말 C++을 파면 팔 수록 C++은 너무 방대하다는 느낌이 든다.
 
-
-솔직히 내 코드가 가독성이 더 좋고 쉽게 읽힌다고 생각한다.
+다만 아래 코드는 내 코드와 달리 increment를 지원하지 않아 증감값을 1씩만 증가시켜 loop를 할 수 있는 것으로 보인다.     
+솔직히 내 코드가 가독성이 더 좋고 쉽게 읽힌다고 생각한다. ( C++20에서 template lambda를 지원하면 내 코드를 더 손쉽게 쓸 수 있을 것이라 생각한다. )     
 
 ```c++
 // Generic, reusable utility
