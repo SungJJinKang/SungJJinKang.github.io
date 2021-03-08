@@ -66,8 +66,8 @@ std::unordered_map<const char*, std::chrono::time_point<std::chrono::high_resolu
 단 여기도 문제점이 있는 데 이것이 강제적인 사항이 아니라는 것이다.      
 C++ 표준에서는 똑같은 literal string들을 한번만 allocate하여 두개 다 한 주소를 가지게 하는 것을 강제(!!!)하지 않기 때문에 컴파일러에 따라 const char*을 이용한 이 방법이 unordered_map의 키값으로 사용할 때 다른 value를 return할 수도 있다는 것이다.      
 
-그래서 필자는 간단히 똑같은 literal string이 같은 address에 저장된 경우 key 타입으로 char pointer을 사용하는 코드 템플릿 메타프로그래밍을 이용하여 작성하였다.    
+그래서 필자는 간단히 똑같은 literal string이 같은 address에 저장된 경우 key 타입으로 char pointer을 사용하는 코드를 템플릿 메타프로그래밍을 이용하여 작성하였다.    
 ```c++
 using key_type = typename std::conditional_t<"TEST LITEAL STRING OVERLAP" == "TEST LITEAL STRING OVERLAP", const char*, std::string>;
 ```
-위의 코드는 컴파일 타임에 결정되는 데 두 literal string이 같은 address인 경우 const char*을 key 타입으로 사용한다.    
+위의 코드는 컴파일 타임에 결정되는 데 두 literal string이 같은 address인 경우 const char*을 key 타입으로 사용한다. ( 사실 똑같은 string literal이 다른 translation unit에 속하는 경우 등 다양한 경우를 테스트 해봐야하는 데 그냥 현시점에서는 msbuild가 literal string overlap을 지원하니 이렇게만 하고 넘어가겠다. )
