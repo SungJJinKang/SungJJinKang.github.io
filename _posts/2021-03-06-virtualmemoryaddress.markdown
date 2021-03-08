@@ -34,7 +34,7 @@ TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20�
 1. CPU에 있는 MMU(memory management unit)이라는 장치가 이 작업을 하는 데 우선 MMU는 MMU 내에 TLB(Translation lookaside buffer)라는 메모리 캐시를 먼저 탐색한다.    
 TLB내에는 최근에 변환했던 virtual address와 그 physical address가 저장되어 있다.      
 그럼 MMU는 우선 이 TLB를 먼저 탐색한다.      
-만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다.       
+만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다. (후술하지만 정확히는 TLB가 페이지 테이블 엔트리를 저장하고 하위 offset비트로 이 엔트리에서 실제 physical memory address로 접근한다.)        
 
 2. 그런데 만약 TLB에 없다면 MMU는 virtual address의 상위 10비트를 가지고 메모리 내의 페이지 테이블을 확인한다.     
 그리고 중간 10비트로 페이지 테이블 내의 페이지 테이블 엔트리를 찾는다. 이 페이지 테이블 엔트리는 4KB 사이즈의 페이지의 base 주소를 가지고 있다.    
@@ -57,7 +57,7 @@ virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부
 
 Reference bit(페이지에 접근이 있었는지, page out할 블록을 정할 떄 사용함),      
 Valid bit(해당 page의 실제 데이터가 메모리에 있는지, page out되어 하드디스크 내 paging file에 있는지),      
-Dirty bit(해당 페이지의 메모리 데이터가 page in된 이후 데이터가 변하였는지, 변한 경우 다시 page out될때 반드시 해당 내용을 disk의 paging file에 copy해줘야한다, 달라진게 없으면 굳이 paging file에 메모리 데이터 내용을 안 써줘도 된다),       
+Dirty bit(해당 페이지의 메모리 데이터가 page in된 이후 데이터가 변하였는지, 변한 경우 다시 page out될때 data들을 disk의 paging file에 copy해줘야한다, 달라진게 없으면 굳이 paging file에 메모리 데이터 내용을 안 써줘도 된다),       
 Process ID information(예전에는 모든 프로세스가 하나의 페이지 테이블을 가져 각기 다른 프로그램(프로세스)가 같은 physical address에 접근하려 할 때 이를 구분해주기 위해 프로세스의 ID를 기록하였다. 근데 최근에는 그냥 프로세스마다 자신만의 페이지 테이블을 메모리에 가지고 있다. 이 bit는 잘 안쓰인다.)          
 
 이 페이지 테이블도 여러 종류가 있는데 그건 아래 주소에서 확인하자. 참고로 x86은 Multi-level이라는 방식을 사용한다.       
