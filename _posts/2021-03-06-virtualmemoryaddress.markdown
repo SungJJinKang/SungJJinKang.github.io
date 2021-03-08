@@ -34,7 +34,8 @@ TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20�
 1. CPU에 있는 MMU(memory management unit)이라는 장치가 이 작업을 하는 데 우선 MMU는 MMU 내에 TLB(Translation lookaside buffer)라는 메모리 캐시를 먼저 탐색한다.    
 TLB내에는 최근에 변환했던 virtual address와 그 physical address가 저장되어 있다.      
 그럼 MMU는 우선 이 TLB를 먼저 탐색한다.      
-만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다. (후술하지만 정확히는 TLB가 페이지 테이블 엔트리를 저장하고 하위 offset비트로 이 엔트리에서 실제 physical memory address로 접근한다.)        
+만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다. (후술하지만 정확히는 TLB가 virtual address와 physical address page의 base address를 저장하고 이 address에서 하위 offset비트로 이 엔트리에서 실제 physical memory address로 접근한다.)    
+즉 MMU는 메모리의 paged memory를 관리하고 virtual address를 physical address로 변환하는 작업을 한다.           
 
 2. 그런데 만약 TLB에 없다면 MMU는 virtual address의 상위 10비트를 가지고 메모리 내의 페이지 테이블을 확인한다.     
 그리고 중간 10비트로 페이지 테이블 내의 페이지 테이블 엔트리를 찾는다. 이 페이지 테이블 엔트리는 4KB 사이즈의 페이지의 base 주소를 가지고 있다.    
@@ -42,12 +43,12 @@ TLB내에는 최근에 변환했던 virtual address와 그 physical address가 �
 
 3. 여기서 중요한 내용이 나오는 데 원하는 페이지가 메모리 내에 없을 수도 있다.     
 이게 무슨 말인가? 메모리에 없다면 어디 있나?? 바로 하드디스크와 같은 디스크에 메모리 내용을 임시로 저장해 둘 수 있다.     
-virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부족하다면 컴퓨터는 메모리에서 오래 동안 사용되지 않은 페이지(4KB)를 디스크 내에 paging file에 임시로 저장해 둔다. 이를 page out이라고도 한다.      
+virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부족하다면 컴퓨터는 메모리에서 오래 동안 사용되지 않은 페이지(4KB)를 디스크 내에 paging file에 임시로 저장해 둔다. 이를 page out이라고도 한다. ( page out되도 해당 virtual address 그냥 유지된다. virtual address는 그냥 말그대로 가상의 주소다. 실제 데이터를 가리킬수 있고 아닐 수도 있다.)            
 이렇게 찾고자 하는 페이지가 page out되어 있는 경우를 page fault라고한다.       
 이 경우에는 disk의 paging file에서 다시 메모리로 page in을 하여 데이터를 disk에 저장되어 있는 페이지를 메모리로 복사해서 가져와야한다. (페이지 단위로 저장하고 로드한다. 대개 4KB이다).     
 그럼 이제 디스크에서 불러온 이 페이지의 physical address를 페이지 테이블에 업데이트하고 난 후 이 페이지 주소를 반환한다. ( 여기서 TLB 존재이유가 나온다. TLB가 있으면 이렇게 복잡한 페이지를 찾는 과정을 안거쳐도 되는 것이다. )        
 
-4. 여기서 중요한건 메모리에서 바로가져오든 page in해서 주소를 가져오든 반드시 TLB에 그 변환을 기록해야한다. 이 기록을 한 후 MMU는 처음부터 TLB를 뒤진다. 그럼 당연히 방금 전에 TLB에 기록했으니 그 기록을 보고 MMU는 physical memory에 접근한다.      
+4. 여기서 중요한건 메모리에서 바로가져오든 page in해서 주소를 가져오든 반드시 TLB에 그 변환 관계를 기록해야한다. 이 기록을 한 후 MMU는 처음부터 TLB를 뒤진다. 그럼 당연히 방금 전에 TLB에 기록했으니 그 기록을 보고 MMU는 physical memory에 접근한다.         
 
 
 -----------------------------
