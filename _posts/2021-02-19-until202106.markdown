@@ -11,9 +11,9 @@ categories: ComputerScience
 Operating Sytem Concepts ( ABRAHAM SILBERSCHATZ, ... )   
 Fundamentals of Computer Graphics ( Steve Marschner, ...)   
 
-[3D Collision](https://gdbooks.gitbooks.io/3dcollisions/content/)
+~~[3D Collision](https://gdbooks.gitbooks.io/3dcollisions/content/)~~      
 ~~[Raycast에 대한 아주 기본적인 이해](https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection)~~     
-[Dynamic BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)        
+~~[Dynamic BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)~~           
 [Collision Query](https://docs.unity3d.com/Packages/com.unity.physics@0.3/manual/collision_queries.html)       
 
 [C++ 표준 stl이 왜 구린가?? EASTL의 장점](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html#better_allocator_model)       
@@ -29,6 +29,7 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 [Occulusion culling 5](https://mkblog.co.kr/2019/09/24/gpu-occlusion-culling-early-z-vs-occlusion-queries/)     
 [Occulusion culling 5](https://megayuchi.com/2017/10/27/5068/)        
 
+[Frustum culling 0](https://cgvr.informatik.uni-bremen.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html)
 [Frustum culling 1](https://www.braynzarsoft.net/viewtutorial/q16390-34-aabb-cpu-side-frustum-culling)   
 [Frustum culling 2](https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/)      
 
