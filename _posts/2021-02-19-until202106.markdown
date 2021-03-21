@@ -38,6 +38,7 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 
 [Realtime Ray Tracing and Interactive Global Illumination, Ingo Wald, 2004](http://www.sci.utah.edu/~wald/PhD/wald_phd.pdf)
 
+[Performance Optimization, SIMD and Cache](https://youtu.be/Nsf2_Au6KxU)        
  
 
 영상 :   
