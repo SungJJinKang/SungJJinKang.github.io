@@ -6,7 +6,7 @@ categories: ComputerScience
 ---
 
 stack영역은 해당 프로그램에 배당된 stack 사이즈가 얼만큼 배당되어 있다.(물론 이것도 나중에 늘릴 수 있다.)
-그럼 어떠한 scope에 진입하는 순간 그 scope에서 사용되는 메모리 사이즈만큼 stack pointer을 미리 이동시켜둔다. ( stack의 사이즈는 변함이 없고 현재 총 사이즈 중 어디까지 할당했는 지를 stack pointer로 표시하는 것이다 )
+그럼 어떠한 scope에 진입하는 순간 그 scope에서 사용되는 메모리 사이즈만큼 stack pointer을 미리 이동시켜둔다. ( stack의 사이즈는 변함이 없고 현재 총 사이즈 중 어디까지 할당했는 지를 stack pointer로 표시하는 것이다, scopre를 빠져나가면 다시 stack pointer가 원래대로 돌아감 )      
 그리고 stack pointer를 기준으로 얼만큼의 offset(해당 scope 기준)으로 스택 변수에 접근하는 것이다.
 stack pointer + offset으로 바로 데이터에 접근할 수 있는 것이다.
 심지어 이 scope의 local 변수들의 총 사이즈와 각 변수의 offset 또한 컴파일 타임에 다 결정되어서 매우 매우 빠르게 현재 stack pointer를 옮기고 offset을 더해서 데이터에 접근하는 것이다.
