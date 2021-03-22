@@ -49,25 +49,24 @@ bcopy(src0, dst0, length)
 		 * Copy forward.
 		 */
 		t = (int)src;	/* only need low bits */
-		if ((t | (int)dst) & wmask) { //destination과 source의 하위 4바이트들 중 1인 비트가 있는 경우
+		if ((t | (int)dst) & wmask) { 
 			/*
-			 * Try to align operands.  This cannot be done
-			 * unless the low bits match.
+			 * WORD단위 복사를 위해 Alignmnet를 맞추기 위한 부분
 			 */
-			if ((t ^ (int)dst) & wmask || length < wsize) // destination과 source의 하위 4바이트 중 서로 다른 비트가 존재하거나(데이터 복사해야함) 복사할 byte수가 word 사이즈보다 작은 경우
-				t = length; // 복사할 lenth 모두를 1바이트씩 복사
+			if ((t ^ (int)dst) & wmask || length < wsize) 
+				t = length; 
 			else // 
-				t = wsize - (t & wmask); // 복사할 byte수 중 초기 n바이트는 1바이트씩 일일이 복사함
+				t = wsize - (t & wmask); 
 			length -= t;
-			TLOOP1(*dst++ = *src++); //t만큼은 WORD단위가 아닌 1바이트씩 복사
+			TLOOP1(*dst++ = *src++); 
 		}
 		/*
 		 * Copy whole words, then mop up any trailing bytes.
 		 */
 		t = length / wsize;
-		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize); // 워드 단위로 복사
+		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize); 
 		t = length & wmask;
-		TLOOP(*dst++ = *src++); // 마지막에 남는 워드 사이즈 이하의 바이트는 한 바이트씩 복사
+		TLOOP(*dst++ = *src++); 
 	} else {
 		/*
 		 * Copy backwards.  Otherwise essentially the same.
