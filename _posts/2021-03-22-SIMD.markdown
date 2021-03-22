@@ -130,6 +130,7 @@ Vector<4, float> Result;
 근데 희안한게 SIMD 사용하여 작성하지 않은 코드도 SIMD 명령어를 사용하고 있는 것을 볼 수 있다.    
 아래 assembly 코드는 SIMD를 사용하지 않았는 데 똑똑하게도 컴파일러가 최적화를 위해 SIMD코드를 알아서 사용하고 있는 것이다.
 
+나중에 언리얼엔진 소스코드를 뒤져보니 언리얼엔진도 Vector4 연산에서는 SIMD코드를 사용하지 않았던 것이다.    
 reference :           
 https://www.codeproject.com/Articles/874396/Crunching-Numbers-with-AVX-and-AVX    
 https://software.intel.com/sites/landingpage/IntrinsicsGuide     
