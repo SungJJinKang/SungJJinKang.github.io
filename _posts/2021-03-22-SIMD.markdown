@@ -2,7 +2,7 @@
 layout: post
 title:  "SIMD(SSE) 사용하기"
 date:   2021-03-22
-categories: Doom
+categories: C++
 ---
 
 렌더링을 하는 데 ModelMatirx나 AABB등에 ModelMatrix를 적용하는 데 너무 많은 부화가 걸린다. 그래픽 API 콜보다 더 많은 부하가 걸려서 이걸 해결해야겠다는 생각이 들었다.    
@@ -27,25 +27,108 @@ typedef union __declspec(intrin_type) __declspec(align(16)) __m128 {
      unsigned __int32    m128_u32[4];
  } __m128;
 ```
-이 결과값을 Aligned로 받는 다는 조건 때문에 SIMD가 오히려 느린 경우가 발생한다. 기본적으로 게임 내 사용되는 Vector형의 데이터는 packed되어 있다. Vector형 자체는 aligned되어 있을지 몰라도 그 내부 데이터는 packed되어 있다. 아래는 필자가 사용하는 Vector형의 아주 간단한 버전이다.    
+
+이 타입에 맞추기 위해 필자가 사용하는 Vector 구조체도 16byte align에 맞추어 주었다. 
 ```c++
-struct Vector4
+struct alignas(16) Vector4Float
 {
     union { float x, r; };
     union { float y, g; };
     union { float z, b; };
     union { float w, a; };
 }
+
+struct alignas(32) Vector4Double
+{
+    union { double x, r; };
+    union { double y, g; };
+    union { double z, b; };
+    union { double w, a; };
+}
+```      
+
+constexpr도 문제가 되었다. SIMD 함수는 consexpr 함수가 아니라서 SIMD를 사용하려면 그걸 사용하는 함수도 SIMD이면 안된다. 그렇게 되면 또 이 함수를 호출하는 다른 함수의 constexpr도 제거해야 한다. 
+그래서 SIMD를 지원하는 경우에만 constexpr을 없애는 macros를 만들었다
+```c++
+#ifdef __AVX__
+#define SIMD_CONSTEXPR 
+#else
+#define SIMD_CONSTEXPR constexpr
+#endif
 ```
-그럼 생각해보자. SIMD를 사용하려면 SIMD의 결과값을 16byte
+그런데 또 문제는 기존 게임엔진에 여러 함수들에 constexpr을 붙인 것이다. 함수에 constexpr을 붙이면 그 함수 내에서 사용되는 모든 함수들은 constexpr이 붙어 있어야 한다 (일반 함수가 constexpr 함수를 호출하는건 문제가 없다). 이 뜻은 SIMD기능이 활성화 된 경우 내 수학 라이브러리 함수들은 constexpr이 제거되었는 데 게임 엔진쪽 코드에서는 constexpr 함수가 수학 라이브러리 함수를 호출하는 경우 컴파일 에러가 뜬다는 것이다.    
+그래서 결국 기존 게임엔진 코드에서 Vector나 Matrix를 사용하는 함수, 클래스에서는 constepxr을 없애주었다.    
 
-SIMD가 연산할 때 사용하는 XMM 레지스터는 12Bit로 이루어줘 효율적으로 데이터를 전송하고 읽어오기 위해서는 128bit 즉 16byte로 결과값을 읽어오는 변수가 aligned되어 있어야한다. ( aligned에 대해서는 나중에 포스팅을 올릴 예정이다 )         
+여차여차해서 첫번째로 SIMD를 사용한 함수를 작성하였다. ( L_AVX 매크로는 SIMD의 지원하였을 때, 미지원 하였을 때 모두 작동하기 위해 코드를 구분해 주었다. )
+```c++
+#define XMM128Float(VECTOR4FLOAT) *(__m128*)(&VECTOR4FLOAT)
 
+template <>
+[[nodiscard]] inline SIMD_CONSTEXPR auto Vector<4, float>::sqrMagnitude() const noexcept
+{
+#ifdef L_AVX
+	Vector<4, float> Result;
+	
+	XMM128Float(Result) = _mm_mul_ps(XMM128Float(*this), XMM128Float(*this));
+	return Result.x + Result.y + Result.z + Result.w;
+#else
+	return x * x + y * y + z * z + w * w;
+#endif
+}
+```
+그런데 왠걸 성능 테스트를 해보니 SIMD를 적용한 코드가 더 성능이 않좋은 것이다.        
+그래서 assembly를 까봤다.
+```c++
+SIMD 적용 코드
 
+Vector<4, float> Result;
+00755779  lea         ecx,[Result]  
+0075577C  call        math::Vector<4,float>::Vector<4,float> (073D2E9h)  
+	
+		XMM128Float(Result) = _mm_mul_ps(XMM128Float(*this), XMM128Float(*this));
+00755781  mov         eax,dword ptr [this]  
+00755784  mov         ecx,dword ptr [this]  
+00755787  vmovups     xmm0,xmmword ptr [ecx]  
+0075578B  vmulps      xmm0,xmm0,xmmword ptr [eax]  
+0075578F  vmovaps     xmmword ptr [ebp-110h],xmm0  
+00755797  vmovaps     xmm0,xmmword ptr [ebp-110h]  
+0075579F  vmovaps     xmmword ptr [Result],xmm0  
+		return Result.x + Result.y + Result.z + Result.w;
+007557A4  vmovss      xmm0,dword ptr [Result]  
+007557A9  vaddss      xmm0,xmm0,dword ptr [ebp-2Ch]  
+007557AE  vaddss      xmm0,xmm0,dword ptr [ebp-28h]  
+007557B3  vaddss      xmm0,xmm0,dword ptr [ebp-24h]  
+007557B8  vmovss      dword ptr [ebp-118h],xmm0  
+007557C0  fld         dword ptr [ebp-118h]
+```
 
+```c++
+아래는 SIMD를 사용안한 코드다.
 
-
-
+00F6FCDD  mov         eax,dword ptr [this]  
+00F6FCE0  mov         ecx,dword ptr [this]  
+00F6FCE3  vmovss      xmm0,dword ptr [eax]  
+00F6FCE7  vmulss      xmm0,xmm0,dword ptr [ecx]  
+00F6FCEB  mov         edx,dword ptr [this]  
+00F6FCEE  mov         eax,dword ptr [this]  
+00F6FCF1  vmovss      xmm1,dword ptr [edx+4]  
+00F6FCF6  vmulss      xmm1,xmm1,dword ptr [eax+4]  
+00F6FCFB  vaddss      xmm0,xmm0,xmm1  
+00F6FCFF  mov         ecx,dword ptr [this]  
+00F6FD02  mov         edx,dword ptr [this]  
+00F6FD05  vmovss      xmm1,dword ptr [ecx+8]  
+00F6FD0A  vmulss      xmm1,xmm1,dword ptr [edx+8]  
+00F6FD0F  vaddss      xmm0,xmm0,xmm1  
+00F6FD13  mov         eax,dword ptr [this]  
+00F6FD16  mov         ecx,dword ptr [this]  
+00F6FD19  vmovss      xmm1,dword ptr [eax+0Ch]  
+00F6FD1E  vmulss      xmm1,xmm1,dword ptr [ecx+0Ch]  
+00F6FD23  vaddss      xmm0,xmm0,xmm1  
+00F6FD27  vmovss      dword ptr [ebp-0D0h],xmm0  
+00F6FD2F  fld         dword ptr [ebp-0D0h]  
+```
+근데 희안한게 SIMD 사용하여 작성하지 않은 코드도 SIMD 명령어를 사용하고 있는 것을 볼 수 있다.    
+아래 assembly 코드는 SIMD를 사용하지 않았는 데 똑똑하게도 컴파일러가 최적화를 위해 SIMD코드를 알아서 사용하고 있는 것이다.
 
 reference :           
 https://www.codeproject.com/Articles/874396/Crunching-Numbers-with-AVX-and-AVX    
