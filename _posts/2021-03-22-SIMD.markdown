@@ -76,9 +76,13 @@ template <>
 #endif
 }
 ```
+
+자세히 보면 _mm_load_ps 함수를 사용하지 않고 바로 Vector4 타입에서 __m128 타입으로 캐스팅한 것을 알 수 있다. 이게 컴파일러에 따라 문제가 된다. float*를 
+ Any object pointer type T1* can be converted to another object pointer type cv T2*. This is exactly equivalent to static_cast<cv T2*>(static_cast<cv void*>(expression)) (which implies that if T2's alignment requirement is not stricter than T1's, the value of the pointer does not change and conversion of the resulting pointer back to its original type yields the original value). In any case, the resulting pointer may only be dereferenced safely if allowed by the type aliasing rules (see below)
+
 그런데 왠걸 성능 테스트를 해보니 SIMD를 적용한 코드가 더 성능이 않좋은 것이다.        
 그래서 assembly를 까봤다.
-```c++
+```
 SIMD 적용 코드
 
 Vector<4, float> Result;
@@ -102,7 +106,7 @@ Vector<4, float> Result;
 007557C0  fld         dword ptr [ebp-118h]
 ```
 
-```c++
+```
 아래는 SIMD를 사용안한 코드다.
 
 00F6FCDD  mov         eax,dword ptr [this]  
@@ -134,3 +138,5 @@ Vector<4, float> Result;
 reference :           
 https://www.codeproject.com/Articles/874396/Crunching-Numbers-with-AVX-and-AVX    
 https://software.intel.com/sites/landingpage/IntrinsicsGuide     
+https://stackoverflow.com/questions/66743623/what-is-difference-between-m128a-and-m128a?noredirect=1#comment117984269_66743623      
+https://stackoverflow.com/questions/6996764/fastest-way-to-do-horizontal-sse-vector-sum-or-other-reduction

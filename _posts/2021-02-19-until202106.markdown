@@ -39,7 +39,8 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 [Realtime Ray Tracing and Interactive Global Illumination, Ingo Wald, 2004](http://www.sci.utah.edu/~wald/PhD/wald_phd.pdf)
 
 [Performance Optimization, SIMD and Cache](https://youtu.be/Nsf2_Au6KxU)        
- 
+[File mapping](https://docs.microsoft.com/en-us/windows/win32/memory/file-mapping)      
+[GCC always assumes aligned pointer accesses](https://trust-in-soft.com/blog/2020/04/06/gcc-always-assumes-aligned-pointer-accesses/)           
 
 영상 :   
 
