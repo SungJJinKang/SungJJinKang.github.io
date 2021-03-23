@@ -16,12 +16,12 @@ AVX1은 그 하위버전인 SSE, SSE2, SSE3 ....들을 모두 포함하고 있�
 우선 본격적으로 시작하기 전 SIMD의 결과값을 받을 16바이트로 Aligned된 Vector4 구조체를 간단하게 만들었다. SIMD는 XMM이라는 전용 레지스터를 통해 데이터를 읽어오거나 쓰는 데 이 XMM 레지스터는 128bit의 사이즈를 가진다. 그래서 SIMD 연산의 결과가 저장된 XMM에서 데이터를 효율적으로(!!!) 가져오기 위해서는(데이터를 XMM에 보내기 위해서는) 데이터를 받는 변수 형도 align되어 있어야 한다. 그래서 SSE는 __m128라는 데이터형을 제공한다.
 ```c++
 typedef union __declspec(intrin_type) __declspec(align(16)) __m128 {
-     float               m128_f32[4];
+     float       m128_f32[4];
      unsigned __int64    m128_u64[2];
-     __int8              m128_i8[16];
-     __int16             m128_i16[8];
-     __int32             m128_i32[4];
-     __int64             m128_i64[2];
+     __int8      m128_i8[16];
+     __int16     m128_i16[8];
+     __int32     m128_i32[4];
+     __int64     m128_i64[2];
      unsigned __int8     m128_u8[16];
      unsigned __int16    m128_u16[8];
      unsigned __int32    m128_u32[4];
@@ -47,8 +47,8 @@ struct alignas(32) Vector4Double
 }
 ```      
 
-constexpr도 문제가 되었다. SIMD 함수는 consexpr 함수가 아니라서 SIMD를 사용하려면 그걸 사용하는 함수도 SIMD이면 안된다. 그렇게 되면 또 이 함수를 호출하는 다른 함수의 constexpr도 제거해야 한다. 
-그래서 SIMD를 지원하는 경우에만 constexpr을 없애는 macros를 만들었다
+constexpr도 문제가 되었다. SIMD 함수는 consexpr 함수가 아니라서 SIMD를 사용하려면 그걸 사용하는 함수도 SIMD이면 안된다. 그렇게 되면 또 이 함수를 호출하는 다른 함수의 constexpr도 제거해야 한다.  
+그래서 SIMD를 지원하는 경우에만 constexpr을 없애는 macros를 만들었다.     
 ```c++
 #ifdef __AVX__
 #define SIMD_CONSTEXPR 
@@ -56,86 +56,140 @@ constexpr도 문제가 되었다. SIMD 함수는 consexpr 함수가 아니라서
 #define SIMD_CONSTEXPR constexpr
 #endif
 ```
-그런데 또 문제는 기존 게임엔진에 여러 함수들에 constexpr을 붙인 것이다. 함수에 constexpr을 붙이면 그 함수 내에서 사용되는 모든 함수들은 constexpr이 붙어 있어야 한다 (일반 함수가 constexpr 함수를 호출하는건 문제가 없다). 이 뜻은 SIMD기능이 활성화 된 경우 내 수학 라이브러리 함수들은 constexpr이 제거되었는 데 게임 엔진쪽 코드에서는 constexpr 함수가 수학 라이브러리 함수를 호출하는 경우 컴파일 에러가 뜬다는 것이다.    
-그래서 결국 기존 게임엔진 코드에서 Vector나 Matrix를 사용하는 함수, 클래스에서는 constepxr을 없애주었다.    
+그런데 또 문제는 기존 게임엔진에 여러 함수들에 constexpr을 붙인 것이다. 함수에 constexpr을 붙이면 그 함수 내에서 사용되는 모든 함수들은 constexpr이 붙어 있어야 한다 (일반 함수가 constexpr 함수를 호출하는건 문제가 없다). 이 뜻은 SIMD기능이 활성화 된 경우 내 수학 라이브러리 함수들은 constexpr이 제거되었는 데 게임 엔진쪽 코드에서는 constexpr 함수가 수학 라이브러리 함수를 호출하는 경우 컴파일 에러가 뜬다는 것이다.      
+그래서 결국 기존 게임엔진 코드에서 Vector나 Matrix를 사용하는 함수, 클래스에서는 constepxr을 없애주었다.       
 
 여차여차해서 첫번째로 SIMD를 사용한 함수를 작성하였다. ( L_AVX 매크로는 SIMD의 지원하였을 때, 미지원 하였을 때 모두 작동하기 위해 코드를 구분해 주었다. )
 ```c++
-#define XMM128Float(VECTOR4FLOAT) *(__m128*)(&VECTOR4FLOAT)
+
+```
+첫번째로 SIMD를 적용한 함수는 벡터의 Sqr Magnitude를 구하는 코드이다. Magnitude가 제곱근 때문에 성능이 느려 단순히 두 Magnitude를 비교하는 경우에는 SqrMagnitude를 사용한다.       
+작성 후 성능 테스트를 해보니 왠걸 SIMD를 적용한 코드가 더 성능이 않좋은 것이다.      
+어셈블리를 까보자....    
+
+첫번째는 SIMD 명령어를 사용한 코드의 어셈블리이다. ( 공통되는 부분은 삭제하였다 )      
+```c++
+alignas(16) struct A
+{
+    float x,y,z,w;
+};
+
+A a{1.0f, 2.0f, 3.0f, 4.0f};
+__m128 ap = _mm_load_ps(&(a.a));
+__m128 result = _mm_mul_ps(ap, ap);
+float sqrmagnitude = result[0] + result[1] + result[2] + result[3];
+```
+```
+vmovaps xmm0, XMMWORD PTR [rax]
+vmovaps XMMWORD PTR [rbp-16], xmm0
+vmovaps xmm0, XMMWORD PTR [rbp-16]
+vmovaps XMMWORD PTR [rbp-48], xmm0
+vmovaps xmm0, XMMWORD PTR [rbp-16] 
+vmovaps XMMWORD PTR [rbp-64], xmm0 // 여기 매우 흥미롭다. XMM 레지스터를 이용안하면 X84기준 4번(4바이트씩)의 명령어를 통해 데이터를 복사해야 되는 데 XMM0 레지스터를 거쳐서 rbp-64에 저장하니 2번의 명령어만에 16바이트의 데이터를 전송할 수 있었다.
+vmovaps xmm0, XMMWORD PTR [rbp-48] // 곱셈 연산을 위해 a의 데이터를 xmm0 레지스터에 저장
+vmulps  xmm0, xmm0, XMMWORD PTR [rbp-64] // xmm0레지스터와 로컬 변수 ap를 곱함
+vmovaps XMMWORD PTR [rbp-112], xmm0 // result변수에 곱셈 결과값 저장
+vmovss  xmm1, DWORD PTR [rbp-112] // result[0]을 xmm1 레지스터에 저장
+vmovss  xmm0, DWORD PTR [rbp-108] // result[1]을 xmm0 레지스터에 저장
+vaddss  xmm0, xmm1, xmm0 // xmm0와 xmm1 레지스터를 더해서 xmm0 레지스터에 저장
+vmovss  xmm1, DWORD PTR [rbp-104]
+vaddss  xmm0, xmm0, xmm1
+vmovss  xmm1, DWORD PTR [rbp-100]
+vaddss  xmm0, xmm0, xmm1
+vmovss  DWORD PTR [rbp-20], xmm0
+```
+
+두번째는 일반적으로 작성한 어셈블리이다.       
+```c++
+struct A
+{
+    float x,y,z,w;
+};
+
+A a{1.0f, 2.0f, 3.0f, 4.0f};
+float sqrmagnitude = a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w;
+```
+```
+movss   xmm1, DWORD PTR [rbp-16]
+movss   xmm0, DWORD PTR [rbp-16]
+mulss   xmm1, xmm0
+movss   xmm2, DWORD PTR [rbp-12]
+movss   xmm0, DWORD PTR [rbp-12]
+mulss   xmm0, xmm2
+addss   xmm1, xmm0
+movss   xmm2, DWORD PTR [rbp-8]
+movss   xmm0, DWORD PTR [rbp-8]
+mulss   xmm0, xmm2
+addss   xmm1, xmm0
+movss   xmm2, DWORD PTR [rbp-4]
+movss   xmm0, DWORD PTR [rbp-4]
+mulss   xmm0, xmm2
+addss   xmm0, xmm1
+cvttss2si       eax, xmm0
+```
+
+무엇이 특이한가?? 일반적으로 작성한 코드도 SIMD 명령어를 사용한다는 것이다. 심지어 명령어 줄수도 2줄 더 적다.        
+컴파일러가 알아서 SIMD 명령어를 사용하여 코드를 최적화 해준 것이다. 이렇게 컴파일러가 똑똑하다.    
+어쨌든 SIMD를 사용하지 않은 scalar코드가 빠른 이유는 SIMD코드를 사용한 경우와 다르게 중간 결과를 따로 저장할 필요가 없기 때문이다.       
+SIMD 코드를 사용한 경우에는 _mm_mul_ps(ap, ap); 같은 부분에서 두번의 load를 하지 않기 위해 그 전에 ap라는 지역변수에 임시로 데이터를 저장하였다. ( __m128은 그냥 alignas float[4]이다. __m128자체가 무슨 레지스터이고 그런 것은 아니다. 그냥 aligned된 16바이트 타입을 api차원에서 지원한 것이다. )           
+
+나중에 언리얼엔진 소스코드를 뒤져보니 언리얼엔진도 Vector4만 단독으로 사용되는 연산에서는 SIMD코드를 사용하지 않던 것을 알 수 있었다.      
+여차여차해서 첫 SIMD 코드로 4x4 행렬 곱을 구현하였다. 짧은 함수는 inline화를 강제하여 최대한 성능을 뽑아내고자 노력했다.       
+```c++
+
+FORCE_INLINE __m128 __m128_MUL(const __m128& Vec1, const __m128& Vec2)
+{
+	return _mm_mul_ps(Vec1, Vec2);
+}
+
+FORCE_INLINE __m128 __m128_MUL_AND_ADD(const __m128& Vec1, const __m128& Vec2, const __m128& Vec3)
+{
+	return __m128_ADD(__m128_MUL(Vec1, Vec2), Vec3);
+}
 
 template <>
-[[nodiscard]] inline SIMD_CONSTEXPR auto Vector<4, float>::sqrMagnitude() const noexcept
+[[nodiscard]] type operator*(const Matrix<4, 4, float>& rhs) noexcept
 {
-#ifdef L_AVX
-	Vector<4, float> Result;
-	
-	XMM128Float(Result) = _mm_mul_ps(XMM128Float(*this), XMM128Float(*this));
-	return Result.x + Result.y + Result.z + Result.w;
-#else
-	return x * x + y * y + z * z + w * w;
-#endif
+    Matrix<4, 4, float> Result{};
+
+    const __m128* A = (const __m128*)this->data();
+	const __m128* B = (const __m128*)rhs.data();
+	__m128* R = (__m128*)Result.data();
+	__m128 Temp;// , R0, R1, R2, R3;
+
+	// First row of result (Matrix1[0] * Matrix2).
+	Temp = __m128_MUL(__m128_REPLICATE(B[0], 0), A[0]);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[0], 1), A[1], Temp);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[0], 2), A[2], Temp);
+	R[0] = __m128_MUL_AND_ADD(__m128_REPLICATE(B[0], 3), A[3], Temp);
+
+	// Second row of result (Matrix1[1] * Matrix2).
+	Temp = __m128_MUL(__m128_REPLICATE(B[1], 0), A[0]);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[1], 1), A[1], Temp);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[1], 2), A[2], Temp);
+	R[1] = __m128_MUL_AND_ADD(__m128_REPLICATE(B[1], 3), A[3], Temp);
+
+	// Third row of result (Matrix1[2] * Matrix2).
+	Temp = __m128_MUL(__m128_REPLICATE(B[2], 0), A[0]);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[2], 1), A[1], Temp);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[2], 2), A[2], Temp);
+	R[2] = __m128_MUL_AND_ADD(__m128_REPLICATE(B[2], 3), A[3], Temp);
+
+	// Fourth row of result (Matrix1[3] * Matrix2).
+	Temp = __m128_MUL(__m128_REPLICATE(B[3], 0), A[0]);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[3], 1), A[1], Temp);
+	Temp = __m128_MUL_AND_ADD(__m128_REPLICATE(B[3], 2), A[2], Temp);
+	R[3] = __m128_MUL_AND_ADD(__m128_REPLICATE(B[3], 3), A[3], Temp);
+
+	return Result;
 }
 ```
+SIMD를 사용하지 전 보다 대략 1.6배 빨라졌다. 게임에서는 매 프레임마다 4x4행렬 곱을 매우 자주 수행해야 해서 1.6배의 성능향상은 정말로 정말로 엄청난 향상이다.    
+SIMD에 재미를 붙였다. 이걸로 Culling 같은 부분에서 성능 향상을 노려봐야겠다!!!!        
 
-자세히 보면 _mm_load_ps 함수를 사용하지 않고 바로 Vector4 타입에서 __m128 타입으로 캐스팅한 것을 알 수 있다. 이게 컴파일러에 따라 문제가 된다. float*를 
- Any object pointer type T1* can be converted to another object pointer type cv T2*. This is exactly equivalent to static_cast<cv T2*>(static_cast<cv void*>(expression)) (which implies that if T2's alignment requirement is not stricter than T1's, the value of the pointer does not change and conversion of the resulting pointer back to its original type yields the original value). In any case, the resulting pointer may only be dereferenced safely if allowed by the type aliasing rules (see below)
 
-그런데 왠걸 성능 테스트를 해보니 SIMD를 적용한 코드가 더 성능이 않좋은 것이다.        
-그래서 assembly를 까봤다.
-```
-SIMD 적용 코드
 
-Vector<4, float> Result;
-00755779  lea         ecx,[Result]  
-0075577C  call        math::Vector<4,float>::Vector<4,float> (073D2E9h)  
-	
-		XMM128Float(Result) = _mm_mul_ps(XMM128Float(*this), XMM128Float(*this));
-00755781  mov         eax,dword ptr [this]  
-00755784  mov         ecx,dword ptr [this]  
-00755787  vmovups     xmm0,xmmword ptr [ecx]  
-0075578B  vmulps      xmm0,xmm0,xmmword ptr [eax]  
-0075578F  vmovaps     xmmword ptr [ebp-110h],xmm0  
-00755797  vmovaps     xmm0,xmmword ptr [ebp-110h]  
-0075579F  vmovaps     xmmword ptr [Result],xmm0  
-		return Result.x + Result.y + Result.z + Result.w;
-007557A4  vmovss      xmm0,dword ptr [Result]  
-007557A9  vaddss      xmm0,xmm0,dword ptr [ebp-2Ch]  
-007557AE  vaddss      xmm0,xmm0,dword ptr [ebp-28h]  
-007557B3  vaddss      xmm0,xmm0,dword ptr [ebp-24h]  
-007557B8  vmovss      dword ptr [ebp-118h],xmm0  
-007557C0  fld         dword ptr [ebp-118h]
-```
-
-```
-아래는 SIMD를 사용안한 코드다.
-
-00F6FCDD  mov         eax,dword ptr [this]  
-00F6FCE0  mov         ecx,dword ptr [this]  
-00F6FCE3  vmovss      xmm0,dword ptr [eax]  
-00F6FCE7  vmulss      xmm0,xmm0,dword ptr [ecx]  
-00F6FCEB  mov         edx,dword ptr [this]  
-00F6FCEE  mov         eax,dword ptr [this]  
-00F6FCF1  vmovss      xmm1,dword ptr [edx+4]  
-00F6FCF6  vmulss      xmm1,xmm1,dword ptr [eax+4]  
-00F6FCFB  vaddss      xmm0,xmm0,xmm1  
-00F6FCFF  mov         ecx,dword ptr [this]  
-00F6FD02  mov         edx,dword ptr [this]  
-00F6FD05  vmovss      xmm1,dword ptr [ecx+8]  
-00F6FD0A  vmulss      xmm1,xmm1,dword ptr [edx+8]  
-00F6FD0F  vaddss      xmm0,xmm0,xmm1  
-00F6FD13  mov         eax,dword ptr [this]  
-00F6FD16  mov         ecx,dword ptr [this]  
-00F6FD19  vmovss      xmm1,dword ptr [eax+0Ch]  
-00F6FD1E  vmulss      xmm1,xmm1,dword ptr [ecx+0Ch]  
-00F6FD23  vaddss      xmm0,xmm0,xmm1  
-00F6FD27  vmovss      dword ptr [ebp-0D0h],xmm0  
-00F6FD2F  fld         dword ptr [ebp-0D0h]  
-```
-근데 희안한게 SIMD 사용하여 작성하지 않은 코드도 SIMD 명령어를 사용하고 있는 것을 볼 수 있다.    
-아래 assembly 코드는 SIMD를 사용하지 않았는 데 똑똑하게도 컴파일러가 최적화를 위해 SIMD코드를 알아서 사용하고 있는 것이다.
-
-나중에 언리얼엔진 소스코드를 뒤져보니 언리얼엔진도 Vector4 연산에서는 SIMD코드를 사용하지 않았던 것이다.    
-reference :           
+reference :   
 https://www.codeproject.com/Articles/874396/Crunching-Numbers-with-AVX-and-AVX    
 https://software.intel.com/sites/landingpage/IntrinsicsGuide     
 https://stackoverflow.com/questions/66743623/what-is-difference-between-m128a-and-m128a?noredirect=1#comment117984269_66743623      
