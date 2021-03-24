@@ -13,7 +13,7 @@ SIMD에 대해 살짝 간을 봤는 데 쉽지는 않을 것 같다.
 필자는 AVX1 버전까지 지원하기로 결정하였다. AVX2는 아직까지는 지원하지 않는 CPU가 조금 있고 필자가 조사한 바로는 상용게임들도 AVX1까지 지원한다고 알고 있다. 물론 매크로로 AVX2까지 지원해줄 수도 있지만 필자는 귀찮기도하고 AVX1까지 지원하기로 결정하였다.    
 AVX1은 그 하위버전인 SSE, SSE2, SSE3 ....들을 모두 포함하고 있다.       
 
-우선 본격적으로 시작하기 전 SIMD의 결과값을 받을 16바이트로 Aligned된 Vector4 구조체를 간단하게 만들었다. SIMD는 XMM이라는 전용 레지스터를 통해 데이터를 읽어오거나 쓰는 데 이 XMM 레지스터는 128bit의 사이즈를 가진다. 그래서 SIMD 연산의 결과가 저장된 XMM에서 데이터를 효율적으로(!!!) 가져오기 위해서는(데이터를 XMM에 보내기 위해서는) 데이터를 받는 변수 형도 align되어 있어야 한다. 그래서 SSE는 __m128라는 데이터형을 제공한다.
+우선 본격적으로 시작하기 전 SIMD의 결과값을 받을 16byte로 Aligned된 4X4 Matrix 구조체를 간단하게 만들었다. SIMD는 XMM이라는 전용 레지스터를 통해 데이터를 읽어오거나 쓰는 데 이 XMM 레지스터는 128bit의 사이즈를 가진다. 그래서 SIMD 연산의 결과가 저장된 XMM에서 데이터를 효율적으로(!!!) 가져오기 위해서는(데이터를 XMM에 보내기 위해서는) 데이터를 받거나 보내는 데이터들도 16byte에 align되어 있어야 한다. 그래서 SSE는 __m128라는 데이터형을 제공한다.
 ```c++
 typedef union __declspec(intrin_type) __declspec(align(16)) __m128 {
      float       m128_f32[4];
@@ -28,9 +28,10 @@ typedef union __declspec(intrin_type) __declspec(align(16)) __m128 {
  } __m128;
 ```
 
-이 타입에 맞추기 위해 필자가 사용하는 Vector 구조체도 16byte align에 맞추어 주었다. 
+이 타입에 맞추기 위해 필자가 사용하는 Matrix4X4 구조체도 16byte align에 맞추어 주었다.    
+구조체를 align 시키는 방법은 컴파일러마다 다양하지만 C++11 이후 alignas라는 표준 attribute가 생겼다.    
 ```c++
-struct alignas(16) Vector4Float
+alignas(16) struct Vector4Float
 {
     union { float x, r; };
     union { float y, g; };
@@ -38,12 +39,9 @@ struct alignas(16) Vector4Float
     union { float w, a; };
 }
 
-struct alignas(32) Vector4Double
+struct alignas(16) Matrix4X4
 {
-    union { double x, r; };
-    union { double y, g; };
-    union { double z, b; };
-    union { double w, a; };
+    Vector4Float column[4];
 }
 ```      
 
@@ -60,23 +58,24 @@ constexpr도 문제가 되었다. SIMD 함수는 consexpr 함수가 아니라서
 그래서 결국 기존 게임엔진 코드에서 Vector나 Matrix를 사용하는 함수, 클래스에서는 constepxr을 없애주었다.       
 
 여차여차해서 첫번째로 SIMD를 사용한 함수를 작성하였다. ( L_AVX 매크로는 SIMD의 지원하였을 때, 미지원 하였을 때 모두 작동하기 위해 코드를 구분해 주었다. )
-```c++
 
-```
 첫번째로 SIMD를 적용한 함수는 벡터의 Sqr Magnitude를 구하는 코드이다. Magnitude가 제곱근 때문에 성능이 느려 단순히 두 Magnitude를 비교하는 경우에는 SqrMagnitude를 사용한다.       
 작성 후 성능 테스트를 해보니 왠걸 SIMD를 적용한 코드가 더 성능이 않좋은 것이다.      
 어셈블리를 까보자....    
 
 첫번째는 SIMD 명령어를 사용한 코드의 어셈블리이다. ( 공통되는 부분은 삭제하였다 )      
 ```c++
-alignas(16) struct A
+alignas(16) struct Vector4Float
 {
-    float x,y,z,w;
-};
+    union { float x, r; };
+    union { float y, g; };
+    union { float z, b; };
+    union { float w, a; };
+}
 
-A a{1.0f, 2.0f, 3.0f, 4.0f};
-__m128 ap = _mm_load_ps(&(a.a));
-__m128 result = _mm_mul_ps(ap, ap);
+Vector4Float vec4{1.0f, 2.0f, 3.0f, 4.0f};
+__m128 mVec4 = _mm_load_ps(&(vec4.a));
+__m128 result = _mm_mul_ps(mVec4, mVec4);
 float sqrmagnitude = result[0] + result[1] + result[2] + result[3];
 ```
 ```
@@ -85,7 +84,7 @@ vmovaps XMMWORD PTR [rbp-16], xmm0
 vmovaps xmm0, XMMWORD PTR [rbp-16]
 vmovaps XMMWORD PTR [rbp-48], xmm0
 vmovaps xmm0, XMMWORD PTR [rbp-16] 
-vmovaps XMMWORD PTR [rbp-64], xmm0 // 여기 매우 흥미롭다. XMM 레지스터를 이용안하면 X84기준 4번(4바이트씩)의 명령어를 통해 데이터를 복사해야 되는 데 XMM0 레지스터를 거쳐서 rbp-64에 저장하니 2번의 명령어만에 16바이트의 데이터를 전송할 수 있었다.
+vmovaps XMMWORD PTR [rbp-64], xmm0 // 여기 매우 흥미롭다. XMM 레지스터를 이용안하면 X84기준 4번(4byte씩)의 명령어를 통해 데이터를 복사해야 되는 데 XMM0 레지스터를 거쳐서 rbp-64에 저장하니 2번의 명령어만에 16byte의 데이터를 전송할 수 있었다.
 vmovaps xmm0, XMMWORD PTR [rbp-48] // 곱셈 연산을 위해 a의 데이터를 xmm0 레지스터에 저장
 vmulps  xmm0, xmm0, XMMWORD PTR [rbp-64] // xmm0레지스터와 로컬 변수 ap를 곱함
 vmovaps XMMWORD PTR [rbp-112], xmm0 // result변수에 곱셈 결과값 저장
@@ -101,13 +100,16 @@ vmovss  DWORD PTR [rbp-20], xmm0
 
 두번째는 일반적으로 작성한 어셈블리이다.       
 ```c++
-struct A
+struct Vector4Float
 {
-    float x,y,z,w;
-};
+    union { float x, r; };
+    union { float y, g; };
+    union { float z, b; };
+    union { float w, a; };
+}
 
-A a{1.0f, 2.0f, 3.0f, 4.0f};
-float sqrmagnitude = a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w;
+Vector4Float vec4{1.0f, 2.0f, 3.0f, 4.0f};
+float sqrmagnitude = vec4.x * vec4.x + vec4.y * vec4.y + vec4.z * vec4.z + vec4.w * vec4.w;
 ```
 ```
 movss   xmm1, DWORD PTR [rbp-16]
@@ -131,9 +133,19 @@ cvttss2si       eax, xmm0
 무엇이 특이한가?? 일반적으로 작성한 코드도 SIMD 명령어를 사용한다는 것이다. 심지어 명령어 줄수도 2줄 더 적다.        
 컴파일러가 알아서 SIMD 명령어를 사용하여 코드를 최적화 해준 것이다. 이렇게 컴파일러가 똑똑하다.    
 어쨌든 SIMD를 사용하지 않은 scalar코드가 빠른 이유는 SIMD코드를 사용한 경우와 다르게 중간 결과를 따로 저장할 필요가 없기 때문이다.       
-SIMD 코드를 사용한 경우에는 _mm_mul_ps(ap, ap); 같은 부분에서 두번의 load를 하지 않기 위해 그 전에 ap라는 지역변수에 임시로 데이터를 저장하였다. ( __m128은 그냥 alignas float[4]이다. __m128자체가 무슨 레지스터이고 그런 것은 아니다. 그냥 aligned된 16바이트 타입을 api차원에서 지원한 것이다. )           
+SIMD 코드를 사용한 경우에는 _mm_mul_ps(ap, ap); 같은 부분에서 두번의 load를 하지 않기 위해 그 전에 ap라는 지역변수에 임시로 데이터를 저장하였다. ( __m128은 그냥 alignas float[4]이다. __m128자체가 무슨 레지스터이고 그런 것은 아니다. 그냥 aligned된 16byte 타입을 api차원에서 type aliasing한 것이다. )           
 
 나중에 언리얼엔진 소스코드를 뒤져보니 언리얼엔진도 Vector4만 단독으로 사용되는 연산에서는 SIMD코드를 사용하지 않던 것을 알 수 있었다.      
+
+추가적으로 이미 align된 데이터를 _mm_load_ps을 __m128형 변수로 옮길 필요가 전혀 없다. _mm_load_ps는 align되지 않은 데이터의 주소를 parameter로 받아 align된 데이터로 return해주는 함수인 데 이미 Vector4Float는 16byte로 align되어 있다. 그러니 _mm_load_ps는 필요 없다.
+```c++
+Vector4Float result;
+__m128* m128Result = reinterpret_cast<__m128*>(&result);
+const __m128* m128Vec4 = reinterpret_cast<const __m128*>(&vec4);
+*m128Result = _mm_mul_ps(*m128Vec4, *m128Vec4);
+```
+이렇게 타입만 변경해주면 된다. 
+
 여차여차해서 첫 SIMD 코드로 4x4 행렬 곱을 구현하였다. 짧은 함수는 inline화를 강제하여 최대한 성능을 뽑아내고자 노력했다.       
 ```c++
 
@@ -148,13 +160,13 @@ FORCE_INLINE __m128 __m128_MUL_AND_ADD(const __m128& Vec1, const __m128& Vec2, c
 }
 
 template <>
-[[nodiscard]] type operator*(const Matrix<4, 4, float>& rhs) noexcept
+[[nodiscard]] type Matrix<4, 4, float>::operator*(const Matrix<4, 4, float>& rhs) noexcept
 {
     Matrix<4, 4, float> Result{};
 
-    const __m128* A = (const __m128*)this->data();
-	const __m128* B = (const __m128*)rhs.data();
-	__m128* R = (__m128*)Result.data();
+	const __m128* A = reinterpret_cast<const __m128*>(this); // Matrix<4, 4, float> 자체가 16byte에 align되어 있기 때문에 가능하다.
+	const __m128* B = reinterpret_cast<const __m128*>(&rhs);
+	__m128* R = reinterpret_cast<__m128*>(&Result);
 	__m128 Temp;// , R0, R1, R2, R3;
 
 	// First row of result (Matrix1[0] * Matrix2).
@@ -184,7 +196,96 @@ template <>
 	return Result;
 }
 ```
-SIMD를 사용하지 전 보다 대략 1.6배 빨라졌다. 게임에서는 매 프레임마다 4x4행렬 곱을 매우 자주 수행해야 해서 1.6배의 성능향상은 정말로 정말로 엄청난 향상이다.    
+SIMD를 사용하지 전 보다 대략 1.6배 빨라졌다. 게임에서는 매 프레임마다 4x4행렬 곱을 매우 자주 수행해야 해서 1.6배의 성능향상은 정말로 정말로 엄청난 향상이다.     
+
+하나 더 해보겠다
+```c++
+struct Vector4
+{
+	float x, y, z, w
+}
+struct Matrix
+{
+	Vector4 columns[4];
+}
+
+FORCE_INLINE constexpr explicit Matrix(const Matrix& matrix) noexcept
+			: columns{ matrix.columns[0], matrix.columns[1], matrix.columns[2], matrix.columns[3] }
+{}
+```
+```
+000C3B3D  mov         eax,dword ptr [this]  
+000C3B40  mov         dword ptr [ebp-0D0h],eax  
+000C3B46  mov         ecx,10h  
+000C3B4B  imul        edx,ecx,0  
+000C3B4E  add         edx,dword ptr [matrix]  
+000C3B51  push        edx  
+000C3B52  mov         ecx,dword ptr [ebp-0D0h]  
+000C3B58  call        math::Vector<4,float>::Vector<4,float><float> (0A86C5h)  
+000C3B5D  mov         eax,dword ptr [this]  
+000C3B60  add         eax,10h  
+000C3B63  mov         dword ptr [ebp-0D4h],eax  
+000C3B69  mov         ecx,10h  
+000C3B6E  shl         ecx,0  
+000C3B71  add         ecx,dword ptr [matrix]  
+000C3B74  push        ecx  
+000C3B75  mov         ecx,dword ptr [ebp-0D4h]  
+000C3B7B  call        math::Vector<4,float>::Vector<4,float><float> (0A86C5h)  
+000C3B80  mov         edx,dword ptr [this]  
+000C3B83  add         edx,20h  
+000C3B86  mov         dword ptr [ebp-0D8h],edx  
+000C3B8C  mov         eax,10h  
+000C3B91  shl         eax,1  
+000C3B93  add         eax,dword ptr [matrix]  
+000C3B96  push        eax  
+000C3B97  mov         ecx,dword ptr [ebp-0D8h]  
+000C3B9D  call        math::Vector<4,float>::Vector<4,float><float> (0A86C5h)  
+000C3BA2  mov         ecx,dword ptr [this]  
+000C3BA5  add         ecx,30h  
+000C3BA8  mov         dword ptr [ebp-0DCh],ecx  
+000C3BAE  mov         edx,10h  
+000C3BB3  imul        eax,edx,3  
+000C3BB6  add         eax,dword ptr [matrix]  
+000C3BB9  push        eax  
+000C3BBA  mov         ecx,dword ptr [ebp-0DCh]  
+000C3BC0  call        math::Vector<4,float>::Vector<4,float><float> (0A86C5h) 
+```
+4X4 행렬을 복사해서 새로운 4X4 행렬을 만드는 생성자이다. 얼마나 비효율적인지 보이는가.    
+멤버 변수 columns array가 Vector4의 구조체로 이루져있는 데 column array의 각 element마다 Paramter column의 element를 일일이 전달한다. 심지어 일일이 생성자도 하나씩 호출한다... Vector4의 생성자 어셈블리까지 합치면 매우 매우 비효율적이다.     
+필자가 계획한 것은 그냥 새로 생성하는 Matrix4x4와 그 Matrix의 각 column Vector4들도 NULL초기화를 하지 않고 그냥 알 수 없는 값들로 나두는 것이다. 그리고 난 후 복사할 4X4Matrix의 데이터를 _mm256_load_ps를 통해 2번의 명령어로 복사해볼 계획이다. 이게 가능한 이유는 우선 4X4Matrix(float)는 Vector4(float) 4개로 구성된 구조체이기 때문이다. 즉 4X4Matrix는 총 연속된 64개의 float 형의 데이터로 구성되었다는 의미이다.       
+그래서 필자는 _mm256_load_ps를 이용해서 float 데이터 32개씩(256bit) 복사해서 2번의 복사로 데이터를 모두 옮길 예정이다. ( _mm256 함수를 사용하기 위해 Matrix4x4를 32byte에 align되게 하였다. )
+```c++
+struct Vector4
+{
+	float x, y, z, w
+}
+alignas(32) struct Matrix4X4
+{
+	Vector4 columns[4];
+}
+
+FORCE_INLINE void InitializeSIMD(const type& matrix) noexcept
+{
+	_mm256* A = reinterpret_cast<_mm256*>(this);
+	const float* B = reinterpret_cast<const float*>(&matrix);
+	A[0] = _mm256_load_ps(B); // copy 0 ~ 256 OF B to 0 ~ 256 this
+	A[1] = _mm256_load_ps(B + 8); // B + 8 -> B + sizeof(float) * 8  , copy 256 ~ 512 OF B to 256 ~ 512 this
+}
+```		
+```
+00883AC3  mov         eax,dword ptr [B]  
+00883AC6  add         eax,20h  
+00883AC9  vmovups     ymm0,ymmword ptr [eax]  
+00883ACD  vmovups     ymmword ptr [ebp-180h],ymm0  
+00883AD5  mov         ecx,20h  
+00883ADA  shl         ecx,0  
+00883ADD  add         ecx,dword ptr [A]  
+00883AE0  vmovups     ymm0,ymmword ptr [ebp-180h]  
+00883AE8  vmovups     ymmword ptr [ecx],ymm0  
+```
+ymm이라는 256bit 레지스터를 이용해서 256bit copy(vmovups)를 한 명령어로 수행한다. 한눈에 봐도 어셈블리 코드 수가 확 줄어든 것을 볼 수 있다.         
+테스트 결과 무려 1.8배의 성능향상을 이루었다!!!!!!!
+
 SIMD에 재미를 붙였다. 이걸로 Culling 같은 부분에서 성능 향상을 노려봐야겠다!!!!        
 
 
