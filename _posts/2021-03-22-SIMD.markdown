@@ -284,7 +284,8 @@ FORCE_INLINE void InitializeSIMD(const type& matrix) noexcept
 00883AE8  vmovups     ymmword ptr [ecx],ymm0  
 ```
 ymm이라는 256bit 레지스터를 이용해서 256bit copy(vmovups)를 한 명령어로 수행한다. 한눈에 봐도 어셈블리 코드 수가 확 줄어든 것을 볼 수 있다.         
-테스트 결과 무려 1.8배의 성능향상을 이루었다!!!!!!!
+테스트 결과 무려 1.8배의 성능향상을 이루었다!!!!!!!     
+(특히 4x4행렬과 벡터4의 곱에서는 거의 3배에 가까운 성능향샹을 보여줬다.)            
 
 SIMD에 재미를 붙였다. 이걸로 Culling 같은 부분에서 성능 향상을 노려봐야겠다!!!!        
 
