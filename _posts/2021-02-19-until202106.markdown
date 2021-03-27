@@ -40,7 +40,9 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 
 [Performance Optimization, SIMD and Cache](https://youtu.be/Nsf2_Au6KxU)        
 [File mapping](https://docs.microsoft.com/en-us/windows/win32/memory/file-mapping)      
-[GCC always assumes aligned pointer accesses](https://trust-in-soft.com/blog/2020/04/06/gcc-always-assumes-aligned-pointer-accesses/)           
+[GCC always assumes aligned pointer accesses](https://trust-in-soft.com/blog/2020/04/06/gcc-always-assumes-aligned-pointer-accesses/)            
+
+[ntrinsics: Low-level engine development with Burst - Unite Copenhagen](https://youtu.be/BpwvXkoFcp8)           
 
 영상 :   
 
