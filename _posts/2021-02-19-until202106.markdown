@@ -42,7 +42,12 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 [File mapping](https://docs.microsoft.com/en-us/windows/win32/memory/file-mapping)      
 [GCC always assumes aligned pointer accesses](https://trust-in-soft.com/blog/2020/04/06/gcc-always-assumes-aligned-pointer-accesses/)            
 
-[ntrinsics: Low-level engine development with Burst - Unite Copenhagen](https://youtu.be/BpwvXkoFcp8)           
+[ntrinsics: Low-level engine development with Burst - Unite Copenhagen](https://youtu.be/BpwvXkoFcp8)                  
+
+[Memory Alignment1](https://stackoverflow.com/questions/381244/purpose-of-memory-alignment)
+[Memory Alignment2](https://developer.ibm.com/technologies/systems/articles/pa-dalign/)             
+[Gallery of Processor Cache Effects](http://igoro.com/archive/gallery-of-processor-cache-effects/)          
+
 
 영상 :   
 

@@ -5,12 +5,20 @@ date:   2021-03-28
 categories: ComputerScience
 ---
 
+Resources :      
+https://docs.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=vs-2019      
+https://stackoverflow.com/questions/381244/purpose-of-memory-alignment     
+https://developer.ibm.com/technologies/systems/articles/pa-dalign/       
+
 컴퓨터가 메모리에서 데이터를 가져오는 데 한번에 8바이트씩(64비트 환경에서는 8바이트, 32비트 환경에서는 4바이트)만 가져올 수 있다.    
 
 그렇다면 만약 데이터가 1바이트만 필요하다 하면 우선 목표하는 데이터랑 뒤에 7바이트까지 같이 올 수 밖에 없다. 근데 뒤에 7바이트는 필요가 없는 데이터들이므로 이 7바이트를 짤라내야하는 데 이 짤라내는 과정에서 연산이 더 필요하다.     
 그래서 애초에 데이터를 구성할 때 8바이트 단위로 구성되게 만들어서 뒤 몇바이트를 짤라내는 과정이 필요없게 만든다.        
 
-( 데이터의 시작 주소가 8의 배수여야 한다고 하는 데 이건 잘못된 정보인 듯 )        
+       ㅁ ㅁ ㅁ ㅁ ㅁ ㅁ ㅁ ㅁ ㅁ 
+주소   1  2  3  4  5  6  7  8  9  
+
+----------------------------------------------------------------------
 
 ```c++
 struct ReallySlowStruct
@@ -74,4 +82,3 @@ struct x_
    char _pad1[1];    // padding to make sizeof(x_) multiple of 4
 } bar[3];
 ```
-Source: https://docs.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=vs-2019
