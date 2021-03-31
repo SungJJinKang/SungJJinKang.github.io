@@ -49,7 +49,7 @@ for(unsigned int i = 0 ; i < EntityCount ; i++)
 }
 ```
 
-Renderer Component나, Transform Componetn에도 적용 가능
+Renderer Component나, Transform Component에도 적용 가능
 
 references :        
 https://en.wikipedia.org/wiki/Data-oriented_design

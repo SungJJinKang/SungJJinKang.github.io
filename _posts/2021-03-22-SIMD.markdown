@@ -135,7 +135,7 @@ cvttss2si       eax, xmm0
 어쨌든 SIMD를 사용하지 않은 scalar코드가 빠른 이유는 SIMD코드를 사용한 경우와 다르게 중간 결과를 따로 저장할 필요가 없기 때문이다.       
 SIMD 코드를 사용한 경우에는 _mm_mul_ps(ap, ap); 같은 부분에서 두번의 load를 하지 않기 위해 그 전에 ap라는 지역변수에 임시로 데이터를 저장하였다. ( __m128은 그냥 alignas float[4]이다. __m128자체가 무슨 레지스터이고 그런 것은 아니다. 그냥 aligned된 16byte 타입을 api차원에서 type aliasing한 것이다. )           
 
-나중에 언리얼엔진 소스코드를 뒤져보니 언리얼엔진도 Vector4만 단독으로 사용되는 연산에서는 SIMD코드를 사용하지 않던 것을 알 수 있었다.      
+나중에 언리얼엔진 소스코드를 뒤져보니 언리얼엔진도 Vector4들끼리의 연산에서는 SIMD코드를 사용하지 않던 것을 알 수 있었다.      
 
 추가적으로 이미 align된 데이터를 _mm_load_ps을 __m128형 변수로 옮길 필요가 전혀 없다. _mm_load_ps는 align되지 않은 데이터의 주소를 parameter로 받아 align된 데이터로 return해주는 함수인 데 이미 Vector4Float는 16byte로 align되어 있다. 그러니 _mm_load_ps는 필요 없다.
 ```c++

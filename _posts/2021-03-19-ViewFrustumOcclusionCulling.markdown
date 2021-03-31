@@ -8,7 +8,7 @@ categories: Doom
 어떻게 하면 렌더링을 빨리 할 수 있을 까?? 다양한 연구와 자료들을 공부하였다.    
 후술할 내용들은 내가 공부한 결과이고 얼마나 렌더링이 빨라졌는지를 보여 줄 것이다.
 
-같은 텍스쳐, 메쉬끼리는 묶어서 렌더링 하자(텍스쳐들 Bind하는 비용 줄어듬)
+우선 View Frustum 
 
 BSP 등 Acceleration Sturcuture가 매우 중요하다. 일반 Tree 만들 듯이 Pointer을 이용해서 Node들을 연결하면 매우매우 느리다. 특히 새로 추가되는 노드를 new를 통해 새로운 힙 영역에 allocate하는 것은 정말 정신나간 짓이다.
 모든 노드들을 array형태로 Configous하게 Allocate해서 Cache hit 가능성을 최대한 높임
