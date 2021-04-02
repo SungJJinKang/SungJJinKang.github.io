@@ -26,7 +26,7 @@ void CreateNewEntity()
 struct EntityBlock
 {
    Entity mEntityPool[50];
-   unsigned int mCreatedEntityCount;
+   size_t mCreatedEntityCount;
 }
 std::vector<EntityBlock*> EntityBlockPool; 
 void AddEntityBlockPool()
@@ -43,7 +43,7 @@ Entity* CreateNewEntity()
    mSpawnedEntities.push_back(newEntity);
 }
 
-for(unsigned int i = 0 ; i < EntityCount ; i++)
+for(size_t i = 0 ; i < EntityCount ; i++)
 {
    mSpawnedEntities[i]->DoSomeThing(); // Cache hitting probability is increased!!!!
 }

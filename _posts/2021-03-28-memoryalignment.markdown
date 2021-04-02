@@ -4,12 +4,6 @@ title:  "Memory Alignment"
 date:   2021-03-28
 categories: ComputerScience
 ---
-
-Resources :      
-https://docs.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=vs-2019      
-https://stackoverflow.com/questions/381244/purpose-of-memory-alignment     
-https://developer.ibm.com/technologies/systems/articles/pa-dalign/       
-
 **컴퓨터가 메모리에서 데이터를 가져오는 데 한번에 워드 단위로(64비트 환경에서는 8바이트, 32비트 환경에서는 4바이트)만 가져올 수 있다.**  
 또한 **컴퓨터는 메모리에서 데이터를 가져올 때 가져올 메모리 데이터의 시작 주소는 꼭 워드의 배수여야 한다.** 즉 워드가 4바이트이 환경에서 3번주소부터 4바이트를 가져오는 게 불가능하다는 것이다.  
 그렇다면 만약 데이터가 1바이트만 필요하다 하면 우선 목표하는 데이터랑 뒤에 7바이트까지 같이 올 수 밖에 없다. 근데 뒤에 7바이트는 필요가 없는 데이터들이므로 이 7바이트를 짤라내야하는 데 이 짤라내는 과정에서 연산이 더 필요하다.     
@@ -74,8 +68,13 @@ A_Array[1]의 주소는 무엇일까?? 위에서 struct A의 사이즈가 12바�
 그렇지 않다. alignas(16) 즉 A는 16바이트에 align하므로 A_Array[1]은 A_Array[0]의 시작 주소에 16바이트를 더한 0x003efda0 이다.     
 
 재밌는 건 A_Array[0]의 주소 0x003efd90을 decimal로 바꾸면 4128144이고 이걸 16으로 나누면 나머지 없이 딱 떨어지는 것을 알 수 있다.       
-위에서도 말했 듯이 alignment란 시작 주소가 해당 alignment의 배수랑 같다는 것이다. 그래서 시작 주소 0x003efd9b이 16의 배수인 것이다.     
+위에서도 말했 듯이 alignment란 시작 주소가 해당 alignment의 배수랑 같다는 것이다. 그래서 시작 주소 0x003efd9b이 16의 배수인 것이다.       
 
+
+Resources :       
+https://docs.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=vs-2019       
+https://stackoverflow.com/questions/381244/purpose-of-memory-alignment      
+https://developer.ibm.com/technologies/systems/articles/pa-dalign/      
 
 ----------------------------------------------------------------------
 
