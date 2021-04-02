@@ -101,13 +101,13 @@ Plane1 Dot Object      Plane2 Dot Object      Plane3 Dot Object      Plane4 Dot 
 Plane5 Dot Object      Plane6 Dot Object      Plane5 Dot Object      Plane6 Dot Object
 
                             |
-                            |   If Dot is larget than 0
+                            |   If Dot is larget than 0, Set 1
                             V
-                  1      1      1      1
+                  1      0      1      1
                   1      1      1      1
 
                             |
-                            |   Result
+                            |   To be rendered, All value should be 1
                             V
 
                         Culled!!!!!
@@ -170,6 +170,7 @@ inline char CheckInFrustumSIMDWithTwoPoint(math::Vector<4, float>* eightPlanes, 
 }
 ```
 
+---------------------------------------------
 
 그리고 Frostbite View frustum Culling 방법의 두 번째 특징으로 게임 내 Entity들을 여러 EntityBlock으로 나누어서 각 EntityBlcok들을 서브 스레드들에 넘겨서 Culling 연산을 시키는 것이다.     
 여기서 중요한 것은 각 Entity들이 EntityBlock으로 분리되어 나누어져있기 때문에 Data race가 발생하지 않는다는 것이다.     
