@@ -1,5 +1,5 @@
 ---
-layout: Normalt
+layout: post
 title:  "ViewFrustum Culling(렌더링 빨리 하기)"
 date:   2021-04-02
 categories: Doom
