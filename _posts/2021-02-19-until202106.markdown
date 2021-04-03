@@ -47,7 +47,8 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 ~~[Gallery of Processor Cache Effects](http://igoro.com/archive/gallery-of-processor-cache-effects/)~~                
 [프로그래머가 메모리에 대해 알아야 할 것](https://lwn.net/Articles/250967/)        
 [소프트웨어 최적화](https://www.agner.org/optimize/)       
-[Memory Optimization](https://web.archive.org/web/20160422113037/http://www.research.scea.com/research/pdfs/GDC2003_Memory_Optimization_18Mar03.pdf)    
+[Memory Optimization](https://web.archive.org/web/20160422113037/http://www.research.scea.com/research/pdfs/GDC2003_Memory_Optimization_18Mar03.pdf)            
+[Pitfalls of Object Oriented Programming](http://harmful.cat-v.org/software/OO_programming/_pdf/Pitfalls_of_Object_Oriented_Programming_GCAP_09.pdf)           
 
 영상 :   
 
