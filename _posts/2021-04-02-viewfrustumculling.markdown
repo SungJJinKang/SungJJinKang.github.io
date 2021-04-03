@@ -23,10 +23,11 @@ categories: Doom
 
 하지만 필자는 위에 나타난 BVH같은 Accleration Structure가 아닌 다른 방법을 사용하려고 한다.     
 
-이 방법은 EA의 대표 게임엔진인 [Frostbite엔진 개발자가 발표한 내용](https://www.ea.com/frostbite/news/culling-the-battlefield-data-oriented-design-in-practice)으로 멀티스레드를 이용하는 방법이다.(아직도 이 방법을 사용하는지는 모른다).    
+이 방법은 EA의 대표 게임엔진인 [Frostbite엔진 개발자가 발표한 내용](https://www.ea.com/frostbite/news/culling-the-battlefield-data-oriented-design-in-practice)으로 Data oriented Design과 멀티 스레드를 이용하는 방법이다.(현재도 Frostbite 게임 엔진에서 이 방법을 사용하는지는 모른다).    
+
 이 방법의 가장 핵심적인 요소는 두가지 이다.       
-1. 게임 내 데이터들을 Linear(연속되게)하게 배치하여서 캐시 Hit률을 높이고 거기에 더해 SIMD사용하여 성능 향상을 노리는 것이다.    
-2. 게임 내 Entity들을 EntityBlock내에 일정한 개수만큼 나누어서 이 Entity묶음(Block)들을 서브 스레드들에 넘겨주어 해당 묶음 내 Entity들의 Culling여부를 결정하는 연산을 한다. ( Data race가 생기지 않아 매우 빠르게 연산 가능 )
+1. 게임 내 데이터들을 Linear(연속되게)하게 배치하여서 캐시 Hit률을 높이고 거기에 더해 SIMD사용하여 성능 향상을 노리는 것이다.([Data Oriented Design!!!!!](https://youtu.be/rX0ItVEVjHc))                    
+2. 게임 내 Entity들을 EntityBlock내에 일정한 개수만큼 나누어서 이 Entity묶음(Block)들을 서브 스레드들에 넘겨주어 해당 묶음 내 Entity들의 Culling여부를 결정하는 연산을 한다. ( EntityBlock간에 연관되는 데이터가 없어 Data race 대응 없이 매우 빠르게 연산 가능 )             
 
 우선 1번째 요소에 대해 살펴보자.    
 SIMD 사용에 최적화된 형태로 데이터들을 Linear하게 배치한 후 SIMD 연산을 통해 연산속도를 최대한으로 끌어내는 방법이다.      
