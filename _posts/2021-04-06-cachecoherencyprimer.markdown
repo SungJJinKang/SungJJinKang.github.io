@@ -54,7 +54,7 @@ template <typename X>
 안된다!!! 왜냐면 Vector3 뒤에 어떤 데이터가 있는지도 모르고 뒤 데이터가 float형 값 1이여야 정상적으로 연산을 할 수 있다.         
 
 그래서 조금 Tricky한 방법을 사용하려 한다.                
-Vector3 뒤에 float형 변수를 하나 넣는 것이다!!!        
+**Vector3 뒤에 float형 변수를 하나 넣는 것이다!!!**       
 그럼 우리가 필요한건 우선 16byte에 align이 되어 있어야 하고 뒤에 float형 padding이 와야한다.                 
 ```c++
 struct alignas(16) AlignedTempVec3
@@ -62,8 +62,9 @@ struct alignas(16) AlignedTempVec3
     Vector<3, float> Vec3;
     const float padding{ 1.0f };
 };
-inline static AlignedTempVec3 _AlignedTempVec3_Parameter{};
-inline static AlignedTempVec3 _AlignedTempVec3_Result{};
+
+inline thread_local static AlignedTempVec3 _AlignedTempVec3_Parameter{};
+inline thread_local static AlignedTempVec3 _AlignedTempVec3_Result;
 
 template <>
 [[nodiscard]] FORCE_INLINE Vector<3, float> operator*(const Vector<3, float>& vector) const noexcept
