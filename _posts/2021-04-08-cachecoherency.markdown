@@ -9,7 +9,11 @@ categories: ComputerScience
 의역이나 약간의 부정확한 번역이 있을 수 있으니 양해바람.      
 그리고 중요한 용어 같은 것들은 번역을 하지 않고 영어 그대로 썼다.    
 
-또한 이해를 돕기위해 필자 나름 추가적인 설명을 써두었다.       
+또한 이해를 돕기위해 필자 나름 추가적인 설명을 써두었다.      
+
+그리고 이 글을 읽은 후 이 글들도 읽어보기 바란다    
+[글 1](https://stackoverflow.com/questions/39393850/can-num-be-atomic-for-int-num)      
+[글 2](https://stackoverflow.com/questions/67034400/atomic-variable-also-require-lock-on-read-modify-store-operation)   
 
 그 동안 잘못 이해하고 있던 것들이 이 글을 통해서 한방에 정리된 느낌이다.           
 
