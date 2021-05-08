@@ -71,4 +71,5 @@ strcmp는 index를 하나씩 올려가며 첫 문자부터 끝 문자까지 한 
 
 극단적인 비교를 하였지만 이렇게 std::map과 std::unordered_map이 key값으로 int를 사용한 경우, pointer를 사용한 경우, std::string을 사용한 경우를 내부적으로 어떤 비교 함수가 사용되고 어떤 해시 함수가 사용하는 지를 알아둔다면 성능을 위해 어떤 container을 사용해야할지에 큰 도움을 줄 것이라 생각한다.     
 
-아래의 이미지는 문자열이 긴 경우 다른 문자가 문자열의 처음에 등장하는 경우, 마지막에 등장하는 경우를 std::map과 std::unordered_map의 경우를 비교한 성능 비교도이다.
+아래의 이미지는 문자열이 긴 경우 다른 문자가 문자열의 처음에 등장하는 경우, 마지막에 등장하는 경우를 std::map과 std::unordered_map의 경우를 비교한 성능 비교도이다.    
+![comparison](https://user-images.githubusercontent.com/33873804/117540476-a8250900-b04a-11eb-9434-a2d5476f902b.png)
