@@ -5,8 +5,6 @@ date:   2021-05-08
 categories: C++
 ---
 
-이렇게 차이가 나는 이유는 std::map과 std::unordered_map이 look-up을 하는 방식에서 차이가 있다.      
-
 std::map은 트리 형태로 데이터를 배치하여 찾으려는 key값과 현재 위치한 node의 key값을 비교하여 그 비교 함수의 결과에 따라 트리의 왼쪽 자식 노드로 갈지 오른쪽 자식 노드로 갈지를 결정하여 이를 반복해 원하는 key값의 node를 찾는 방식이다. 시간 복잡도로는 O(n)의 시간 복잡도를 가진다.                     
 std::unordered_map은 hash table을 이용하는 방식이다. 우선 key값을 가지고 hash value를 계산한 후 그 hash value를 인덱스로 사용하여 bucket array의 특정 element 접근한다. 그럼 이 array의 element는 linked list로 같은 hash value를 가지는 key-value pair가 저장된다. hash collision이 발생하는 경우 시간이 더 걸릴 수 있지만 기본적으로는 O(1)의 복잡도를 가진다.       
 
