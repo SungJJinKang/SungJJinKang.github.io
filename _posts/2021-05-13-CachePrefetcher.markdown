@@ -1,11 +1,11 @@
 ---
 layout: post
-title:  "Cache Prefetcher가"
+title:  "Cache Prefetcher"
 date:   2021-05-14
 categories: ComputerScience
 ---
 
-[CPPCON 영상](https://youtu.be/BP6NxVxDQIs)을 보다 Cache Prefetcher가 것에 대해 알게되어 글을 적어보겠다.     
+[CPPCON 영상](https://youtu.be/BP6NxVxDQIs)을 보다 Cache Prefetcher에 대해 알게되어 글을 적어보겠다.     
 
 프로그램의 성능을 하락시키는 주 원인은 무엇일까? 바로 메모리 Fetch이다. 그래서 CPU는 캐시와 같은 더 빠른 메모리를 도입하였는데 Cache는 사이즈가 작아 Cache에 데이터가 없을 경우 메인 메모리에서 데이터를 가져와야하는데 이를 Memory Stall이라 하며 매우 매우 느리다.       
 그래서 CPU가 어떤 데이터를 필요로 할 때 그 데이터가 캐시에 있을 확률을 높이는 것이 프로그램의 성능과 직결된다.       
