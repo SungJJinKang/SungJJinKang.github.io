@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Cache Prefetcher가"
-date:   2021-05-13
+date:   2021-05-14
 categories: ComputerScience
 ---
 
@@ -65,4 +65,11 @@ void Randomly()
 중요한건 RowFirst 방식은 한 행씩 우선적으로 접근하여서 Row major 기반의 CPP에서 한 캐시라인에 있는 데이터를 연속적으로 접근하여서 Cache miss를 최대한 줄였다.       
 반면 ColumnFirst와 Randomly 함수는 Cache Line을 무시하고 매 iteration마다 서로 다른 캐시라인에 접근하였다.     
 얼핏보면 ColumnFirst와 Randomly 두 함수의 성능상의 차이는 없을꺼 같아보인다.    
-그럼 벤치마크를 보자.       
+
+그럼 벤치마크를 보자. ( 벤치마크는 컴파일러 옵션의 Optimization option을 모두 끈 상태로 진행되었다 )
+
+<img width="434" alt="20210514001711" src="https://user-images.githubusercontent.com/33873804/118149673-bb6e1500-b44c-11eb-8de5-b22486d77f77.png">     
+
+Randomly 방식이 ColumnFirst 방식보다 훨씬 느리다.      
+이는 위에서 배운 Cache Prefetch 때문이다.       
+ColumnFirst 함수는 일정한 stride(간격)마다 데이터에 접근한다는 것을 CPU가 인지하고 다음 Column의 데이터를 미리 fetch하였기 때문에 Randomly 함수에 비해 훨씬 빠른 것이다.      
