@@ -5,7 +5,9 @@ date:   2021-05-14
 categories: ComputerScience
 ---
 
-[CPPCON 영상](https://youtu.be/BP6NxVxDQIs)을 보다 Branch Prediction에 대해 알게되어 글을 적어보겠다.     
+[CPPCON 영상](https://youtu.be/BP6NxVxDQIs)을 보다 Branch Prediction에 대해 알게되어 글을 적어보겠다.   
+
+( 이 글의 모든 벤치마크는 x64 msvc 컴파일러에서 연산된 결과이다. )        
  
 - Cache Coherency -            
 
@@ -102,14 +104,14 @@ atomicVersion은 멀티스레드로 각 스레드가 a++를 각자 concurrent하
 lockingVersion은 각 thread에 작업을 할당했지만 결국 하나의 thread에서 4번의 loop를 하는 것과 차이가 없다.       
 
 얼핏보면 atomicVersion이 multi thread하게 동작하니 훨씬 빠를 것 처럼 보인다.      
-벤치 마크를 보자.     
+벤치 마크를 보자. ( 벤치마크는 컴파일러 옵션의 Optimization option을 모두 끈 상태로 진행되었다 )        
 
 ```
 ---------------------------------------------------------
 Benchmark               Time             CPU   Iterations
 ---------------------------------------------------------
-atomicVersion    11374094 ns       296875 ns         1000
-lockingVersion    4185620 ns        93750 ns         1000
+atomicVersion    11870546 ns       218750 ns         1000
+lockingVersion    5229011 ns       250000 ns         1000
 ```
 
 놀랍게도 lockingVersion이 훨씬 더 빠르다. 이 이유는 Cache coherency 때문이다.     
@@ -246,10 +248,10 @@ static void ThreadCount4(benchmark::State& state)
 -------------------------------------------------------
 Benchmark             Time             CPU   Iterations
 -------------------------------------------------------
-ThreadCount1    1156686 ns        45312 ns        10000
-ThreadCount2    5062688 ns        62500 ns         1000
-ThreadCount3    8769786 ns       140625 ns         1000
-ThreadCount4   11941231 ns       265625 ns         1000
+ThreadCount1    1439046 ns        32812 ns        10000
+ThreadCount2    5483737 ns       125000 ns         1000
+ThreadCount3    8620710 ns       140625 ns         1000
+ThreadCount4   11841399 ns       312500 ns         1000
 ```
 
 ThreadCount에 따라 엄청난 실행 시간 차이를 보인다.    
@@ -266,7 +268,7 @@ struct alignas(64) aligned_atomic_int
     std::atomic<int> atomic_value;
 };
 
-static void ThreadCount2(benchmark::State& state)
+static void ThreadCount2_Aligned(benchmark::State& state)
 {
     aligned_atomic_int a;
     aligned_atomic_int b;
@@ -295,13 +297,13 @@ aligned_atomic_int라는 새로운 struct를 만들었는 데 이 struct는 std:
 
 벤치마크 결과를 보자.      
 ```
----------------------------------------------------------------
-Benchmark                     Time             CPU   Iterations
----------------------------------------------------------------
-ThreadCount1_Aligned     900984 ns        34877 ns         8960
-ThreadCount2_Aligned    1531791 ns        98349 ns         7467
-ThreadCount3_Aligned    2142163 ns       117188 ns         6400
-ThreadCount4_Aligned    2780243 ns       218750 ns         1000
+--------------------------------------------------------------------
+Benchmark               Time             CPU              Iterations
+--------------------------------------------------------------------
+ThreadCount1_Aligned    1447722 ns        41851 ns         7467
+ThreadCount2_Aligned    2150025 ns        43248 ns        11200
+ThreadCount3_Aligned    2986332 ns       171875 ns         1000
+ThreadCount4_Aligned    3772771 ns       187500 ns         1000
 ```
 
 이번에도 ThreadCount에 따라 약간의 실행 시간 차이를 보이지만 이전과 비교해서는 엄청나게 개선이 되었고 각 ThreadCount간 실행 시간 차이가 그렇게 크지 않다.       
