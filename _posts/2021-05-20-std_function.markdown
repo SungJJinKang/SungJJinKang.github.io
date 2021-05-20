@@ -5,4 +5,6 @@ date:   2021-05-20
 categories: C++
 ---
 
-어떤 함수를 호출할지 알 수 없기 때문에(내부적으로 함수포인터로 구현) Memory Stall에 대비한 Instruction Reordering, Cache prefetcher의 이점을 못얻음
+
+
+references : [https://stackoverflow.com/questions/18453145/how-is-stdfunction-implemented](https://stackoverflow.com/questions/18453145/how-is-stdfunction-implemented), [https://stackoverflow.com/questions/5057382/what-is-the-performance-overhead-of-stdfunction](https://stackoverflow.com/questions/5057382/what-is-the-performance-overhead-of-stdfunction), [https://stackoverflow.com/questions/18608888/c11-stdfunction-slower-than-virtual-calls](https://stackoverflow.com/questions/18608888/c11-stdfunction-slower-than-virtual-calls), [https://stackoverflow.com/questions/67615330/why-stdfunction-is-too-slow-is-cpu-cant-utilize-instruction-reordering](https://stackoverflow.com/questions/67615330/why-stdfunction-is-too-slow-is-cpu-cant-utilize-instruction-reordering), 
