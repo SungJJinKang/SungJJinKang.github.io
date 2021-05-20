@@ -107,7 +107,7 @@ int main()
   
 그럼 이제 "Hurry up and Wait"와 "Spurious Wake up" 문제에 대해 알아보겠다. 
 
-"Hurry up ans Wait" 문제는 위의 코드에서 바로 확인할 수 있다.  
+**"Hurry up ans Wait"** 문제는 위의 코드에서 바로 확인할 수 있다.  
 
 ```c++
 void worker_thread()
@@ -156,7 +156,7 @@ void worker_thread()
 이렇게 하면 wake up 쓰레드는 mutex가 unlock된 후에야 비로소 Lock을 획득하게 된다. 불필요하게 중간에 다시 blocking되는 일이 발생할 가능성을 없앤 것이다.         
 
 
-다음으로 "Spurious Wake up" 문제에 대해 설명해보겠다.      
+다음으로 **"Spurious Wake up"** 문제에 대해 설명해보겠다.      
 "Spurious Wake up" 즉 가짜 Wake up 문제는 위의 "Hurry up and Wait" 문제에서 worker_thread의 **notify 전 mutex를 unlock한 경우 발생할 수 있는 문제이다.** ( 참 아이러니다..... )     
 이 가짜 Wake up 문제는 간단한 예시를 들어 설명하겠다. 
 우선 이번에는 두개의 worker_thread가 어떤 queue integer값을 랜덤으로 넣는 함수라고 생각하자.
