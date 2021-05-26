@@ -12,6 +12,7 @@ plainwhite:
   name: SungJin Kang
   tagline: Programmer
   date_format: "%b %-d, %Y"
+  disqus_shortname: sungjinkangblog
   sitemap: true # set to true to generate sitemap.xml content
   search: true # set to true to enable searchbar
   dark_mode: true # set to true to add dark mode toggle
@@ -23,7 +24,7 @@ plainwhite:
     - post
   # generate social links in footer
   social_links:
-    #twitter: samarsault
+    twitter: SungJinKang6
     github:  SungJJinKang
     #linkedIn: in/samarsault
     #rss: rss
@@ -65,5 +66,3 @@ url: "https://sungjjinkang.github.io/." # the base hostname & protocol for your 
 highlighter: rouge
 future: true
 
-disqus_url: sungjinkangblog.disqus.com
-disqus_id: sungjinkangblog
