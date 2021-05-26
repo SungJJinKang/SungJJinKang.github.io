@@ -64,3 +64,6 @@ url: "https://sungjjinkang.github.io/." # the base hostname & protocol for your 
 
 highlighter: rouge
 future: true
+
+disqus_url: sungjinkangblog.disqus.com
+disqus_id: sungjinkangblog
