@@ -14,7 +14,7 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 ~~[3D Collision](https://gdbooks.gitbooks.io/3dcollisions/content/)~~      
 ~~[Raycast에 대한 아주 기본적인 이해](https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection)~~     
 ~~[Dynamic BVH](https://box2d.org/files/ErinCatto_DynamicBVH_GDC2019.pdf)~~           
-[Collision Query](https://docs.unity3d.com/Packages/com.unity.physics@0.3/manual/collision_queries.html)       
+~~[Collision Query](https://docs.unity3d.com/Packages/com.unity.physics@0.3/manual/collision_queries.html)~~       
 
 [C++ 표준 stl이 왜 구린가?? EASTL의 장점](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html#better_allocator_model)       
 [EASTL Allocator](http://ohyecloudy.com/pnotes/archives/250/)       
@@ -26,19 +26,17 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 [Graphics Pipline](https://fgiesen.wordpress.com/2011/07/09/a-trip-through-the-graphics-pipeline-2011-index/)       
 
 [Occulusion culling 1](https://youtu.be/TG308pW0GY8)        
-[Occulusion culling 3](https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful)      
-[Occulusion culling 4](http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch29.html)     
-[Occulusion culling 5](https://mkblog.co.kr/2019/09/24/gpu-occlusion-culling-early-z-vs-occlusion-queries/)      
-[Occulusion culling 5](https://megayuchi.com/2017/10/27/5068/)         
+~~[Occulusion culling 3](https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful)~~            
+~~[Occulusion culling 4](http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch29.html)~~             
+~~[Occulusion culling 5](https://mkblog.co.kr/2019/09/24/gpu-occlusion-culling-early-z-vs-occlusion-queries/)~~        
+~~[Occulusion culling 5](https://megayuchi.com/2017/10/27/5068/)~~                 
 
 ~~[Frustum culling 0](https://cgvr.informatik.uni-bremen.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html)~~             
 ~~[Frustum culling 1](https://www.braynzarsoft.net/viewtutorial/q16390-34-aabb-cpu-side-frustum-culling)~~       
 ~~[Frustum culling 2](https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/)~~       
-[How To Make FrustumCulling Faster](https://www.gamedev.net/forums/topic/626778-whats-out-there-fast-frustum-culling/)         
+~~[How To Make FrustumCulling Faster](https://www.gamedev.net/forums/topic/626778-whats-out-there-fast-frustum-culling/)~~                   
 
 [Realtime Ray Tracing and Interactive Global Illumination, Ingo Wald, 2004](http://www.sci.utah.edu/~wald/PhD/wald_phd.pdf)
-
-[Performance Optimization, SIMD and Cache](https://youtu.be/Nsf2_Au6KxU)     
 
 [ntrinsics: Low-level engine development with Burst - Unite Copenhagen](https://youtu.be/BpwvXkoFcp8)                  
 
@@ -46,13 +44,12 @@ Fundamentals of Computer Graphics ( Steve Marschner, ...)
 ~~[Memory Alignment2](https://developer.ibm.com/technologies/systems/articles/pa-dalign/)~~                 
 ~~[Gallery of Processor Cache Effects](http://igoro.com/archive/gallery-of-processor-cache-effects/)~~                
 [프로그래머가 메모리에 대해 알아야 할 것](https://lwn.net/Articles/250967/)        
-[소프트웨어 최적화](https://www.agner.org/optimize/)       
+[소프트웨어 최적화 모음!!!](https://www.agner.org/optimize/)       
 [Memory Optimization](https://web.archive.org/web/20160422113037/http://www.research.scea.com/research/pdfs/GDC2003_Memory_Optimization_18Mar03.pdf)            
 [Pitfalls of Object Oriented Programming](http://harmful.cat-v.org/software/OO_programming/_pdf/Pitfalls_of_Object_Oriented_Programming_GCAP_09.pdf)           
 
 영상 :   
-
-[원신 렌더링 기법들](https://youtu.be/00QugD5u1CU)      
+   
 [CppCon 2016: Nicolas Fleury “Rainbow Six Siege: Quest for Performance"](https://www.youtube.com/watch?v=tD4xRNB0M_Q)   
 [CppCon 2014: Nicolas Fleury "C++ in Huge AAA Games"](https://youtu.be/qYN6eduU06s)   
 [Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next”](https://youtu.be/6hC9IxqdDDw)   
