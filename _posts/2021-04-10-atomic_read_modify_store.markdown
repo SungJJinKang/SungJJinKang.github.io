@@ -23,6 +23,7 @@ X84 초기에는 메모리 공유 버스에 Lock을 걸어서 Read-Modify-Store�
 
 -----------------------------------------------------
 
+[https://stackoverflow.com/questions/38447226/atomicity-on-x86/38465341#38465341](https://stackoverflow.com/questions/38447226/atomicity-on-x86/38465341#38465341)                 
 [https://stackoverflow.com/questions/39393850/can-num-be-atomic-for-int-num](https://stackoverflow.com/questions/39393850/can-num-be-atomic-for-int-num)       
 [https://stackoverflow.com/questions/67034400/atomic-variable-also-require-lock-on-read-modify-store-operation](https://stackoverflow.com/questions/67034400/atomic-variable-also-require-lock-on-read-modify-store-operation)        
 [https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)        
