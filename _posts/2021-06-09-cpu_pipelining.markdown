@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "CPU Pipelining"
+title:  "CPU Pipelining ( 작성 예정 )"
 date:   2021-06-09
 categories: ComputerScience
 ---

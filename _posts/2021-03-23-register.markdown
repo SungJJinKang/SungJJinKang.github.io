@@ -1,8 +1,0 @@
----
-layout: post
-title:  "레지스터 종류, 역할 정리"
-date:   2021-03-23
-categories: C++
----
-
-추후 작성 예정 

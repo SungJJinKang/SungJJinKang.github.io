@@ -15,12 +15,20 @@ categories: C++
 
 --------------------------------------
 
-## new[] 대신 std::unique_ptr을 사용하자.      
-
-보통 dynamic한 array를 사용하기 위해서는 정말 plain 하게 new로 배열을 allocate한다. 하지만 프로그래머가 실수로 memory leak을 발생시킬 가능성이 높다. std::vector가 대안이 될 수 있지만 vector를 reserve 해주지 않는 경우 reallocation을 할 가능성이 있다. 그래서 고정된 사이즈의 배열을 dynamic 하게 allocate하는 경우에는 unique_ptr을 사용하여 memory leak 발생가능성을 줄이도록 하자.
+## vector은 무조건 reserve하자.      
+   
+std::vector을 생성할 때 "std::vector(1000)" 이런 식으로 vector을 생성하는 것은 정말 미친 짓이다.        
+1000개의 item을 위한 메모리를 할당 후 모든 item에 대해 default-initilization을 하기 때문이다.     
+물론 이 동작을 원하는 경우에는 상관없다.                   
 ```c++
-std::unique_ptr<int[]> variable
-```       
+std::vector<int> a(1000); // 1000개의 int item을 모두 0으로 초기화
+```
+
+무조건 "std::vector.reserve"를 사용하자. std::vector.reserve는 메모리 할당은 하지만 initialization을 수행하지 않는다.                
+```c++
+std::vector<int> variable;
+variable.reserve(1000);
+```
 
 --------------------------------------
 
@@ -36,5 +44,4 @@ enum class를 사용하자. 무심코 형변환하는 일이 없어진다. enum�
 
 --------------------------------------
 
-## vector은 무조건 reserve하자.   
-vector 사이즈가 커지다보면 reallocation이 발생하는 데 만약 move semantic이 제대로 정의 되어있지 않으면 overhead가 매우 커지게 된다. 그래서 가능하다면 vector은 생성 후 reserve를 하자.    
+

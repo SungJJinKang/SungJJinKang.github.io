@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Fetch-Decode-Execute Instruction Cycle"
-date:   2021-06-07
+date:   2021-06-09
 categories: ComputerScience
 ---
 
@@ -38,6 +38,7 @@ Decode 단계에서는 현재 명령어 레지스터(CIR)에 저장되어 있는
 **유효한 주소 읽기 단계** :    
 이 단계를 이해하기 위해서는 주소 모드에 대한 이해가 필요하다.            
 [이 글](https://sungjjinkang.github.io/computerscience/2021/06/09/addressing_mode.html)을 읽어보기 바란다.         
+유효한 주소란 실제 명령어가 필요로 하는 데이터가 저장되어 있는 주소를 말한다.       
 
 디코딩 된 명령어가 메모리 명령어(메모리와 레지스터 사이의 데이터를 읽거나 쓰는 명령어)라면 Execute 단계는 다음 CPU 클락에 수행된다.    
 만약 메모리 명령어가 간접 주소(Indirect Mode)를 가지고 있는 경우 피연산자의 주소를 읽고 그걸 가지고 메인 메모리로부터 피연산자 데이터를 읽어와서 메모리 데이터 레지스터(MDR)에 저장된다. ( 즉 CPU Clock으로는 3번의 CPU Clock이 필요한 것이다. 피연산자 주소 읽기(간접 주소) - 피연산자 데이터 읽기 - 메모리 데이터 레지스터에 피연산자 데이터 복사)                          
