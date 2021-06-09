@@ -5,3 +5,5 @@ date:   2021-06-07
 categories: ComputerScience
 ---
 P
+
+references : [https://stackoverflow.com/questions/36681920/cpu-and-gpu-differences](https://stackoverflow.com/questions/36681920/cpu-and-gpu-differences)      
