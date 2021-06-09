@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Fetch-Decode-Execute Instruction Cycle"
-date:   2021-06-09
+date:   2021-06-07
 categories: ComputerScience
 ---
 
@@ -32,33 +32,16 @@ Decode 단계에서는 현재 명령어 레지스터(CIR)에 저장되어 있는
 
 **유효한 주소 읽기 단계** :    
 이 단계를 이해하기 위해서는 주소 모드에 대한 이해가 필요하다.            
-[이 글](https://sungjjinkang.github.io/ComputerScience/2021/06/09/addressing_mode.html)을 읽어보기 바란다.         
+[이 글](https://sungjjinkang.github.io/computerscience/2021/06/09/addressing_mode.html)을 읽어보기 바란다.         
 
 디코딩 된 명령어가 메모리 명령어(메모리와 레지스터 사이의 데이터를 읽거나 쓰는 명령어)라면 Execute 단계는 다음 CPU 클락에 수행된다.    
-명령어가 간접 주소를 가지고 있는 경우 유효한 주소가 메인 메모리로부터 읽어지고 요구되는 데이터는 메모리로부터 읽어서 메모리 데이터 레지스터(MDR)에 저장된다.      
-만약 명령어가 직접 주소인 경우 이 단계(유요한 주소 읽기)에서는 아무것도 하지 않는다.     
-만약 이것이 IO 명령어이거나 레지스터 명령어인 경우 현재 CPU 클락에서 수행이 된다.     
+만약 메모리 명령어가 간접 주소(Indirect Mode)를 가지고 있는 경우 피연산자의 주소를 읽고 그걸 가지고 메인 메모리로부터 피연산자 데이터를 읽어와서 메모리 데이터 레지스터(MDR)에 저장된다. ( 즉 CPU Clock으로는 3번의 CPU Clock이 필요한 것이다. 피연산자 주소 읽기(간접 주소) - 피연산자 데이터 읽기 - 메모리 데이터 레지스터에 피연산자 데이터 복사)                          
+만약 명령어가 직접 주소(Direct Address Mode)인 경우 이 단계(유요한 주소 읽기)에서는 아무것도 하지 않는다.       
+만약 명령어가 IO 명령어이거나 레지스터 명령어인 경우 현재 CPU 클락에서 Execute 단계가 수행이 된다.      
 
 **Execute 단계** :           
 CPU의 컨트롤 유닛(CU)는 디코드 된 명령어를 컨트롤 시그널로 관련된 CPU 유닛으로 전송하는데 이는 명령어에 의해 요구되는 행동을 수행하기 위함이다. 예를 들면 레지스터에서 값 읽기, 다시 레지스터에 값 쓰기, 수학 연산을 위해 ALU에 전송을 하고 다시 레지스터 쓰기와 같은 것들이 있다. 만약 ALU가 연관이 된 명령어인 경우 ALU는 다시 컨트롤 유닛에 상태 시그널을 전송한다. 그 연산으로부터의 결과는 메인 메모리에 저장되거나 외부 장치로 보내진다. ALU로부터의 피트백을 바탁으로 프로그램 카운터(PC)는 다음으로 Fetch 되어야할 명령어의 주소를 업데이트한다.       
 
 **위와 같은 4가지 단계가 계속 반복된다.**      
-
-
-
-**Decode 단계에 대한 자세한 설명** :      
-
-현대 CPU는 내부적으로는 마이크로코드라고 불리는 많은 명령어를 실행한다.        
-로우 레벨 명령어로 쓰여진 이 마이크로코드는 하이 레벨 명령어를 수행하기 위해 사용된다.          
-우리가 흔히 어셈블러를 통해 보는 명령어들은 실은 여러 마이크로코드들을 묶어둔(추상화한) 하이 레벨 명령어이다.            
-
-
-Modern Intel CPUs actually implement many instructions using so-called microcode. Microcode consists of code written in a simpler low-level instruction set used to implement high-level instructions (for example, a rep-prefixed instruction might be implemented as a microcoded loop). Because this effectively requires the CPU itself to "compile" your input instruction stream into microcode, one can imagine that it is this microcode that is being cached (to avoid the overhead of repeatedly compiling it).
-
-Of course, the precise details of caching "decoded" instructions varies greatly by processor, so no general statement is possible.
-
-
-인코딩 된 명령어 ? 디코딩된 명령어?
-decode 단계에서는 구체적으로 어떤 것을 해석해서 어떤 것을 도출하는 과정인가?     
 
 references : [https://en.wikipedia.org/wiki/Instruction_cycle](https://en.wikipedia.org/wiki/Instruction_cycle), [https://stackoverflow.com/questions/30061932/what-is-the-decoded-form-of-an-instruction](https://stackoverflow.com/questions/30061932/what-is-the-decoded-form-of-an-instruction) , [https://en.wikipedia.org/wiki/Microcode](https://en.wikipedia.org/wiki/Microcode)
