@@ -58,6 +58,8 @@ std::unordered_map<std::string, std::chrono::time_point<std::chrono::high_resolu
 생각을 해보자. D_START_PROFILING("Update", eProfileLayers::CPU);과 D_END_PROFILING("Update"); 를 호출하면 두 string literal "Update"는 unordered_map에서 일치하는 value를 찾기 위해 key값으로 사용된다. 그런데 여기서 unorderd_map의 키 값은 std::string이라서 내부적으로 자동으로 std::string 오브젝트가 생성되어 이 키값을 기존의 unordered_map의 데이터와 비교를 하는 것이다.      
 그렇게 되면 매 D_START_PROFILING, D_END_PROFILING마다 string 오브젝트를 생성하고 그 안에 array에 literal string을 복사하는 과정을 매번 해주어야 하는 것이다. 적지않은 오버헤드이다.    
 
+또한 std::string을 키 값으로 사용할 시 매번 std::string의 hash value를 구하기 위하 O(n)의 시간복잡도를 들여 hash value를 구한다. 이 또한 불필요한 연산이다. ( 자세한건 [이 글](https://sungjjinkang.github.io/c++/2021/05/08/unordered_map_vs_map.html)을 참고하자. )         
+
 그래서 해결책으로 그냥 literal string의 address(char pointer)를 key값으로 사용하는 것이다. ( 참고로 std::hash는 c string 즉 char pointer에 대한 hash specialization을 제공하지 않아 키 값을 char pointer로 사용하는 경우 그냥 4byte 포인터 주소를 비교하는 작업을 한다. )      
 ```c++
 std::unordered_map<const char*, std::chrono::time_point<std::chrono::high_resolution_clock>> _ProfilingData{};
