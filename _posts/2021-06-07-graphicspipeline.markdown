@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "그래픽스 파이프라인 1탄 - 목차 ( 번역 )"
+title:  "그래픽스 파이프라인과 GPU 아키텍쳐 1탄 - 목차 ( 번역 )"
 date:   2021-06-07
 categories: ComputerGraphics
 ---

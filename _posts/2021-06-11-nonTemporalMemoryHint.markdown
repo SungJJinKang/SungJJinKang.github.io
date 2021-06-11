@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Caching of Temporal vs. Non-Temporal Data"
+title:  "Non-Temporal Memory Hint"
 date:   2021-06-11
 categories: ComputerScience
 ---
