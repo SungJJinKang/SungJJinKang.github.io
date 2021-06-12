@@ -30,7 +30,7 @@ _NODISCARD inline size_t _Fnv1a_append_bytes(size_t _Val, const unsigned char* c
 이를 이해하기 위해서 그 전에 std::map의 key값을 문자열로 사용한 경우 내부적으로 어떻게 동작하는지를 우선 알아보자.     
 
 이해를 돕기 위해 std::map이 어떻게 작동하는지 간단히 설명하겠다.           
-**std::map은 hash값을 계산할 필요는 없지만 tree구조의 node들을 이동하며 key값을 비교하여 왼쪽 자식 노드를 택할지, 오른쪽 자식 노드를 택할지를 결정한다. 대걔 이렇게 node를 한 단계식 찾아가는 동작으로 인해 O(n)의 시간 복잡도를 가져 std::map이 std::unordered_map보다 느리다고 여겨진다.**                
+**std::map은 hash값을 계산할 필요는 없지만 tree구조의 node들을 이동하며 key값을 비교하여 왼쪽 자식 노드를 택할지, 오른쪽 자식 노드를 택할지를 결정한다. 대걔 이렇게 node를 한 단계식 찾아가는 동작으로 인해 O(log(n))의 시간 복잡도를 가져 std::map이 std::unordered_map보다 느리다고 여겨진다.**                
 아래는 흔히 볼 수 있는 문자열 비교 함수이다.       
 ```
 _NODISCARD static _CONSTEXPR17 int compare(_In_reads_(_Count) const _Elem* _First1,
