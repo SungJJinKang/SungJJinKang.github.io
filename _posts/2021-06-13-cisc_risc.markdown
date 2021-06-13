@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "CISV VS RISV ( 작성 예정 )"
+date:   2021-06-13
+categories: ComputerScience
+---
+
+references : [https://cs.stanford.edu/people/eroberts/courses/soco/projects/risc/risccisc/](https://cs.stanford.edu/people/eroberts/courses/soco/projects/risc/risccisc/)     
