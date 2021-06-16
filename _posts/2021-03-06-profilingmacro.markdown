@@ -75,4 +75,6 @@ C++ 표준에서는 똑같은 literal string들을 한번만 allocate하여 두�
 ```c++
 using key_type = typename std::conditional_t<"TEST LITEAL STRING OVERLAP" == "TEST LITEAL STRING OVERLAP", const char*, std::string>;
 ```
-위의 코드는 컴파일 타임에 결정되는 데 두 literal string이 같은 address인 경우 const char*을 key 타입으로 사용한다. ( 사실 똑같은 string literal이 다른 translation unit에 속하는 경우 등 다양한 경우를 테스트 해봐야하는 데 그냥 현시점에서는 msbuild가 literal string overlap을 지원하니 이렇게만 하고 넘어가겠다. )
+위의 코드는 컴파일 타임에 결정되는 데 두 literal string이 같은 address인 경우 const char*을 key 타입으로 사용한다. ( 사실 똑같은 string literal이 다른 translation unit에 속하는 경우 등 다양한 경우를 테스트 해봐야하는 데 그냥 현시점에서는 msbuild가 literal string overlap을 지원하니 이렇게만 하고 넘어가겠다. )              
+
+여담으로 여기서 enum을 쓰면 당연히 더 빠르겠지만 매번 enum을 만들기는 귀찮다. 어차피 디버그 모드에서만 호출되는 코드이니 어느 정도 성능 하락을 감수하면서 최선의 방법을 찾으려고 노력했다.        
