@@ -2,7 +2,7 @@
 layout: post
 title:  "EASTL 분석하기 1탄 - 개요"
 date:   2021-06-10
-categories: C++, EASTL
+categories: C++ EASTL
 ---
 
 오늘부터 EASTL에 대해 분석해 볼 예정이다.      
