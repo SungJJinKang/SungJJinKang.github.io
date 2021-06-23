@@ -19,6 +19,9 @@ categories: C++
 EASTL의 container의 작동 원리부터 내부 메모리 layout까지 상세하게 다루어 볼 예정이다.     
 또한 표준 C++ STL과 EASTL의 차이점을 비교하면서 EASTL이 게임 업계에서 많이 사용되는 이유에 대해서도 알아볼 것이다.       
 
+또한 EASTL 문서에 있는 [Best Practice](https://eastl.docsforge.com/master/best-practices/)를 한번 읽어 보길 추천한다.         
+EASTL뿐만 아니라 표준 STL에서도 알면 성능 향상에 매우 도움이 되는 좋은 Practice들이 소개되어 있다.         
+
 [EASTL Git repo](https://github.com/electronicarts/EASTL)
 
 

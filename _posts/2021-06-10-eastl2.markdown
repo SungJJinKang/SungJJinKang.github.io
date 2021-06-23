@@ -5,6 +5,9 @@ date:   2021-06-08
 categories: C++
 ---
 
+우선 EASTL의 Allocator에 알기 위해서는 STL 표준 Allocator의 Design과 장단점에 대해 알아야 한다고 생각한다. 왜냐하면 EASTL의 Allocator은 STL Allocator의 문제점을 보완하는 방식으로 디자인 되었기 때문이다.      
+
+
 표준 C++ STL
 
 Each STL container needs to have an allocator templated on container type T associated with it. The problem with this is that allocators for containers are defined at the class level and not the instance level. This makes it painful to define custom allocators for containers and adds to code bloat. Also, it turns out that the containers don't actually use allocator<t> but instead use allocator<T>::rebind<U>::other. Lastly, you cannot access this allocator after the container is constructed. There are some good academic reasons why the C++ standard works this way, but it results in a lot of unnecessary pain and makes concepts like memory tracking much harder to implement.</t>
