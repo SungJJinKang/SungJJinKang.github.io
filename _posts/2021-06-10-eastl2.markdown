@@ -2,7 +2,7 @@
 layout: post
 title:  "EASTL 분석하기 2탄 - Allocator ( 할당자 ) ( 작성 예정 )"
 date:   2021-06-08
-categories: C++
+categories: C++ EASTL
 ---
 
 우선 EASTL의 Allocator에 알기 위해서는 STL 표준 Allocator의 Design과 장단점에 대해 알아야 한다고 생각한다. 왜냐하면 EASTL의 Allocator은 STL Allocator의 문제점을 보완하는 방식으로 디자인 되었기 때문이다.      

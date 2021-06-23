@@ -2,7 +2,7 @@
 layout: post
 title:  "ViewFrustum Culling(렌더링 빨리 하기)"
 date:   2021-04-02
-categories: Doom
+categories: Doom C++ ComputerGraphics Game
 ---
 
 어떻게 하면 렌더링을 빨리 할 수 있을 까?? 다양한 연구와 자료들을 공부하였다.    

@@ -2,7 +2,7 @@
 layout: post
 title:  "텍스쳐 압축을 위한 힘든 여정"
 date:   2021-03-02
-categories: Doom3
+categories: Doom3 Game C++
 ---
 
 지금까지는 텍스쳐를 압축없이 png 그대로 가져다 써왔다. 언젠가는 텍스쳐 압축을 해야겠다는 생각은 하였는 데 때가 된 것 같다.      

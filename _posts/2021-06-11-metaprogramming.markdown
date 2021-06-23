@@ -2,7 +2,7 @@
 layout: post
 title:  "메타프로그래밍이란?"
 date:   2021-06-11
-categories: C++
+categories: ComputerScience C++
 ---
 
 메타 프로그래밍은 간단히 설명하면 **어떤 하나의 코드를 작성해서 다른 코드를 작성하는 것**이다.             

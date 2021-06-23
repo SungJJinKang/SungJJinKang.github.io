@@ -2,7 +2,7 @@
 layout: post
 title:  "어떻게 GPU는 DRAM에 있는 데이터에 접근하는가?"
 date:   2021-06-21
-categories: ComputerScience
+categories: ComputerScience ComputerGraphics
 ---
 
 어떻게 GPU는 DRAM에 있는 데이터에 접근하는가?  

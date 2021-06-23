@@ -2,7 +2,7 @@
 layout: post
 title:  "프로파일링 매크로 최적화하기(literal string overlap)"
 date:   2021-03-05
-categories: C++
+categories: C++ Doom Game
 ---
 
 현재 진행 중인 프로젝트에는 프로파일링을 도와주는 코드가 있다. 
