@@ -68,15 +68,15 @@ int main()
     std::list<float> list1;
 }
 ```
-위의 코드에서 컴파일러는 allocator<int>와 allocator<float> 두개의 타입을 만든다. 그 만큼 코드 사이즈가 늘어나고 컴파일 타임도 늦어진다.         
+위의 코드에서 컴파일러는 allocator\<int\>와 allocator\<float\> 두개의 타입을 만든다. 그 만큼 코드 사이즈가 늘어나고 컴파일 타임도 늦어진다.         
      
 
-또 다른 문제는 std::allocator의 rebind 구조체 문제이다. 이 allocator<T>::rebind<U>는 컨테이너 내에서 저장하는 item의 타입이 아닌 다른 타입이 필요할 때 Allocator로 사용된다. 예를 들면 std::list를 생각해보면 std::list는 양방향 링크드 리스트이기 떄문에 각 item과 다른 노드에 대한 포인터를 가지는 node 타입이 필요하다. 그런데 이 포인터의 타입은 allocator<T>로 할당하지 못한다. 그래서 allocator<T> 타입 내에 rebind<U>라는 구조체를 통해 할당하는 것이다.         
-바로 이 rebind<U> 코드가 std::allocator가 욕을 먹는 원흉이라 할 수 있다!!!!          
-std::list의 경우에는 내부적으로 node를 할당하기 위해 item 타입에 따라 std::allocator<T>rebind<U> 타입을 하나 더 만드는 것이다.     
+또 다른 문제는 std::allocator의 rebind 구조체 문제이다. 이 allocator\<T\>::rebind\<U\>는 컨테이너 내에서 저장하는 item의 타입이 아닌 다른 타입이 필요할 때 Allocator로 사용된다. 예를 들면 std::list를 생각해보면 std::list는 양방향 링크드 리스트이기 떄문에 각 item과 다른 노드에 대한 포인터를 가지는 node 타입이 필요하다. 그런데 이 포인터의 타입은 allocator\<T\>로 할당하지 못한다. 그래서 allocator\<T\> 타입 내에 rebind\<U\>라는 구조체를 통해 할당하는 것이다.         
+바로 이 rebind\<U\> 코드가 std::allocator가 욕을 먹는 원흉이라 할 수 있다!!!!          
+std::list의 경우에는 내부적으로 node를 할당하기 위해 item 타입에 따라 std::allocator\<T\>rebind\<U\> 타입을 하나 더 만드는 것이다.     
 ```c++
-allocator<int>::rebind<_Alnode>
-allocator<float>::rebind<_Alnode>
+allocator\<int\>::rebind<_Alnode>
+allocator\<float\>::rebind<_Alnode>
 ```
 이렇게 말이다. 코드 사이즈가 수도 없이 커지는 것이다.            
 
