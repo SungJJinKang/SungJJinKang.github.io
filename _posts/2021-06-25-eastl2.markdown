@@ -75,8 +75,8 @@ int main()
 바로 이 rebind\<U\> 코드가 std::allocator가 욕을 먹는 원흉이라 할 수 있다!!!!          
 std::list의 경우에는 내부적으로 node를 할당하기 위해 item 타입에 따라 std::allocator\<T\>rebind\<U\> 타입을 하나 더 만드는 것이다.     
 ```c++
-allocator\<int\>::rebind<_Alnode>
-allocator\<float\>::rebind<_Alnode>
+allocator<int>::rebind<_Alnode>
+allocator<float>::rebind<_Alnode>
 ```
 이렇게 말이다. 코드 사이즈가 수도 없이 커지는 것이다.            
 
