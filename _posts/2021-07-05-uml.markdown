@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "설계를 할 때 명심해야할 것"
+date:   2021-07-05
+categories: DesignPattern
+---
+
+

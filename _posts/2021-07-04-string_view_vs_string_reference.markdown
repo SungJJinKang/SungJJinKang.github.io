@@ -41,11 +41,9 @@ std::string_view가 const std::string& 보다 빠른 **두번째 이유**는 std
 
 사실 이건 극단적인 케이스다. 그렇지만 어찌되었든 substring은 가지고 놀 때 std::string_view는 많은 성능 향상을 가져다 준다.             
 
-std::string_view을 사용한다 하면 std::string_view를 사용했을 때 우리가 손해를 보는 것이 무엇이냐를 고민해 보아야 하는데 그것이 그렇게 크지 않다.        
+둘 중 어느 것을 선택할지를 결정할 때는 std::string_view를 사용했을 때 단점을 알면 된다. 단점이 그렇게 많지는 않지만 몇가지 있다.         
 
-무엇이 있는지 알아보자.      
-
-너는 null termination ('\0')을 잃는다. 만약 같은 문자열이 null terminator을 요구하는 3개의 함수들에 모두 전달하려 한다면 그냥 std::string으로 한번 변환하는 것이 현명할 것이다. 그러므로 만약 너의 코드가 null turminator가 필요하다고 알려지고 문자열들이 C 스타일로 코딩된 버퍼에서 오는 경우를 제외한다면, const std::string&으로 받아라. 위의 경우가 아니면 std::string_view로 받아도 된다. ( 쉽게 설명하면 null terminator가 필요하고 전달되는 타입이 C 스타일 문자열이 아니라면 ( C 스타일 const char*이 전달되는 경우에는 문자열을 복사해야 하기 때문에 ) const std::string&으로 받아야한다는 것이다. 반면 null terminator가 필요 없다면 그냥 std::string_view로 받아도 된다. )            
+일단 null terminatior('\0')를 잃는다. 만약 같은 문자열이 null terminator을 요구하는 3개의 함수들에 모두 전달하려 한다면 그냥 std::string으로 한번 변환하는 것이 현명할 것이다. 그러므로 만약 너의 코드가 null turminator가 필요하다고 알려지고 문자열들이 C 스타일로 코딩된 버퍼에서 오는 경우를 제외한다면, const std::string&으로 받아라. 위의 경우가 아니면 std::string_view로 받아도 된다. ( 쉽게 설명하면 null terminator가 필요하고 전달되는 타입이 C 스타일 문자열이 아니라면 ( C 스타일 const char*이 전달되는 경우에는 std::string을 생성하면서 문자열을 복사해야 하기 때문에 ) const std::string&으로 받아야한다는 것이다. 반면 null terminator가 필요 없다면 그냥 std::string_view로 받아도 된다. )            
 
 만약 std::string_view가 문자열이 null terminator가 있는지 없는지를 알 수 있는 flag를 가지고 있다면 const std::string&을 쓰는 마지막 이유 조차 없어진다.           
 
