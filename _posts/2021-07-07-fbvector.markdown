@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "FBVector의 동작 원리"
+date:   2021-07-07
+categories: C++
+---
+
+references : [https://github.com/facebook/folly/blob/master/folly/docs/FBVector.md](https://github.com/facebook/folly/blob/master/folly/docs/FBVector.md)       

@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "FBString의 동작 원리"
+date:   2021-07-07
+categories: C++
+---
+
+references : [https://github.com/facebook/folly/blob/master/folly/docs/FBString.md](https://github.com/facebook/folly/blob/master/folly/docs/FBString.md)  
