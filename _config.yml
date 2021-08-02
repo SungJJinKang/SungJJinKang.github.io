@@ -24,7 +24,7 @@ plainwhite:
     - post
   # generate social links in footer
   social_links:
-    twitter: SungJinKang6
+    #twitter: SungJinKang6
     github:  SungJJinKang
     #linkedIn: in/samarsault
     #rss: rss
