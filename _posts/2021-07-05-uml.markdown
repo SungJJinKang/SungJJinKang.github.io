@@ -2,7 +2,7 @@
 layout: post
 title:  "프로그램을 설계할 때 명심해야할 것 ( 클래스를 만들 때 생각해야할 것들 )"
 date:   2021-07-05
-categories: DesignPattern
+categories: DesignPattern INTERN
 ---
 
 클래스는 무엇인가?? 클래스는 그냥 기능을 수행하는 것이다.      
