@@ -72,6 +72,7 @@ void Randomly()
 
 <img width="434" alt="20210514001711" src="https://user-images.githubusercontent.com/33873804/118149673-bb6e1500-b44c-11eb-8de5-b22486d77f77.png">     
 
-Randomly 방식이 ColumnFirst 방식보다 훨씬 느리다.      
+Randomly 방식이 ColumnFirst 방식보다 훨씬 느리다.     
+더 중요한 것은 ColumFirst 방식과 RowFirst 방식의 성능상 큰 차이가 없다는 점이다.           
 이는 위에서 배운 Cache Prefetch 때문이다.       
 ColumnFirst 함수는 일정한 stride(간격)마다 데이터에 접근한다는 것을 CPU가 인지하고 다음 Column의 데이터를 미리 fetch하였기 때문에 Randomly 함수에 비해 훨씬 빠른 것이다.      
