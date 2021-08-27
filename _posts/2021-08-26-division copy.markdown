@@ -1,8 +1,0 @@
----
-layout: post
-title:  "나누기, 나머지 연산이 느린 이유"
-date:   2021-08-26
-categories: ComputerScience
----
-
-reference : [https://scicomp.stackexchange.com/questions/187/why-is-division-so-much-more-complex-than-other-arithmetic-operations](https://scicomp.stackexchange.com/questions/187/why-is-division-so-much-more-complex-than-other-arithmetic-operations)
