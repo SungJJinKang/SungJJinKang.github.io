@@ -1,8 +1,117 @@
 ---
 layout: post
 title:  "나누기, 나머지 연산이 느린 이유"
-date:   2021-08-26
+date:   2021-08-27
 categories: ComputerScience
 ---
 
-reference : [https://scicomp.stackexchange.com/questions/187/why-is-division-so-much-more-complex-than-other-arithmetic-operations](https://scicomp.stackexchange.com/questions/187/why-is-division-so-much-more-complex-than-other-arithmetic-operations),   [https://blog.naver.com/PostView.nhn?blogId=fah204&logNo=221573584390](https://blog.naver.com/PostView.nhn?blogId=fah204&logNo=221573584390)
+본격적으로 나누기 연산이 느린 이유에 대해 알아보기 전에 컴퓨터가 곱하기와 나누기 연산을 어떻게 하는지를 알아보자.       
+
+
+우선 컴퓨터는 2진수 체계이기 때문에 **곱하기 연산**을 할 때 이 2진수라는 것을 잘 활용한다. 그래서 2의 거듭제곱을 곱할 때 비트를 Shift하여 매우 빠르게 곱하기를 할 수 있다.
+
+```
+2 ( 10진수 ) = 00010 ( 2진수 ) 에서
+
+2를 곱한다 ( 왼쪽으로 1만큼 shift )
+->
+4 ( 10진수 ) = 00100 ( 2진수 )
+
+->
+8를 곱한다 ( 왼쪽으로 3만큼 shift )
+16 ( 10진수 ) = 10000 ( 2진수 )
+
+---------------------------------
+
+3 ( 10진수 ) = 00011 ( 2진수 ) 에서
+
+4를 곱한다 ( 왼쪽으로 2만큼 shift )
+->
+12 ( 10진수 ) = 01100 ( 2진수 )
+```
+
+그럼 **2의 거듭제곱이 아닌 수를 곱할 때는 어떻게 할까??**               
+이 또한 매우 빠르게 할 수 있다.      
+
+```
+11 ( 10진수 ) = 1011 ( 2진수 = 1 x 2^3 + 0 x 2^2 + 1 x 2^1 + 1 x 2^0) 에서
+
+9를 곱한다 ( 2의 거듭제곱 아님 ) ( 2진수 01001 =  1 x 2^3 + 0 x 2^2 + 0 x 2^1 + 1 x 2^0 )
+->
+
+11 x ( 8 + 1 )
+->
+11 x ( 1 x 2^3 + 0 x 2^2 + 0 x 2^1 + 1 x 2^0 )
+->
+11 x 2^3 + 11 x 2^0
+->
+Shift 연산으로 빠르게 계산
+->
+88 + 11
+->
+99
+```
+
+위에서 보이 듯이 2의 거듭제곱이 아닌 수를 곱할 때도 결국 모든 수는 2진수로 이루어진 수들로 바꿀 수 있기 때문에 2진수로 변환 후 각각 곱한 후 다시 더해주면 빠르게 연산을 수행할 수 있다.          
+
+이를 조금 다르게 나타내 보면
+```
+     1011   (this is binary for decimal 11)
+   x 1110   (this is binary for decimal 14)
+   ======
+     0000   (this is 1011 x 0)
+    1011    (this is 1011 x 1, shifted one position to the left)
+   1011     (this is 1011 x 1, shifted two positions to the left)
++ 1011      (this is 1011 x 1, shifted three positions to the left)
+=========
+ 10011010   (this is binary for decimal 154)
+```
+
+위의 형태는 사람들이 일반적으로 곱하기를 할 때 보이는 한 자리씩 곱해서 더하는 것과 똑같은 형태인데 이는 위에서 설명한 2의 거듭제곱들을 곱한 후 다 더하는 형태와 같다.          
+
+여기서 각 Shift 연산의 결과를 모두 더하는 과정이 느린데 ( Shift 연산보다 덧셈이 더 느리다 ) ( 32비트 숫자 두개를 곱하는 경우 32번의 덧셈이 필요하다 ) **컴퓨터는 Parallel하게 덧셈들을 처리(덧셈 여러개를 하나의 명령어로 한번에 처리 ( SIMD ) )**하여 이를 빠르게 처리한다. ( 곱하기 연산을 빠르게 만들기 위한 각종 하드웨어 장치들은 모두 이 Shift 연산의 결과를 **더하는 과정을 빠르게 하기 위한 것들**이다. )      
+
+( 여기에 더해 부호가 있는 수를 처리할 때는 2의 보수를 처리하기 위해 추가적인 연산이 필요한데 자세한 것은 [이 글](https://en.wikipedia.org/wiki/Binary_multiplier)을 참고하기 바란다 )        
+
+----------------------            
+
+곱하기 연산과 달리 **나머지 연산** 하나의 과정이 더 필요하다. 바로 나누려는 수의 역수를 구하는 과정이다.       
+그럼 그 역수를 가지고 위에서 본 곱하기 연산을 해주면 결과적으로는 나머지 연산이 된다.        
+이때 나누려는 수의 역수를 구하기 위해 뉴톤-랍손(Newton-Raphson) 알고리즘이 사용된다.       
+이 뉴톤-랍손 방법을 통해 **나누려는 수의 역수의 근사치 값**을 구해 곱하기 연산을 해주면 된다.      
+기존의 곱하기 연산과 비교하여 역수를 구하는 과정이 추가되었기 때문에 나머지 연산이 더 느린 것이다.    
+( 뉴톤-랍손 방법이 어떻게 동작하는지에 대해서는 [이 글](https://en.wikipedia.org/wiki/Division_algorithm#Newton%E2%80%93Raphson_division)을 읽기 바란다. 여기서 자세히 다룰 내용은 아니다. )           
+
+위와는 별개로 컴파일러는 나머지 연산을 빠르게 하기 위한 최적화를 수행하는데 그것은 분모가 2의 거듭 제곱인 경우에는 컴파일러단에서 나누려는 수를 그 수의 역수로 바꾸고 나누기를 곱하기로 바꾸는 것이다.      
+```
+a *= 0.5f;
+
+vs
+
+a /= 2.0f;
+```
+
+위의 두 연산의 연산 속도는 큰 차이가 없다.           
+이는 /= 2.0의 2.0f이 2진수로 2^-1이기 때문에 컴파일러가 컴파일을 할 때 자동으로 /= 2.0f를 *= 0.5f로 바꾸는 최적화를 해주기 때문에 두 연산의 속도가 차이가 없는 것이다.          
+
+어셈블리에서도 바로 이를 확인할 수 있다.        
+```
+float a(float num) {
+    float result = num / 2.0f;
+    return result;
+}
+
+a(float):
+        mulss   xmm0, DWORD PTR .LC0[rip]
+        ret
+
+.LC0:
+.long   1056964608
+```
+num / 2.0f가 곱하기 연산 ( mulss )로 바뀐 것을 알 수 있는 데 곱하는 .LC0의 값은 1056964608, 이진수로 바꾸면 00111111000000000000000000000000 부동소수점으로 0.5를 나타내는 값임을 알 수 있다.      
+즉 컴파일러가 num / 2.0f를 num * 0.5f로 바꾼 것이다.        
+
+그래서 만약 어느 정도의 반올림 오류를 프로그래머가 인지를 하고 용인을 할 수 있다고 판단을 한다면 분모가 2의 거듭 제곱이 아니더라도 ( 컴파일러가 자동으로 나누기를 곱셈으로 최적화할 수 없는 경우 ) 임의로 가장 가까운 2의 거듭 제곱으로 바꾸어서 곱하기 연산으로 만들어 프로그래밍을 하여 최적화하는 방법도 있다.       
+
+
+reference : [https://scicomp.stackexchange.com/questions/187/why-is-division-so-much-more-complex-than-other-arithmetic-operations](https://scicomp.stackexchange.com/questions/187/why-is-division-so-much-more-complex-than-other-arithmetic-operations),   [https://blog.naver.com/PostView.nhn?blogId=fah204&logNo=221573584390](https://blog.naver.com/PostView.nhn?blogId=fah204&logNo=221573584390),   [https://www.quora.com/How-do-computers-perform-multiplication-division-operations-internally-by-additive-approaches](https://www.quora.com/How-do-computers-perform-multiplication-division-operations-internally-by-additive-approaches)
