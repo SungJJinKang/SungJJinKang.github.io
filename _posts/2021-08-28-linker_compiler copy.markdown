@@ -6,7 +6,7 @@ categories: ComputerScience C++
 ---
 
 컴파일 과정은 크게는 3가지 과정으로 나뉜다.                   
-Preprocessing(전처리), 컴파일, 링킹이 그것이다.        
+Preprocessing(전처리), 컴파일, 링킹이 그것이다.               
                
 --------------------                
               
