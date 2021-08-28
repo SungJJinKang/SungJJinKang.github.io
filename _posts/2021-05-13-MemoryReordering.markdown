@@ -5,6 +5,8 @@ date:   2021-05-13
 categories: ComputerScience
 ---
 
+기본적으로 메모리 Reordering은 메모리 Stall ( 메모리 Latency )를 줄이기 ( 숨기기 ) 위한 기능이다.    
+
 - [컴파일 타임 메모리 Reodering](https://preshing.com/20120625/memory-ordering-at-compile-time/)     
 - [Acquire, Release Semantics](https://preshing.com/20120913/acquire-and-release-semantics/)      
 - [Memory Barrier에 대한 이해](https://preshing.com/20120710/memory-barriers-are-like-source-control-operations/)      
