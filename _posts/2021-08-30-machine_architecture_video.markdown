@@ -5,5 +5,6 @@ date:   2021-08-30
 categories: ComputerScience
 ---
 
-[https://youtu.be/L7zSU9HI-6I](https://youtu.be/L7zSU9HI-6I)
+영상 : [https://youtu.be/L7zSU9HI-6I](https://youtu.be/L7zSU9HI-6I)          
 
+PPT : [https://nwcpp.org/talks/2007/Machine_Architecture_-_NWCPP.pdf](https://nwcpp.org/talks/2007/Machine_Architecture_-_NWCPP.pdf)
