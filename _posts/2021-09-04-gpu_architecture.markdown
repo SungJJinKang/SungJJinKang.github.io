@@ -44,7 +44,7 @@ CPU에서 생기는 마법같은 일들의 대부분은 여기서 발생한다. 
 
 너는 콘솔 프로그래머들이 상당히 고수준의 ( 고수준이기 때문에 저수준의 최적화를 하지 못하는, 저수준으로 접근하지 못하는 ) PC 3D API가 유발하는 성능 저하에 대해 불만을 표출하는 것을 자주 봤을 것이다. 그러나 중요한 것은 PC 플랫폼의 3D API, 드라이버들은 콘솔 게임들 보다 더 복잡한 문제들을 가지고 있다는 것이다. 예를 들면 PC 플랫폼에서는 현재 모든 상태들을 추적할 수 있어야한다는 것이 그 예이다. 또한 PC 플랫폼은 엉망으로 작성된 프로그램들과도 잘 작동해야하고 그 엉망으로 작성된 프로그램들 뒤에서 여러 성능 문제들을 고쳐주어야한다. 이것은 드라이버 제조사를 포함하여 좋아하는이가 없는 짜증하는 일이다. 그러나 비지니스 측면에서는 확실이 이 길이 맞다. 사람들은 모든 것들이 잘 작동하기를 ( 매끄럽게 )를 원한다.                
 
-**커널 모드 그래픽스 드라이버 ( KMD )**          
+**커널 모드 그래픽스 드라이버 ( KMD )** [보충자료](https://traxnet.wordpress.com/2011/07/18/understanding-modern-gpus-2/) )              
 KMD는 실제로 하드웨어를 다루는 부분이다. **동시간대에 UMD 인스턴스는 여러개가 존재할 수 있다** ( 아마 API를 호출하는 프로그램마다 하나씩 ), **그러나 KMD는 오직 하나만 존재한다.** 만약 KMD에서 크래시가 발생하면 거기서 끝이다. ( 과거에는 커널 모드 드라이버에서 크래시가 발생했을시 블루스크린이 떳지만 현재 윈도우에서는 커널 모드 드라비어를 죽이고 다시 로드한다. )           
 
 KMD는 오직 하나씩만 존재하는 것들을 다룬다. 여러 프로그램들이 GPU 메모리로 접근하려하지만 GPU 메모리는 오직 하나만 존재한다. 누군가는 **이것들을 지휘하고 ( 조절하고 ), 피지컬 메모리를 할당하고 매핑해야한다.** ( 당연히 여기서 누군가는 KMD를 말한다. ) 비슷하게 누군가는 시작시 GPU를 초기화해야하고 디스플레이 모드를 설정하고 하드웨어 마우스 커서를 관리하고, HW Watchdog Timer를 프로그램하여 GPU가 일정한 시간 동안 쉬고 있다면 리셋되게하여야하고, 인터럽트에 대응해야한다. 그것이 바로 KMD가 하는 것이다.           
@@ -90,11 +90,11 @@ OpenGL에 대해 조금 더 설명하면 OpenGL 또한 내가 설명한 것들�
 
 가장 쉬운 해결책은 갈 길을 알려주는 추자적인 주소란을 하나 더 더하는 것이다. 이것은 간단하고 꽤 잘 작동하며 여러 번 이렇게 해왔다. 또는 일부 게임 콘솔과 같이 통합된 메모리 구조를 가지고 있을 수도 있다. 그 경우 선택의 여지가 없다. 오직 하나의 유일한 메모리가 존재하고 그것이 너가 갈 길이다. 만약 좀 더 Fancy한 것을 원한다면 **메모리 관리 유닛 ( MMU )**를 더해라. 이 **MMU는 가상 메모리 주소 공간을 제공한다.** ( 이는 흔히 말하는 페이징 기법과 거의 같다. 페이징 기법, 가상 메모리 주소 공간에 대해 알고 싶다면 [이 글](https://sungjjinkang.github.io/computerscience/2021/03/05/virtualmemoryaddress.html)을 참조하라. 참고로 이 글은 CPU - DRAM - Disk의 관점에서 쓴 글이다. 그치만 동작하는 원리는 GPU랑 비슷하다. ) 예를 들어보면 어떤 큰 텍스쳐의 **자주 접근하는 일부분 ( 텍스쳐의 일부 데이터 )은 VRAM에 두고 ( 자주 사용하는 것은 접근이 빠른 VRAM에 두고 )**, **덜 자주 쓰는 부분은 DRAM에 두고 ( DRAM으로의 접근은 VRAM으로의 접근보다 느리다 )**, 그리고 **그 외의 것들은 그냥 디스크에 두는 것이다 ( GPU가 디스크에 있는 데이터를 읽는데는 진짜 농담이 아니라 한달이 걸린다고 할만큼 매우 느리다. ).** 디스크는 엿같이 느려터졌다!!      
 
-또한 우리의 값 비싼 3d 하드웨어  ( CPU 코어 ) / 쉐이더 코어 ( GPU 코어 )들의 개입 없이 메모리를 복사할 수 있게해주는 DMA 엔진이 있다. 이 DMA 엔진을 통해 DRAM과 VRAM 양방향으로 데이터를 복사 ( 전송 )할 수 있다. 또한 DMA 엔진은 VRAM에서 VRAM으로 데이터를 복사 ( 전송 )할 수 있다. ( VRAM 파편화 제거를 하는데 사용된다. ) 반면 DRAM에서 DRAM으로의 데이터 복사는 할 수 없다. 왜냐고? 이 DMA Engine은 GPU의 요소인데 어떻게 GPU 밖에 있는 DRAM간의 데이터 전송이 가능하겠냐? DRAM간의 데이터 복사는 CPU 코어 ( CPU 레지스터를 이용하여 )로 하면 된다.        
+또한 우리의 값 비싼 3d 하드웨어  ( CPU 코어 ) / 쉐이더 코어 ( GPU 코어 )들의 개입 없이 메모리를 복사할 수 있게해주는 DMA 엔진이 있다. 이 **DMA 엔진을 통해 DRAM과 VRAM 양방향으로 데이터를 복사 ( 전송 )할 수 있다. 또한 DMA 엔진은 VRAM에서 VRAM으로 데이터를 복사 ( 전송 )할 수 있다.** ( VRAM 파편화 제거를 하는데 사용된다. ) 반면 DRAM에서 DRAM으로의 데이터 복사는 할 수 없다. 왜냐고? 이 DMA Engine은 GPU의 요소인데 어떻게 GPU 밖에 있는 DRAM간의 데이터 전송이 가능하겠냐? DRAM간의 데이터 복사는 CPU 코어 ( CPU 레지스터를 이용하여 )로 하면 된다.        
 
 자, 잠깐 복습해보면 CPU에 커맨드 버퍼가 있다. 그리고 PCIe 호스트 인터페이스가 있으므로 CPU가 이 커맨드의 주소를 일부 레지스터에 쓸 수 있습니다. 우리는 그 레지스터에 쓰인 주소 ( 커맨드가 저장되어 있는 주소 )를 데이터를 반환하는 로드 명렁어로 변환해주는 로직이 있다. 커맨드가 PCIe를 거쳐서 DRAM에서 오든 ( 커맨드 버퍼가 DRAM에 있는 경우 ), 그냥 커맨드 버퍼를 VRAM에 두든, KMD가 DMA 전송을 통해서 그것들을 구현하면 되기 때문에 CPU나 GPU 코어가 신경쓸 것은 없다. 그리고 우리는 메모리 하부 시스템을 통해서 VRAM에 있는 데이터를 얻을 수 있다. 커맨드가 DRAM 경로가 마련되었고 우리는 커맨드들을 볼 준비가 되었다.          
 
-드디어 **커맨드 프로세서 ( Command Processor )**이다.      
+드디어 **커맨드 프로세서 ( Command Processor )**이다. ( [보충자료](https://traxnet.wordpress.com/2011/07/22/understanding-modern-gpus-3/) )      
 커맨드 프로세서의 핵심은 **버퍼링 ( Buffering )**이다.        
 
 위에서 언급한 **DRAM - VRAM간의 메모리 전송은 높은 대역폭을 가졌지만 레이턴시 또한 높다.** 이 **레이턴시 문제를 해결하기 위한 방법은 많은 수의 독립된 쓰레드들을 가지는 것**이다. 그러나 이 경우 커맨드 버퍼를 순서대로 수행할 하나의 커맨드 프로세서를 가졌다. ( 이는 커맨드 버퍼가 반드시 정해진 순서대로 실행되어야 하는 상태 변화나 렌더링과 같은 명령어들을 가지고 있기 때문이다. ) 그래서 우리는 다음으로 중요한 것을 하는데 바로 **충분히 큰 버퍼를 추가하고 커맨드 프로세서가 다음 커맨드를 기다리는 동안 잠시 멈추는 것을 방지하기 위해 충분한 수의 명령어 미리 가져오는 ( Prefetch ) 것**이다.                 
@@ -124,7 +124,7 @@ OpenGL에 대해 조금 더 설명하면 OpenGL 또한 내가 설명한 것들�
 
 그런데 만약 너가 CPU쪽에서 이 레지스터들에 쓰기 동작을 한다면, 다른 방법으로 이것을 구현할 수도 있다. 특정 값을 기다리는 것을 포함하는 부분적인 커맨드 버퍼를 제출하라, 그리고 GPU 대신 CPU쪽에서 레지스터의 값을 바꾸어라. 이것은 D3D11-스타일의 멀티스레드 렌더링을 구현하기 위해서 사용될 수 있는 방법이다. 이 방법에서는 CPU쪽에서 여전히 lock되어 있는 버텍스/인덱스 버퍼들을 참조하는 배치를 제출할 수 있다. 실제 렌더 호출 앞에서 기다릴 것이고, CPU는 일단 버텍스/인덱스 버퍼들이 실제로 unlock되면 그 레지스터의 값을 바꿀 수 있다. wait 자체는 아무것도 하지 않는다. 만약 무언가를 한다면 그냥 커맨드 프로세서에 데이터가 도달할 때 까지 아무것도 하지 않고 시간을 낭비하고 있는 것이다.
 
-이 장에서 배운 것을 좀 간략히 요약해보자. **The command processor has a FIFO in front, then the command decode logic, execution is handled by various blocks that communicate with the 2D unit, 3D front-end (regular 3D rendering) or shader units directly (compute shaders), then there’s a block that deals with sync/wait commands (which has the publicly visible registers I talked about), and one unit that handles command buffer jumps/calls (which changes the current fetch address that goes to the FIFO). And all of the units we dispatch work to need to send us back completion events so we know when e.g. textures aren’t being used anymore and their memory can be reclaimed.**
+이 장에서 배운 것을 좀 간략히 요약해보자. 커맨드프로세서는 앞선에는 FIFO 버퍼를 가지고, 커맨드 디코드 로직을 가지고 있으며, 명령어 수행은 2D, 3D 유닛과 소통하거나, 쉐이더 유닛들과 직접적으로 소통하는 다양한 블록들에 의해서 다루어다. 동기화/wait 커맨드들을 다루는 블록도 있다. 모든 유닛들은 작업 완료 이벤트를 다시 보내준다. **The command processor has a FIFO in front, then the command decode logic, execution is handled by various blocks that communicate with the 2D unit, 3D front-end (regular 3D rendering) or shader units directly (compute shaders), then there’s a block that deals with sync/wait commands (which has the publicly visible registers I talked about), and one unit that handles command buffer jumps/calls (which changes the current fetch address that goes to the FIFO). And all of the units we dispatch work to need to send us back completion events so we know when e.g. textures aren’t being used anymore and their memory can be reclaimed.**
 
 
 
