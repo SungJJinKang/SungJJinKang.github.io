@@ -32,8 +32,8 @@ Decode 단계에서는 **컨트롤 유닛(CU)**이 현재 명령어 레지스터
 프로그램 카운터로 부터 다음 실행할 명령어가 저장되어 있는 메모리 주소를 통해 다음에 실행할 명령어를 가져와서 현재 명령어 레지스터(CIR)에 저장한다.( 당연히 이 동작 후 프로그램 카운터는 다음에 실행될 명령어의 주소를 가지게 된다.)         
 
 **Decode 단계** :       
-Decode 단계에서는 현재 명령어 레지스터(CIR)에 저장되어 있는 인코딩된 명령어를 디코더로 해석을 한다.    
-( 이 단계에 대해서는 이 후에 자세히 쓸 예정이다. [참고](https://stackoverflow.com/questions/56218344/how-are-microcodes-executed-during-an-instruction-cycle) )           
+Decode 단계에서는 현재 명령어 레지스터(CIR)에 저장되어 있는 인코딩된 명령어를 디코더로 해석을 한다. 실제 우리가 어셈블리고 보는 div ( 인코딩된 명렁어 )와 같은 명령어 코드들은 내부적으로는 여러개의 microcode들로 이루어져있다. 그래서 CPU는 Decode 단계에서 명령어를 microcode로 변환한 후 변환된 microcode들을 실행하는 것이다.                              
+( 이 단계에 대해서는 이 후에 자세히 쓸 예정이다. [참고](https://stackoverflow.com/questions/56218344/how-are-microcodes-executed-during-an-instruction-cycle) )                    
 
 **유효한 주소 읽기 단계** :    
 이 단계를 이해하기 위해서는 주소 모드에 대한 이해가 필요하다.            
