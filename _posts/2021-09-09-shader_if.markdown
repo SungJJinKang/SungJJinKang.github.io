@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "쉐이더에서 분기점( if )이 나쁜(느린) 이유"
+date:   2021-09-09
+categories: ComputerScience ComputerGraphics
+---
+
+references : [https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader](https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader)
