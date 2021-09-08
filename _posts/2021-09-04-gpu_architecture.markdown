@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "현대 GPU 아키텍쳐 이해하기 ( Graphics API에서 GPU로의 여정 )"
+title:  "현대 GPU 아키텍쳐 이해하기 1 ( Graphics API에서 GPU로의 여정 )"
 date:   2021-09-04
 categories: ComputerScience ComputerGraphics
 ---

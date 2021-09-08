@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "현대 GPU 아키텍쳐 이해하기 ( Turing Architecture )"
+title:  "현대 GPU 아키텍쳐 이해하기 2 ( Turing Architecture )"
 date:   2021-09-09
 categories: ComputerScience ComputerGraphics
 ---
