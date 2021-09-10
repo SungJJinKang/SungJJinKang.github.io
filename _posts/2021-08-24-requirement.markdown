@@ -2,7 +2,7 @@
 layout: post
 title:  "작업 요구 사항에 맞추어서 작업하기"
 date:   2021-08-24
-categories: Work INTERN
+categories: COWORK
 ---
 
 간혹 작업을 하다보면 요구 사항을 넘어서 오버해서(?) 불필요한 작업을 하는 경우가 종종 있다.    
