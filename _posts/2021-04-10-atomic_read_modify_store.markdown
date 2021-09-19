@@ -15,7 +15,8 @@ std::atomic은 여러 기능을 가지고 있다.
 대표적으로 std::atomic::fetch_add 즉 Read-Modify-Store 작업이 있는 데 이는 CPU에 따라 다르지만 대채적으로 atomic하지 않다. ( 명령어 하나로 처리하지 못한다 )      
 그래서 std::atomic 클래스는 이렇게 한 Cycle 내에 처리 못하는 작업을 수행할 때는 일종의 Locking 메커니즘을 사용한다.        
 X84 초기에는 메모리 공유 버스에 Lock을 걸어서 Read-Modify-Store을 수행하였다. 그렇지만 이는 다른 모든 CPU가 메모리가 접근하는 것을 막아버려 좋은 방법은 아니다.            
-그래서 현재의 X86, 64는 MESI와 같은 Cache Coherency Protocol들을 사용하는 데 이는 전체가 아닌 특정 캐시 라인만을 Exclusive 상태로 만들어 다른 CPU의 해당 캐시 라인만으로의 접근을 막는 방법으로 매우 효율적이다. ( 추가적으로 X86은 강한 메모리 모델을 가지고 있어서 Cache Coherency를 해칠 시 가장 최근에 Cache Coherency를 준수 했던 상태로 Rollback한다 )
+그래서 현재의 X86, 64는 MESI와 같은 Cache Coherency Protocol들을 사용하는 데 이는 전체가 아닌 특정 캐시 라인만을 Exclusive 상태로 만들어 다른 CPU의 해당 캐시 라인만으로의 접근을 막는 방법으로 매우 효율적이다.        
+atomic 연산을 하는 동안 해당 캐시 라인에 Modified 상태로 만든다. 이때 다른 코어가 해당 캐시 라인을 읽으려고하면 ( 캐시 라인의 Modified 상태를 가지고 있는 코어는 Snooping 중이다. ) 해당 캐시 라인의 Modified 상태를 가지고 있는 주인 코어는 atomic 연산이 다 끝날때까지 캐시 라인을 flush 해주지 않고 Modified 상태를 가지고 있는다. ( 그럼 당연히 해당 캐시 라인을 읽으려는 다른 코어들은 주인 코어가 캐시 라인 flush를 해줄때까지 기다려야한다. ) ( 추가적으로 X86은 강한 메모리 모델을 가지고 있어서 Cache Coherency를 해칠 시 가장 최근에 Cache Coherency를 준수 했던 상태로 Rollback한다 )
 
 [https://en.cppreference.com/w/cpp/atomic/memory_order#Relaxed_ordering](https://en.cppreference.com/w/cpp/atomic/memory_order#Relaxed_ordering)       
 [https://en.cppreference.com/w/cpp/atomic/atomic_flag](https://en.cppreference.com/w/cpp/atomic/atomic_flag)           
