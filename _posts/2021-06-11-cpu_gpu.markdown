@@ -13,6 +13,11 @@ GPU는 원래 그래픽 어플리케이션의 연산을 위해 개발되었다. 
 
 반면에 **CPU는 연속된(!) 여러 복잡한 연산을 가능하면 빠르게 수행하는 것에 최적화**되어 있다. 그러니깐 서로 다른 연속된 명령어(연산)들을 가능한 빠르게 수행하는 것이 목적인 것이다. 이를 위해 CPU는 [파이프라이닝](https://sungjjinkang.github.io/computerscience/2021/06/09/cpu_pipelining.html)이나 [캐싱](https://sungjjinkang.github.io/computerscience/2021/04/01/cachefriendly.html), [분기 예측](https://sungjjinkang.github.io/computerscience/2021/05/14/branchprediction.html), [Out-of-Order Execution](https://sungjjinkang.github.io/computerscience/2021/05/13/MemoryReordering.html) 등을 활용한다. CPU에서 하나의 연산을 수행하기 위해 사용되는 컴퓨터 자원(전력)은 대부분 파이프라인을 활용하여 명령어를 관리하는데 사용된다. 그러니깐 예를들면 곱셈 연산을 한다고치면 실제로 컴퓨터가 곱셈을 하는데 필요한 컴퓨터 자원보다 파이프라이닝을 관리하는데 더 많은 컴퓨팅 자원이 사용된다는 것이다.        
 
-또 다른 주 된 차이점으로는 CPU는 코어(Processing Unit)간의 [Cache coherent](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)를 가지고 있지만 GPU는 그렇지 않다. GPU의 캐시는 Write - Through 방식 ( 캐시에도 쓰고 VRAM에도 곧 바로 쓰는 )이기 때문에 Cache Coherent가 필요가 없는 것이다.             
+또 다른 주 된 차이점으로는 CPU는 코어(Processing Unit)간의 [Cache coherent](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)를 가지고 있지만 GPU는 그렇지 않다. GPU의 캐시는 Write - Through 방식 ( 캐시에도 쓰고 VRAM에도 곧 바로 쓰는 )이기 때문에 Cache Coherent가 필요가 없는 것이다.            
+
+캐시 사이즈도 차이가 큰데 GPU는 엄청난 수의 코어(SP, Scalar Processor)를 가지고 있기 때문에 그 만큼 코어의 레이스터의 개수도 엄청 많이 필요하다. 이 때문에 GPU의 캐시(L1..) 사이즈는 매우 작다. 그래서 심지어는 90%까지도 캐시 미스가 발생할 수 있다고 한다.      
+반면 CPU는 코어 개수가 적으니 다이에 상대적으로 큰 사이즈의 캐시를 넣을 수 있다.     
+
+그리고 CPU가 Out of order 방식으로 명령어를 처리할 수 있는데 반해 GPU는 들어오는 커맨드들을 들어오는 순서대로 처리하는 In order 방식을 가지고 있다.             
 
 references : [https://stackoverflow.com/a/36684622](https://stackoverflow.com/a/36684622)      

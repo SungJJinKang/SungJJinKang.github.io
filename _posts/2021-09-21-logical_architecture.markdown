@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "논리적으로 결정하기"
+title:  "논리적으로 의사 결정하기"
 date:   2021-09-21
-categories: ComputerScience
+categories: ComputerScience Work
 ---
 프로그래밍을 하면서 간혹 겉멋(?)만 있는 프로그래밍을 할 때가 있다.      
 
