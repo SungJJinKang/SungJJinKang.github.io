@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Draw Indirect with Compute Shader"
+title:  "Draw Indirect 기법"
 date:   2021-09-22
 categories: ComputerGraphics
 ---
@@ -85,7 +85,9 @@ Compute Shader를 통해 View Frustum Culling이나 Occlusion Culling을 수행�
 
 아래 두 사진은 일반적인 Rendering과 Draw Indirect 기법을 활용한 렌더링간의 GPU 상태 변화, 커맨드 전송의 차이를 보여준다. 어떤 사진이 Draw Indirect 기법을 사용했을 때인지는 잘 알것이다.        
 
-
+<img width="459" alt="1" src="https://user-images.githubusercontent.com/33873804/134243270-83a040d2-35e9-4418-9859-dad8e0ffa308.png">              
+               
+<img width="461" alt="2" src="https://user-images.githubusercontent.com/33873804/134243374-26a79ecf-c210-43fd-9c56-198e8d968467.png">                 
 
 **다만 이 Draw Indirect 기법도 일장일단이 있어보인다.**               
 CPU에서 수행했던 ( 대부분의 게임에서 ) View Frustum Culling, Occlusion Culling 연산을 GPU에서 대신하다보니 그 만큼 GPU의 연상량이 늘어났다.          
@@ -99,11 +101,11 @@ CPU에서 수행했던 ( 대부분의 게임에서 ) View Frustum Culling, Occlu
 ----------------------
 
 
-이와 비슷한 개념이 OpenGL의 Conditional Rendering이 있다. 이것은 Occlusion Query 기법에서 사용되는데, Occlusion Query 기법을 간단히 설명하면 Occluder를 먼저 그리고 Occludee들에 대해 단순하게( 간단한 Fragment Shader를 가지고 ) 한번 오브젝트를 그려보고 어떤 Fragment도 Depth Test를 통과하지 못하면 그 오브젝트에 대해서는 Draw API를 호출하지 않는 것이다. 이를 통해 간단하게 한번 오브젝트를 그려보고 만약 안그려도 된다고 판단이 되면 해당 오브젝트를 그리는 것을 생략하여 GPU 연산을 아낄 수 있다.        
-그런데 해당 오브젝트에 대한 Draw API 호출을 할지 말지 결정하기 위해서는 이 Query 데이터 ( 오브젝트가 그려질지 말지 )를 다시 DRAM으로 가져와야한다. VRAM에서 DRAM으로 데이터를 전송하는 것은 느리다....     
-여기서 Conditional Rendering이 등장하는데 Occlusion Query를 통해 어떤 오브젝트가 컬링이 되었는지 안되었는지 여부를 다시 DRAM으로 가져오지 말고 그냥 GPU에서 그 데이터를 가지고 있다가 Draw 커맨드가 들어오면 가지고 있던 Query 데이터를 가지고 Draw를 할지 말지 결정하라는 것이다. 이는 Query 데이터를 다시 DRAM으로 가져오는 것이 느리고 심지어는 Query 작업이 아직 끝나지 않았으면 CPU가 기다려야하는데서 오는 성능 저하를 방지하기 위함이다.    
-일단 CPU단에서 GPU에 Draw 커맨드를 전송하되 그 Draw 커맨드를 처리할지 말지(그릴지 말지) 여부를 그냥 GPU에게 맡기는 것이다.                       
-생각을 해보면 Query 연산이 다 끝나기를 기다리고 그 데이터를 다시 DRAM으로 가져올 때까지 기다릴바에는 그냥 GPU에 Draw 커맨드를 던져두고 CPU는 그 시간에 다른 연산을 더 하는 것이 이득이다.     
+이와 비슷한 개념이 OpenGL의 Conditional Rendering이 있다. 이것은 Occlusion Query 기법에서 사용되는데, Occlusion Query 기법을 간단히 설명하면 Occluder를 먼저 그리고 Occludee들에 대해 단순하게( 간단한 Fragment Shader를 가지고 ) 한번 오브젝트를 그려보고 어떤 Fragment도 Depth Test를 통과하지 못하면 그 오브젝트에 대해서는 Draw API를 호출하지 않는 것이다. 이를 통해 간단하게 한번 오브젝트를 그려보고 만약 안그려도 된다고 판단이 되면 해당 오브젝트를 그리는 것을 생략하여 GPU 연산을 아낄 수 있다.          
+그런데 해당 오브젝트에 대한 Draw API 호출을 할지 말지 결정하기 위해서는 이 Query 데이터 ( 오브젝트가 그려질지 말지 )를 다시 DRAM으로 가져와야한다. VRAM에서 DRAM으로 데이터를 전송하는 것은 느리다....       
+여기서 Conditional Rendering이 등장하는데 Occlusion Query를 통해 어떤 오브젝트가 컬링이 되었는지 안되었는지 여부를 다시 DRAM으로 가져오지 말고 그냥 GPU에서 그 데이터를 가지고 있다가 Draw 커맨드가 들어오면 가지고 있던 Query 데이터를 가지고 Draw를 할지 말지 결정하라는 것이다. 이는 Query 데이터를 다시 DRAM으로 가져오는 것이 느리고 심지어는 Query 작업이 아직 끝나지 않았으면 CPU가 기다려야하는데서 오는 성능 저하를 방지하기 위함이다.         
+일단 CPU단에서 GPU에 Draw 커맨드를 전송하되 그 Draw 커맨드를 처리할지 말지(그릴지 말지) 여부를 그냥 GPU에게 맡기는 것이다.                         
+생각을 해보면 Query 연산이 다 끝나기를 기다리고 그 데이터를 다시 DRAM으로 가져올 때까지 기다릴바에는 그냥 GPU에 Draw 커맨드를 던져두고 CPU는 그 시간에 다른 연산을 더 하는 것이 이득이다.        
 
 이 Occlusion Query + Conditional Rendering 기법도 위에서 말한 GPU에서 알아서 오브젝트를 그릴지 말지 여부를 판단한다는 점에서 비슷해 보이지만 Occlusion Query 기법은 단순하게라도 ( 단순한 Fragment Shader 사용 ) 오브젝트 ( Occludee )를 그려보아야한다. 또한 Occludee들에 대해 Draw 커맨드를 일일이 전송해야한다.         
 이에 반해 Compute Shader를 이용하면 Occludee를 직접 그리는 것이 아니라 단순하게 Occluder를 그린 후 Depth Buffer와 Occludee의 가장 가까운 Depth 값을 비교하는 등과 같은 등의 여러 기법들을 활용하여 빠르게 Cull 여부를 판단할 수 있기 떄문에 Query 방법에 비해 더 빠르다. ( [6페이지 참고](https://www.slideshare.net/dgtman/sw-occlusion-culling) )                   
