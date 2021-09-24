@@ -9,6 +9,7 @@ categories: ComputerScience
 
 std::atomic은 여러 기능을 가지고 있다.       
 우선 이름대로 명령어를 atomic하게 만들어낸다. atomic이란 indivisible이란 뜻으로 여러 Cycle에 걸쳐 수행하는 게 아닌 하나의 Cycle 내로 작업을 처리한다는 것이다.          
+이러한 atomicity를 위해서는 우선 접근하거나 쓰기를 수행하려는 데이터가 레지스터 사이즈에 align되어 있어야한다. ( [메모리 Alignment](https://sungjjinkang.github.io/computerscience/2021/03/28/memoryalignment.html) )            
 하지만 하드웨어, OS에 따라 atomic 변수가 수행하는 작업이 무조건 atomic(하나의 Cycle만으로 연산을 수행하는)하지는 않다.       
 물론 Load, Store 같은 하나 하나의 작업은 atomic하지만(한 Cycle에 수행되지만) 특정 작업을 수행할 때는 명령어가 여러개 필요하다는 뜻이다. ( C++에서는 유일하게 std::atomic_flag만이 모든 작업이 atomic하다(완전히 lock free하다) )              
 이 말은 해당 동작 수행이 여러 명령어로 구성되었을 수 있고 그러면 중간에 다른 스레드가 끼어들어 이상한 값을 만들 수도 있다는 것이다.       
