@@ -103,7 +103,8 @@ CPU에서 수행했던 ( 대부분의 게임에서 ) View Frustum Culling, Occlu
 
               
 현재는 Masked SW Occlusion Culling ( CPU 단에서 Occlusion Culling )을 구현하고 있고 현재 제작 중인 [게임 엔진](https://github.com/SungJJinKang/EveryCulling)에서도 CPU단에서 Frustum Culling을 하고 있기 때문에 이 방법을 당장은 구현해보지 못할 것 같다.         
-----------------------
+
+--------------------------
 
 
 이와 비슷한 개념이 OpenGL의 Conditional Rendering이 있다. 이것은 Occlusion Query 기법에서 사용되는데, Occlusion Query 기법을 간단히 설명하면 Occluder를 먼저 그리고 Occludee들에 대해 단순하게( 간단한 Fragment Shader를 가지고 ) 한번 오브젝트를 그려보고 어떤 Fragment도 Depth Test를 통과하지 못하면 그 오브젝트에 대해서는 Draw API를 호출하지 않는 것이다. 이를 통해 간단하게 한번 오브젝트를 그려보고 만약 안그려도 된다고 판단이 되면 해당 오브젝트를 그리는 것을 생략하여 GPU 연산을 아낄 수 있다.          
