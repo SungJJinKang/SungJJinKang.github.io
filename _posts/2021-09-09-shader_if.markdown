@@ -1,8 +1,51 @@
 ---
 layout: post
-title:  "쉐이더에서 분기점( if )이 나쁜(느린) 이유"
+title:  "쉐이더 ( GPU )에서 분기점( if )이 나쁜(느린) 이유"
 date:   2021-09-09
 categories: ComputerScience ComputerGraphics
 ---
 
-references : [https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader](https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader)
+쉐이더 ( GPU )에서 분기점( if )이 나쁜(느린) 이유는 무엇일까?       
+
+이를 알기 위해서는 우선 GPU의 동작 원리에 대해 알아야한다.      
+GPU내에는 수백개의 SP ( Scalar Processor )로 구성되어 있다. 이 SP는 쉽게 생각하면 CPU 코어라고 생각하면 된다.      
+그리고 이 SP는 여러개의 쓰레드로 구성되어 있다.                       
+그리고 이 **쓰레드들을 32개 ( 혹은 64개 ) 모은 것을 Warp**라고 한다. 그리고 이 Warp를 여러개 ( 48개~64개 ) 모아 하나의 SM ( Streaming Multiprocessor )을 구성한다.       
+자세한 것은 [이 글](https://sungjjinkang.github.io/computerscience/computergraphics/2021/09/09/gpu_architecture2.html)을 참고하기 바란다.            
+
+본론으로 들어가서 **하나의 Warp ( 쓰레드 그룹 ) 내의 쓰레드들은 반드시 동일한 종류의 연산을 수행해야한다.**              
+이 말은 Warp 내의 쓰레드들은 동시점에 동일한 연산을 수행해야하기 때문에 분기점을 만났을 때 해당 분기가 자신 ( 쓰레드 )은 연산을 할 필요가 없는 분기이더라도 다른 쓰레드를 따라서 같이 연산을 해야한다는 뜻이다. ( 이것이 GPU가 SIMT 연산을 한다고 알려진 이유이다. ) ( Volta 아키텍쳐부터는 Warp 내의 쓰레드간의 독립된 스케줄링이 가능하다고는 하나 추가적인 코드 작성이 필요한 것 처럼 보인다. 자세한 것은 [이 글](https://docs.nvidia.com/cuda/volta-tuning-guide/index.html#sm-independent-thread-scheduling)을 참고하기 바란다 )            
+이렇게 **Warp 내의 각 쓰레드들이 서로 다른 분기를 가지는 것을 "분기 발산"이라고 하는데 이로 인해 Warp는 여러 분기 모두를 수행해야하고 ( 왜냐면 하나의 Warp는 특정 시점에 특정 연산만을 수행할 수 있기 때문이다. ) 이는 GPU의 활용율 저하로 이어진다.**          
+그러니깐 예를 들어 Warp 내의 1개의 쓰레드는 분기점 A로 가고, 나머지 31개의 쓰레드들은 분기점 B로 가는 경우에도 Warp의 특성상 32개의 쓰레드 모두 분기점 A의 연산을 수행해야하고 또한 분기점 B의 연산도 수행해야한다. ( 어떤 쓰레드가 자신의 분기가 아닌 분기를 수행할 때 실제로 연산을 하는지 아니면 아무런 연산을 하지 않고 있는지는 모르겠다. )           
+
+
+쉬운 예를 들어보자. 16개의 Fragment에 대해 Fragment Shading을 수행한다고 생각해보자.       
+```
+if( pos.x > 0.5 )
+{
+    분기점 A~~
+}
+else
+{
+    분기점 B~~
+}
+
+```
+Fragment의 위치 값 x가 0.5보다 큰 경우 분기점 A를 실행해야하고, 그 외의 경우에는 분기점 B를 실행한다.          
+이렇게 분기점이 있을 때 GPU Warp는 분기점 A, B 모두를 연산해야한다. 왜냐면 Warp 내의 모든 쓰레드가 동시에 똑같은 연산을 수행해야하기 때문에 자신 ( 쓰레드 )의 분기가 아닌 분기에도 들어가야한다.        
+
+그런데 간혹 두 분기 모두를 실행하지 않아도 되는 경우가 있다.           
+바로 **Warp내의 Thread들이 모두 동일한 분기를 채택한 경우**이다.          
+이를 "다이나믹 브랜칭"이라고 부르는데 Warp 내의 Thread들이 모두 동일한 분기를 선택한다고 판단이 되면 해당 분기만 연산을 하고 다른 분기는 연산을 하지 않는 것이다.         
+이렇게 Warp내의 쓰레드이 동일한 분기를 채택하는 경우가 많을 때 "응집성"이 좋다고 표현하고 모든 쓰레드가 동일한 분기를 채택하면 다른 분기는 연산을 수행하지 않는다.       
+물론 이 경우가 흔하지는 않을 것 같다.              
+
+그래서 GPU 코드를 작성할 때는 분기점을 최대한 줄이기 위해 노력해야하고 분기들 내에 공통된 연산은 분기 밖에서 한번만 연산하는 것이 좋다.        
+( 공통된 연산을 두 분기 모두에 넣어버리면 결국 해당 연산은 공통된 연산임에도 불구하고 모든 쓰레드가 두 번 연산해야한다. )       
+혹은 위와 같이 분기가 생기는 경우에는 아예 별개의 쉐이더로 분리해서 두 분기가 필요한 Fragment들은 두 번의 쉐이딩 ( 2 Pass )을 하는 방법도 있다.              
+하나의 쉐이더에서 분기점을 나누기 위해 두개의 쉐이더를 직접 만들 필요 없이 Shader Permutation을 통해서 하나의 쉐이더로 두개의 쉐이더 프로그램을 만들 수 있다. ( Shader Permutation은 쉽게 생각하면 하나의 쉐이더에 #ifdef와 같은 전처리문들을 여러개 넣어서 하나의 쉐이더로 전처리 개수만큼 각기 다른 쉐이더를 각각 만든다고 생각하면 된다. ) ( 다만 이러한 Shader Permutation의 과도한 사용은 쉐이더 컴파일 시간, 메모리 사용량을 높이니 적절히 사용할 필요가 있다. )           
+
+마지막으로 **다시 정리를 해보면 GPU에서 분기 ( if문 )이 나쁜 ( 느린 ) 이유는 조건문을 연산하는 것 자체가 느린 것이 아니라 GPU의 Warp단위 쓰레드들이 분기점에서 두 개의 분기 모두를 연산해야하기 때문이다.**              
+( 여담으로 CPU의 분기가 느린 이유도 조건문 연산 자체가 느린 것이 아닌 분기 예측 실패에 따라 예측한 분기의 연산 결과,파이프라인(!) 내 명령어들을 비우고 새롭게 올바른 분기의 명령어들로 연산을 해야하기 때문이다. )
+
+references : [https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-34-gpu-flow-control-idioms](https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-34-gpu-flow-control-idioms),  [https://mkblog.co.kr/2019/01/09/gpgpu-series-7-warp-execution/](https://mkblog.co.kr/2019/01/09/gpgpu-series-7-warp-execution/),  [https://mkblog.co.kr/2019/02/01/gpgpu-series-8-branch-divergence/](https://mkblog.co.kr/2019/02/01/gpgpu-series-8-branch-divergence/),  [https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader](https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader)
