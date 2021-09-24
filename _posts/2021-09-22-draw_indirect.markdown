@@ -80,7 +80,7 @@ glMultiDrawArraysIndirect의 indirect에 위의 DrawArraysIndirectCommand 데이
 반면 이 Draw Indirect 방법은 컬링 여부와 관계 없이 무조건 인스턴스 개수만큼 메쉬 데이터가 GPU 파이프라인에 들어갈 것 같아보인다.           
 
 여기서 **Compute Shader**가 등장한다.     
-Compute Shader를 통해 View Frustum Culling이나 Occlusion Culling을 수행한 후 각 Instance가 컬링되었는지 여부를 VRAM에 저장하고 ( **Instance가 컬링되었는지 여부를 CPU로 전송하지 않는다. 왜? 느리기 때문에** ) 있다가 Instance를 그릴지 여부를 결정할 때 활용한다!!            
+Compute Shader를 통해 GPU에서 View Frustum Culling이나 Occlusion Culling을 수행한 후 각 Instance가 컬링되었는지 여부를 VRAM에 저장하고 ( **Instance가 컬링되었는지 여부를 CPU로 전송하지 않는다. 왜? 느리기 때문에** ) 있다가 Instance를 그릴지 여부를 결정할 때 활용한다!! ( 오브젝트들의 컬링 여부가 GPU에서 결정되고 GPU내에 저장된다. DRAM 으로 올 일이 없다. )                       
 알다 싶이 GPU는 병렬적으로 데이터를 처리하는데 특화되어 있기 때문에 이러한 Culling 작업을 빠르게 처리할 수 있을 것 같다.               
 
 아래 두 사진은 일반적인 Rendering과 Draw Indirect 기법을 활용한 렌더링간의 GPU 상태 변화, 커맨드 전송의 차이를 보여준다. 어떤 사진이 Draw Indirect 기법을 사용했을 때인지는 잘 알것이다.        
@@ -94,10 +94,15 @@ CPU에서 수행했던 ( 대부분의 게임에서 ) View Frustum Culling, Occlu
 **일반적으로 대부분의 게임은 GPU Bound ( 프레임 저하의 원인이 GPU인 )하다보니 되도록이면 GPU의 연산량을 덜어주려고 하는데 이 방법은 오히려 CPU에서 하던 일까지 GPU에게 맡겨버리는 꼴이 되었다.**                                      
 정확하게 이 Compute Shader를 활용하여 컬링을 하고 Draw Indirect를 하는 방법이 CPU에서 컬링을 하는 방법보다 실제 게임에서 작동을 했을 때 더 빠른지, 더 느린지에 대해서는 잘 알지 못하겠다.        
 ( GPU가 병렬적으로 연산을 하는데 특화되어 있기 때문에 이 방법이 더 빠를 것 같기도 하다. )           
-              
-현재는 Masked SW Occlusion Culling ( CPU 단에서 Occlusion Culling )을 구현하고 있고 현재 제작 중인 [게임 엔진](https://github.com/SungJJinKang/EveryCulling)에서도 CPU단에서 Frustum Culling을 하고 있기 때문에 이 방법을 당장은 구현해보지 못할 것 같다.        
-그렇지만 최근 나온 게임들에서도 (수 백개의 나무, 풀 같은 오브젝트를 그리는데 많이들 활용한다)[https://assetstore.unity.com/packages/tools/utilities/gpu-instancer-117566?locale=ko-KR]고 알고 있는데 나중에 한번 구현해 보고 싶다.         
 
+또한 위치가 계속 변화하는 오브젝트의 경우에는 결국에는 오브젝트의 위치 데이터를 GPU에 전송해주어야하기 때문에 이 기법을 사용하는 효용이 많이 떨어진다. ( DRAM - GPU간 데이터 전송을 최소화하는 것이 목적이니깐. )       
+
+그래서 풀이나 나무 같이 월드 내에 고정된 Transform Data를 가진 수 많은 오브젝트들을 그릴 때 사용된다.       
+이 경우에는 처음 한번만 Transform Data를 GPU에 올려두면 그 이후부터는 그냥 Draw 커맨드만 전송해주면 GPU에 저장되어 있는 데이터를 가지고 Culling도 하고 렌더링도 매우 빠르게 그릴 수 있다.          
+(실제로도 풀이나 나무를 그릴 때 많이 사용되고 있다.)[https://assetstore.unity.com/packages/tools/utilities/gpu-instancer-117566?locale=ko-KR]             
+
+              
+현재는 Masked SW Occlusion Culling ( CPU 단에서 Occlusion Culling )을 구현하고 있고 현재 제작 중인 [게임 엔진](https://github.com/SungJJinKang/EveryCulling)에서도 CPU단에서 Frustum Culling을 하고 있기 때문에 이 방법을 당장은 구현해보지 못할 것 같다.         
 ----------------------
 
 
