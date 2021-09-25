@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Draw Indirect 기법"
+title:  "Draw Indirect 기법 ( GPU Instancing )"
 date:   2021-09-22
 categories: ComputerGraphics
 ---
