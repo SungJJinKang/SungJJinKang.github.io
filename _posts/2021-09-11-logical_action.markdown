@@ -2,7 +2,7 @@
 layout: post
 title:  "논리적으로 행동하기"
 date:   2021-09-11
-categories: LIFE
+categories: LIFE INTERN
 ---
 
 어떤 상황에서 어떠한 행동을 할지를 어떻게 결정할 수 있을까?      

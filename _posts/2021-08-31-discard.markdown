@@ -18,5 +18,7 @@ Rasterizer 단계가 끝나면 당연히 삼각형의 3개의 Vertex의 depth �
 이유는 당연하다.                  
 **Fragmentment Shader에 discard문이 있다면 어떤 Fragment가 Fragment Shading 단계에서 버려질지 ( Discard ) 그려질지를 알 수 없어지기 때문에 Fragment Shading 단계 전 Early Depth Test 단계에서 Depth Buffer에 Depth 값을 그리면 안된다.**      
 **버려질 Fragment에 대해** Depth Test를 수행하고 Depth Test를 통과하여 **Depth Buffer에 Depth 값을 그리면 안되기 때문**이다. ( 버려질 Fragment가 Depth Test를 통과하여 Depth Buffer에 Depth 값을 쓰면 안된다. )                           
-discard 외에도 **Fragment Shader에서 임의로 해당 Fragment의 Depth를 바꾸는 코드**를 넣거나, **alpha test를 수행**하는 경우에도 Early Depth Test는 수행되지 않는다.           
+discard 외에도 **Fragment Shader에서 임의로 해당 Fragment의 Depth를 바꾸는 코드**를 넣거나, **alpha test를 수행**하는 경우에도 Early Depth Test는 수행되지 않는다.            
 
+또한 Fragment Shading 과정에서 특정 Fragment를 버린다고 거기서 GPU가 바로 다른 일을 하는 것이 아니다.       
+GPU는 Warp 단위로 여러 ( 32, 64개 ) 스레드 ( 여기서는 Fragment 각각 )들을 모아서 동시에 어떤 하나의 명령어를 수행하는데 어느 하나의 Fragment를 버린다하더라도 GPU는 Warp 단위로 함께 동작하기 때문에 같은 Warp에 속해 있던 Fragment들이 Shading 작업을 다 끝낼 때 까지 기다려야한다. ( [참고](https://sungjjinkang.github.io/computerscience/computergraphics/2021/09/09/shader_if.html) )             

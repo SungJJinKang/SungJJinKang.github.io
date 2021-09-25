@@ -42,7 +42,7 @@ TLB내에는 최근에 변환했던 virtual address와 그 physical address가 �
 만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다. (후술하지만 정확히는 TLB가 (virtual address)와 (physical address page의 base address)를 저장하고 이 address에서 하위 offset비트로 이 엔트리에서 실제 physical memory address로 접근한다.)    
 즉 MMU는 메모리의 paged memory를 관리하고 virtual address를 physical address로 변환하는 작업을 한다.           
 
-2. 그런데 만약 TLB에 없다면 MMU는 virtual address의 상위 10비트를 가지고 메모리 내의 페이지 테이블을 확인한다.     
+2. 그런데 만약 TLB에 없다면 MMU는 virtual address의 상위 10비트를 가지고 메모리 내의 페이지 테이블을 확인한다. ( 메모리 상에 페이지 테이블의 위치는 PTBR ( Page Table Base Register )에 저장되어 있다. )             
 그리고 중간 10비트로 페이지 테이블 내의 페이지 테이블 엔트리를 찾는다. 이 페이지 테이블 엔트리는 4KB 사이즈의 페이지의 base 주소를 가지고 있다.    
 이 페이지가 비로소 우리가 찾아왔던 실제 메모리 데이터들이다. 이 4KB의 페이지 내에서 마지막 12비트를 offset으로 사용하여 페이지 내의 목표로 했던 physical address를 TLB에 반환한다.        
 

@@ -55,4 +55,4 @@ Preprocessing(전처리), 컴파일, 링킹이 그것이다.
 여기서 추가적으로 하나 더 설명하면 이러한 동적 오브젝트 파일, 동적 링킹 라이브러리들이 메모리에 로드될 때 코드 영역은 각각의 프로세스 ( 프로그램 )들끼리 서로 공유해서 사용하지만 데이터 영역 ( 상수 등등... )은 프로세스마다 원본에서 복사를 해가서 각자가 따로 관리한다 ( 어찌보면 당연하다 ).               
                 
             
-references : [https://stackoverflow.com/q/25826277](https://stackoverflow.com/q/25826277), [https://stackoverflow.com/q/6264249](https://stackoverflow.com/q/6264249), [https://softwareengineering.stackexchange.com/q/103673](https://softwareengineering.stackexchange.com/q/103673), [https://stackoverflow.com/q/3322911](https://stackoverflow.com/q/3322911)
+references : [https://stackoverflow.com/q/25826277](https://stackoverflow.com/q/25826277), [https://stackoverflow.com/q/6264249](https://stackoverflow.com/q/6264249), [https://softwareengineering.stackexchange.com/q/103673](https://softwareengineering.stackexchange.com/q/103673), [https://stackoverflow.com/q/3322911](https://stackoverflow.com/q/3322911), [https://driip.me/2ab5ed83-58ce-4cf2-bee7-51a58bbe21ac](https://driip.me/2ab5ed83-58ce-4cf2-bee7-51a58bbe21ac)

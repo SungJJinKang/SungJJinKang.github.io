@@ -15,7 +15,7 @@ categories: ComputerScience ComputerGraphics
 특정 오브젝트가 컬링되었는지 안되었는지를 CPU에서 드로우 콜을 떄릴 때 GPU에 전송을 해주어 컬링 된 오브젝트의 버텍스는 아예 그래픽 파이프라인에도 들어가지 않게 만들고 싶은데 쉽지 않을 것 같다.        
 가장 쉬운 방법은 **인덱스 버퍼만 매 프레임 갱신에 GPU에 전송해주어서 컬링이 되지 않은 오브젝트들의 버텍스의 인덱스를 전송해주면 될 것 같다.** 이러면 매 프레임 ( 컬링된 오브젝트의 종류가 바뀐 경우 ) 인덱스 리스트를 새롭게 만들어서 GPU에 전송해주어야한다.      
 
-그래서 이 글에서는 필자가 어떻게 Static Batching을 사용하면서 (CPU 단계에서 수행한 Culling)[https://github.com/SungJJinKang/EveryCulling]의 결과를 Static Batching 렌더링에 반영하여 최적화를 하였는지에 대해 글을 작성해 볼 것이다.         
+그래서 이 글에서는 필자가 어떻게 Static Batching을 사용하면서 [CPU 단계에서 수행한 Culling](https://github.com/SungJJinKang/EveryCulling)의 결과를 Static Batching 렌더링에 반영하여 최적화를 하였는지에 대해 글을 작성해 볼 것이다.         
 그리고 Static Batching 적용 전 후의 퍼포먼스 차이.        
 Static Batching을 적용한 상태에서 CPU Culling ( 현재는 멀티스레드 뷰프러스텀 컬링만 구현되어 있다 )의 결과를 반영하기 전 후의 퍼포먼스 차이에 대해서도 서술할 것이다. ( 오클루전 컬링이 적용이 되었다면 퍼포먼스 차이가 매우 클 것 같은데 뷰 프로스텀 컬링만 적용을 했기 때문에 두 경우의 퍼포먼스 차이가 크지는 않을 것 같기도 하다. )               
 
