@@ -144,6 +144,8 @@ CPU가 I/O가 필요할 경우 I/O 디바이스에 존재하는 디바이스 컨
 IO가 작업을 완료 후 IO의 로컬 버퍼에 결과 데이터를 저장하면 DMA가 CPU를 대신하여 IO의 로컬 버퍼의 결과 데이터를 메모리에 옮긴 후 DMA가 다 옮기면 CPU에 인터럽트를 한번만 걸어서 로컬 버퍼의 메모리의 복사 작업이 완료되었음을 알려준다.            
 ( 여기서 CPU와 DMA가 동시에 메모리에 접근하여 동시에 읽기/쓰기 동작을 하면 안되니 메모리 컨트롤러가 CPU, DMA를 중재한다. )                
 
+[DMA VS Memory Mapped IO](https://stackoverflow.com/questions/3851677/what-is-the-difference-between-dma-and-memory-mapped-io)          
+[GPU의 Memory Mapped IO](https://stackoverflow.com/questions/11355426/gpu-system-memory-mapping)                 
 
 **어플리케이션 IO 인터페이스**            
          
