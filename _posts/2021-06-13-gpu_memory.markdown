@@ -17,6 +17,7 @@ categories: ComputerScience ComputerGraphics
 
 추가적으로 DMA에 대한 깊은 이해를 하고 싶으면 [이 글](https://sungjjinkang.github.io/computerscience/2021/09/26/IO_System.html)을 읽기바란다.            
 [메모리 맵 IO와 DMA의 차이](https://stackoverflow.com/questions/3851677/what-is-the-difference-between-dma-and-memory-mapped-io)        
+[GPU에서 주소 공간 관리](https://nemoux00.wordpress.com/2014/09/09/wayland-gpu-%EB%8F%99%EC%9E%91-%EC%9B%90%EB%A6%AC-%EB%A9%94%EB%AA%A8%EB%A6%AC-%EC%A3%BC%EC%86%8C-%EA%B3%B5%EA%B0%84-%EA%B4%80%EB%A6%AC/)
 
 
 references : [https://stackoverflow.com/questions/11355426/gpu-system-memory-mapping](https://stackoverflow.com/questions/11355426/gpu-system-memory-mapping)  ,  [https://www.quora.com/How-does-a-GPU-share-memory-with-a-CPU-How-can-they-access-it-at-the-same-time](https://www.quora.com/How-does-a-GPU-share-memory-with-a-CPU-How-can-they-access-it-at-the-same-time)  ,  [https://superuser.com/questions/1545812/can-the-gpu-use-the-main-computer-ram-as-an-extension](https://superuser.com/questions/1545812/can-the-gpu-use-the-main-computer-ram-as-an-extension)  ,  
