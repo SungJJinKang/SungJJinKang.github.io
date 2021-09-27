@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "OpenGL과 DirectX 차이"
-date:   2021-09-26
+date:   2021-09-27
 categories: ComputerScience ComputerGraphics
 ---
 
@@ -15,11 +15,13 @@ OpenGL과 DirectX 둘은 무엇이 다를까?
 언뜻보면 OpenGL이 어플리케이션 개발자가 신경쓸 일이 덜한 것 같지만 그 만큼 성능상 최적화할 수 있는 부분이 덜하다.         
 뭔 말이냐면 **DirectX의 경우 리소스 관리를 직접 자유자재로 할 수 있으니 GPU가 어떻게 돌아가는지만 잘 이해하고 있으면 그 만큼 성능상 최적화를 할 수 있다**는 것이다.         
 
-예를 들면 커맨드 배칭을 들 수 있다. DirectX는 OpenGL과 달리 어플리케이션단에서 커맨드들을 여러개 모아서 한번에 GPU에 보낼 수 있다. 이것이 어떤 장점이 있는지를 알려면 메모리와 GPU 사이의 데이터를 전송하는데 쓰이는 PCI-E 버스에 대해 알아야하는데, **PCI-E 버스의 특징은 대역폭은 큰데 반해 그만큼 레이턴시가 길다**는 것이다. 이 말은 PCI-E 버스를 통해 데이터를 전송할 때는 조금 조금씩 데이터를 보내기 보다는 되도록이면 **데이터를 한꺼번에 모아서 PCI-E 버스를 꽉꽉 채워서 데이터를 전송하는 것이 성능상 유리**하다는 것이다.         
-물론 OpenGL도 유저 모드단에서 커맨드버퍼가 있어서 커맨드를 모아서 전송하지만 커맨드 버퍼가 꽉차지 않아도 주기적으로 GPU에 데이터에 전송이 된다. ( 정확히는 유저 모드단에서 커맨드 버퍼에 데이터를 모아두면 커널 모드에서 이걸 가져가서 DMA가 GPU로 전송하는 방식이다. )
-그래서 **DirectX는 개발자가가 원하는만큼 커맨드를 어플리케이션단 ( 유저모드 단 )에서 모을 수 있게 지원을 하고 원하는 시점에 GPU에 보낼 수 있다.       
+예를 들면 DirectX12에서는 GPU 관련 메모리를 할당할 때 어디에 할당할지를 정해줄 수 있다.     
+그래픽 관련 작업에 사용할 메모리를 할당할 때,      
+한번 데이터를 GPU에 올려두면 CPU가 이후 다시 수정할 일이 적은 데이터인 경우 ( 텍스쳐나 버텍스 데이터, 렌더 타켓 텍스쳐 같은 것들이 있다. ) D3D12_HEAP_TYPE_DEFAULT 옵션을 통해 GPU의 로컬 메모리 VRAM에 메모리를 할당할 수 있고,         
+CPU가 자주 접근하거나 읽거갈 일이 많은 데이터인 경우에는 D3D12_HEAP_TYPE_UPLOAD 옵션을 통해서 시스템 메모리 ( DRAM )에 할당을 할 수 있다.         
 
 더 자세히 알고 싶다면 [이 글1](https://docs.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-mapping)과 [이 글2](https://docs.microsoft.com/ko-kr/windows/win32/direct3d12/recording-command-lists-and-bundles)을 읽어보기 바란다.         
+[Vulkan, DX12의 리소스 관리](https://gpuopen.com/wp-content/uploads/2018/05/gdc_2018_tutorial_memory_management_vulkan_dx12.pptx)         
 
 ------------------------       
 
