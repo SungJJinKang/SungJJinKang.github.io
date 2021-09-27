@@ -42,8 +42,8 @@ IO 디바이스들은 크게 저장 디바이스, 상호 작용 ( 커뮤니케�
 - 세번째로는 **status ( 상태 ) 레지스터**로 input, busy, error, transaction 완료 등에 대한 idle, ready와 같은 장치의 상태를 명시하기 위해 호스트에 의해 읽혀지는 비트들을 가지고 있다.               
 - 마지막으로 **control 레지스터**는 패리티 체크, 워드 길이, 전이중 이중 통신과 같은 장치의 설정을 바꾸거나, 커맨드들을 발행하기 위해서 호스트에 의해 쓰여 ( write )지는 비트들을 가지고 있다.          
 
-장치들과 소통하기 위한 또다른 방법으로는 **메모리 맵 IO ( memory-mapped IO )**가 있다.            
-- 이 경우 CPU의 주소 공간 ( Logical 주소 공간 ) 중 일부분이 IO 장치의 레지스터, 저장공간에 맵되고 CPU가 그 메모리 주소 공간에 쓰거나, 읽어서 디바이스와 소통할 수 있다.            
+장치들과 소통하기 위한 또다른 방법으로는 **메모리 맵 IO ( memory-mapped IO )**가 있다.                              
+- 이 경우 CPU의 주소 공간 ( Logical 주소 공간 ) 중 일부분이 IO 장치의 레지스터, 저장공간에 맵되고 CPU가 그 메모리 주소 공간에 쓰거나, 읽어서 디바이스와 소통할 수 있다.                    
 - 메모리 맵 IO는 그래픽 카드와 같이 많은 양의 데이터를 전송해야하는 장치들에 적합하다.       
 - 메모리 맵 IO는 일반적인 레지스터들과 함께 사용될 수도 있고 그것들 대신 사용될 수도 있다.           
 - 메모리 맵 IO의 접근이 일반 DRAM을 접근할 때와 똑같기 때문에 CPU 구조상 간단하다. ( RISC가 목표로하는 것 )
@@ -71,12 +71,15 @@ CPU가 주소 버스에 어떤 주소를 썼는데 그 주소를 주소 디코�
 ![4Rz4p (2)](https://user-images.githubusercontent.com/33873804/134810134-927f653b-a6ef-46df-89de-1877a18d63fe.jpeg)        
 
 
-그리고 메모리 맵 IO와 DMA는 아무런 관련이 없다. 메모리 맵 IO는 CPU가 메모리 버스 ( 주소 버스, 데이터 버스 )를 통해 메모리 ( DRAM )나 IO에 통신하는 방법 중 한 방법이고, DMA는 주변 장치들 끼리 혹은 메모리 ( DRAM )와 주변 장치간의 데이터를 전달하거나 읽을 때 CPU를 대신하여 DMA가 버스에 데이터를 쓰는 것이다.                
-
-
+그리고 메모리 맵 IO와 DMA는 아무런 관련이 없다. 메모리 맵 IO는 CPU가 메모리 버스 ( 주소 버스, 데이터 버스 )를 통해 메모리 ( DRAM )나 IO에 통신하는 방법 중 한 방법이고,     
+DMA는 주변 장치들 끼리 혹은 메모리 ( DRAM )와 주변 장치간의 데이터를 전달하거나 읽을 때 CPU를 대신하여 DMA가 버스에 데이터를 쓰는 것이다. DMA가 이러한 작업을 대신하기 때문에 그 동안 CPU는 다른 일을 할 수 있다.                          
 
 [시스템 주소 버스 vs 데이터 버스](https://www.differencebetween.com/difference-between-address-bus-and-vs-data-bus/)            
 [메모리 맵 IO 참고](https://softwareengineering.stackexchange.com/questions/349902/how-data-is-accessed-in-memory-mapped-i-o)       
+
+메모리 맵 IO와 관련하여 메모리 맵 파일이라는 개념이 존재한다. 흔히 mmap()이라는 함수로 알려진 기능이다.         
+자세한건 [이 글](https://four-hand-shake.tistory.com/20)을 읽기바란다.             
+
 
 **시스템콜**         
 
