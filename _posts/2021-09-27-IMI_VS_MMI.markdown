@@ -1,0 +1,16 @@
+---
+layout: post
+title:  "IO mapped IO vs Memory mapped IO"
+date:   2021-09-26
+categories: ComputerScience
+---
+
+CPU가 IO 장치들과 통신하는 방법에는 두가지가 있다.              
+하나는 IO mapped IO
+
+
+Memory mapped IO의 IO 장치 데이터들은 CPU 가상 주소 공간에서 페이징 처리된다.         
+
+---------------------------
+
+Memory mapped File
