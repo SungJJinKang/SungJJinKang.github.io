@@ -2,12 +2,13 @@
 layout: post
 title:  "2021년 엔진 구현 목표"
 date:   2021-09-29
-categories: ComputerScience ComputerGraphics
+categories: ComputerScience
 ---
 
 우선 목표 
 
 - Occlusion Culling
+- 오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. )
 - 간단한 물리, 충돌 처리
 - 메가 텍스쳐 ( 메모리 맵 IO 이용 )
 - 오브젝트 Bathcing
