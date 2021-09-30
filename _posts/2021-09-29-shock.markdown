@@ -1,108 +1,79 @@
 ---
 layout: post
-title:  "멀티스레드 뷰 프로스텀 컬링 최적화 여정 ( 캐시 미스 줄이기! - 데이터 Oriented 디자인 )"
-date:   2021-09-29
+title:  "멀티스레드 뷰 프로스텀 컬링 최적화 여정1 ( 캐시 미스 )"
+date:   2021-09-30
 categories: ComputerScience ComputerGraphics
 ---
 
-결과는 충격적이었다.         
-기껏 고생해서 멀티스레드로 코드를 돌렸는데 싱글 스레드로 돌린 것과 차이가 없었다.     
-각 스레드가 연산을 할 때마다 thread id를 찍어보니 이상하게도 스레드들이 동시에 연산하지 않고 한 스레드가 끝나면 다음 스레드가, 그리고 그 다음 스레드가 이런 식으로 병렬적으로 연산이 되고 있지 않은 것을 발견했다.     
-
-문제를 분석하기 시작했다.          
-우선 코어간 캐시 동기화가 너무 빈번하게 발생한 것이 큰 원인일 것이라고 생각하고 AMD uProf CPU 프로파일러를 다운 받고 분석에 들어갔다.       
-
-역시나 문제는 캐시 동기화였다.   
-
-스레드간의 연산한 블록 횟수를 세기 위해 사용한 atomic 변수가 문제였다.        
-atomic변수에 값을 쓸 때마다 다른 코어와 동기화가 발생하니 매번 공유 메모리까지 flush가 됬던 것이다.         
-
-**동기화 자체가 문제가 아니라 M, E 상태를 가지고 있는 코어가 flush를 해주기까지 다른 코어들은 다 놀고 있어야한다는 것이 가장 큰 문제였다..** ( 캐시 Coherent에 대해 잘 알지 못하다면 [이 글](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)을 읽기 바란다. )     
-이러니 아토믹 변수에 대해 캐시 라인을 점유하고 있던 스레드만 계속 돌고 해당 캐시라인이 완전히 공유 메모리로 flush될 때까지 어느 정도 시간이 걸리니 그 동안 이 스레드만 동작을 계속하던거였다. 그 후 다른 코어가 해당 아토믹 변수의 캐시 라인을 M, E 상태로 점유하면 또 이 코어만 동작을 했던 것이다.                           
-그러니 스레드들이 동시에 돌지 않고 한 스레드가 
-
-불필요한 아토믹 연산이 총 4번 있었는데 이 때마다 각 코어가 서로 서로 캐시 flush를 요청하는 것이다.....         
-그래서 이 아토믹 연산을 1번으로 줄였다.          
-드디어 모든 코어가 함께 일을 하기 시작한다!!!          
-
-
-현재도 atomic 변수를 한번은 사용하는 형태이다.      
-이후에는 스레드의 인덱스에 따라 블록을 따로 계산하게 만들 예정이다.     
-그러니깐 총 5개의 스레드가 있으면 0번째 스레드는 0, 5, 10, 15. 1번째 스레드는 1, 6, 11, 16 이렇게 동작하게 해서 atomic 변수의 사용을 완전히 배제할 것이다.       
-물론 한 스레드가 자신에게 배정된 블록을 다 연산하면 다른 스레드의 연산을 빼앗아오는 것까지 구현할 것이다.
+예전에 [멀티스레드 뷰 프러스텀 컬링](https://github.com/SungJJinKang/EveryCulling/tree/main/CullingModule/ViewFrustumCulling)을 구현하고 그냥 잘 돌겠지 생각하고 있었다.       
+내가 좋아하는 배틀필드를 만드는데 사용되었던 [프로스트바이트 엔진에서 구현한 것](https://www.slideshare.net/DICEStudio/culling-the-battlefield-data-oriented-design-in-practice)을 참고해서 거의 비슷하게 구현하려 노력하였다.       
+간략히 소개하자면 **핵심은 SoA를 통한 캐시 효율 극대화, SIMD 명령어 사용**을 꼽을 수 있다.        
+코드에 대해 간략하게 설명하자면 뷰 프러스텀 컬링을 연산데 사용되는 오브젝트들의 데이터를 모아둔 엔티티 블록이라는 것이 있는데 이 엔티티 블록 하나는 대략 50개 정도의 오브젝트에 대한 위치, 컬링 연산을 위한 데이터를 가지고 있다.          
+그럼 오브젝트가 1000개라면 총 20개의 엔티티 블록이 있는 것이다.           
+중요한건 오브젝트들의 **데이터가 Configous 하게 배치**되었다는 것이다.
 ```
-struct alignas(64) alignedAtomic
-{
-    std::atomic<size_t> atomic;
-}
-
-std::array<alignedAtomic, 스레드 풀 내의 스레드 개수> alignedAtomicValue;
+Object1 Position | Object2 Position | Object3 Position | Object4 Position ...
 ```
-위와 같이 각각의 atomic 변수의 캐시 라인을 완전히 분리해주어서 코어간의 atomic 변수 Cache coherency를 완전히 막을 것이다.        
+이런 식으로 Array로 오브젝트들의 위치, 바운딩 Sphere의 반지름 총 16바이트의 오브젝트에 대한 데이터를 연속되게 배치하였다.       
+이를 통해 **SIMD 연산 ( AVX1 )으로 빠르게 연산**하고 ( 한번 연산당 2개의 오브젝트에 대한 컬링 여부 알 수 있음 ), **캐시 적중률을 극대화**하였다.    
+또한 **각의 스레드가 하나의 엔티티 블록을 전담하여서 계산**하기 때문에 **스레드간 Data Race가 없고**, 스레드간 **[캐시 동기화](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)를 최소화**해주었다.    
+또한 혹시 있을 캐시 동기화를 막기 위해 각각의 엔티티 블록은 **캐시 라인에 align**되게 셋팅하였다.       
+자세한건 [코드](https://github.com/SungJJinKang/EveryCulling/tree/main/CullingModule/ViewFrustumCulling)를 보기 바란다.                                    
+
+어쨌든 당연히 멀티스레드로 짰으니 빠르겠지 하고 생각하고 있었다.        
+그런데 문뜻 테스트를 해보고 싶었다. 싱글스레드와 비교해서 얼마나 빠를지.        
+( 참고로 테스트한 컴퓨터는 8코어 16스레드 CPU가 장착되어있다. )         
+
+16000개의 오브젝트를 그리는 약간은 극단적인 상황을 가정하고 멀티스레드로 동작하는 코드와 싱글스레드롣 동작하는 코드의 성능을 비교하였다.      
+렌더링 ( 컬링부터 그래픽스 API 호출을 전부 포함하는 )을 시작하고 끝날 때까지의 시간을 측정하였다.     
+**싱글스레드로 동작하는 코드는 **20ms** 소요되었다.     
+**6개의 스레드** ( 메인스레드 1 + 서브스레드 5 )로 멀티스레드로 동작하는 코드는 **12ms** 소요되었다.     
+**16개의 스레드** ( 메인스레드 1 + 서브스레드 15 )로 멀티스레드로 동작하는 코드는 **12ms** 소요되었다.       
+
+여기서 우리는 **두가지 사실**을 알 수 있다.     
+**멀티스레드로 동작하는 코드가** 싱글스레드로 동작하는 코드에 비해 **8ms 빨랐는데** 사실 **테스트 상황이 16000개의 오브젝트를 그리는 극단적인 상황이라는 사실**이다. 실제로 개발된 게임에서 있을법한 상황에서는 그 차이가 훨씬 적을 것이다.      
+( 멀티스레드로 스레드 풀에 작업할 것들을 던져두고 메인스레드에서는 여러 다른 일들을 처리하게 해서 최대한 메인 스레드가 서브스레드가 작업을 다 끝내기를 기다리는 시간을 최소화하였다. 실제로 메인스레드는 거의 ( 99.99% ) 서브스레드들을 기다릴일이 없다. )                    
+
+실제로 개발한 게임이 있을법한 개수의 오브젝트로 테스트를 하면 멀티스레드로 뷰프러스텀 연산을 할때와 싱글스레드로 할때 별차이가 없을 것이다.     
+**내가 느끼기에는 왠만한 게임에서는 뷰프러스텀 컬링을 멀티스레드로 처리해봤자 얻을 수 있는 성능향상이 거의 제로에 가까울 것이다.**     
+
+이러한 테스트 결과를 얻으니 약간은 현타가 왔다.....       
+그래도 개발을 하면서 배운 것이 많으니 어찌 어찌 만족하고 있다.     
+
+다음으로 알 수 있었던 사실은 **16스레드나 6스레드나 성능면에서 차이가 제로에 가깝다**는 것이다.       
+이는 멀티스레드에 대해 조금이라도 아는 사람이라면 이유를 알 것이다.          
+
+그 이유로는 크게 **스레드 컨텍스트 스위칭 비용**과 **캐시 효율 저하**가 있을 것 같다. 다른 이유도 있으니 [이 글](https://megayuchi.com/2018/02/15/%eb%a9%80%ed%8b%b0%ec%bd%94%ec%96%b4%ec%a7%80%ec%9b%90%ec%9d%84-%ec%95%88%ed%95%b4%ec%84%9c-%ea%b2%8c%ec%9e%84%ec%9d%b4-%eb%8a%90%eb%a0%a4/)을 참고하기 바란다.        
+
+어차피 코어는 한정되어 있고 결국 스레드들은 코어를 돌아가면서 점유해서 사용할 것이다.       
+그러다 보니 **스레드가 연산을 계속하다 컨텍스트 스위칭이 되고 그 스레드에 다른 코어가 배정이 되면 그 전에 축적해두었던 캐시가 다 쓸모 없어지게 되고 엄청난 캐시미스가 발생**하는 것이다. ( 밑에서 실제로 이 사례를 적나라하게 보여줄 것이다. )       
+
+스레드 컨텍스트 스위칭의 경우 솔직히 확인할 방법이 없지만 ( 사실 있는지 없는지 모른다 ), 스레드의 개수가 16개나 된다고 생각했을 때 16개의 스레드가 돌아가면서 코어를 사용하려하는데 당연히 스레드 컨텍스트 스위칭이 상당할 것이다.        
+
+사실 싱글스레드를 멀티스레드로 바꾸어도 성능이 크게 좋아지지 않는다는 것은 이미 잘 알고있었다.       
+대형 게임 회사들도 괜히 코어를 한 두개만 갈구는 것이 아니다. 그만큼 멀티 스레드로 코드를 짠다고 해도 얻을 수 있는 성능 향상이 크지 않기 때문이다.       
+[이 영상](https://youtu.be/pBrDKnJ6vjQ)을 보면 대형 회사들의 최신 게임들을 플레이 할 때 코어, 하드웨어 스레드의 개수에 따라 얼마나 성능 향상을 가질 수 있는지를 보여주는데, 코어가 아무리 많아도 별 차이 없다.      
+그만큼 멀티 스레드로 코드를 작성하여도 큰 성능 향상을 얻기가 매우 힘들다는 것이다.      
+
+----------------------
+
+그렇지만 포기하고 싶지 않았다.     
+조금이라도 멀티스레드 뷰 프러스텀 컬링을 빠르게 하기 위한 방법을 찾기로 했다.        
+우선 어떤 부분이 문제가 되는지 알아야했다.        
+나는 아마 멀티 스레드로 동작을 하면서 캐시 미스가 중요한 성능 저하의 원인 중 하나라고 생각하였다.       
+캐시의 중요성에 대해서는 여러 CPPCON 영상들을 통해 잘 알고 있었다.          
+
+AMD uProf CPU 프로파일러로 분석에 들어갔다.      
+일단 **멀티 스레드 코드에서 캐시 미스가 엄청나다**는 사실을 발견했다.      
+
+먼저 몇가지 사진들을 보여주겠다.        
+
+먼저 **싱글 스레드** 상황에서의 프로파일링 결과이다.        
+![싱글스레드](https://user-images.githubusercontent.com/33873804/135473368-11f713eb-6a9b-4d92-9bec-958f20c4aa00.png)       
+
+다음은 **6스레드 멀티 스레드** 상황에서의 프로파일링 결과이다.        
+![멀티스레드-6스레드](https://user-images.githubusercontent.com/33873804/135473361-ebf81514-0f30-4619-a21c-42412209b139.png)           
 
 
-차근 차근 프로파일러와 함께 살펴보겠다.      
-```
-const math::Vector3& renderedObjectPos = renderer->GetTransform()->GetPosition();
+여기서
 
-entityBlock->mPositions[entityIndex].SetPosition(*reinterpret_cast<const culling::Vector3*>(&renderedObjectPos));
-entityBlock->mPositions[entityIndex].SetBoundingSphereRadius(worldRadius);
-```
-우선 첫번째 부분이다.        
-
-
-그리고 나중에는 Position 데이터는 따로 풀링을 해야되겠다.         
-매 프레임 오브젝트의 Posion 데이터에 2번 이상 접근을 하는데 매 오브젝트마다 캐시 미스가 발생하고 있다.       
-그래서 미리 풀링을 해서 사용을 해야겠다.        
-
-현재는 **Position 데이터가 힙 영역 여기 저기 파편화되어 있다보니 캐시의 혜택을 얻지 못하고 있다.**             
-그래서 **많은 개수의 Position 데이터들을 배열로 미리 할당해서 각 오브젝트의 Position 데이터가 연속되게 배치**를 해야겠다.    
-
-위에 보이는 LOAD_LATENCY가 모두 
-
-
-
-
-```
-struct mPosition
-{
-    culling::Vector3 Position;
-    float BoundingSphereRadius;
-};
-
-for (size_t entityIndex = 0; entityIndex < entityCountInBlock; entityIndex++)
-{
-    doom::Renderer* renderer = static_cast<doom::Renderer*>(currentEntityBlock->mRenderer[entityIndex]);
-    currentEntityBlock->mPositions[entityIndex].Position = renderer->GetTransform()->GetPosition();
-
-}
-
-for (size_t entityIndex = 0; entityIndex < entityCountInBlock; entityIndex++)
-{
-    doom::Renderer* renderer = static_cast<doom::Renderer*>(currentEntityBlock->mRenderer[entityIndex]);
-
-    const float worldRadius = renderer->doom::ColliderUpdater<doom::physics::Sphere>::GetWorldCollider()->mRadius;
-
-    currentEntityBlock->mPositions[entityIndex].BoundingSphereRadius = worldRadius;
-
-}
-
-vs
-
-for (size_t entityIndex = 0; entityIndex < entityCountInBlock; entityIndex++)
-	{
-		doom::Renderer* renderer = static_cast<doom::Renderer*>(currentEntityBlock->mRenderer[entityIndex]);
-		const float worldRadius = renderer->doom::ColliderUpdater<doom::physics::Sphere>::GetWorldCollider()->mRadius;
-
-		currentEntityBlock->mPositions[entityIndex].Position = renderer->GetTransform()->GetPosition();
-		currentEntityBlock->mPositions[entityIndex].BoundingSphereRadius = worldRadius;
-
-	}
-```
-
-둘 중 어떤 코드가 빠를까?             
-밑의 코드가 훨씬 더 빠르다.         
-왜냐면 위의 코드의 경우 첫번째 루프에서 저장한 캐시를 두번째 루프에서 활용하지 못한다.     
-그래서 두번째 루프에서 쓰기 동작을 할 때 또 다시 mPositions 데이터를 L1 캐시로 캐시 라인을 읽어와야한다.     
-
-반면 아래 코드의 경우 첫번째 루프에서 Position과 BoundingSphereRadius를 쓰기 떄문에 처음 Position에 쓰기 동작을 수행하며 읽어왔던 캐시 덕분에 BoundingSphereRadius에 쓸 때는 곧 바로 쓸 수 있다.     

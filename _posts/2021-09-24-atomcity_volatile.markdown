@@ -62,6 +62,7 @@ X84 초기에는 메모리 공유 버스에 Lock을 걸어서 Read-Modify-Store�
 atomic 연산을 하는 동안 해당 캐시 라인에 Modified 상태로 만든다. 이때 다른 코어가 해당 캐시 라인을 읽으려고하면 ( 캐시 라인의 Modified 상태를 가지고 있는 코어는 Snooping 중이다. ) 해당 캐시 라인의 Modified 상태를 가지고 있는 주인 코어는 atomic 연산이 다 끝날때까지 캐시 라인을 flush 해주지 않고 Modified 상태를 가지고 있는다. ( 그럼 당연히 해당 캐시 라인을 읽으려는 다른 코어들은 주인 코어가 캐시 라인 flush를 해줄때까지 기다려야한다. ) ( 추가적으로 X86은 강한 메모리 모델을 가지고 있어서 Cache Coherency를 해칠 시 가장 최근에 Cache Coherency를 준수 했던 상태로 Rollback한다 )
 CPU에 따라 Locking을 할 수도 있고 MESI 프로토콜을 이용해서 Atomicity를 구현할 수 있는데 이를 확인하려면 [atomic_is_lock_free](https://en.cppreference.com/w/cpp/atomic/atomic_is_lock_free)를 사용하면 된다.         
 
+std::atomic에 대해 더 자세한 내부 동작 원리를 알고 싶다면 [이 글](https://fgiesen.wordpress.com/2014/08/18/atomics-and-contention/)을 참고하라.          
 
 -------------------------------------------------
 
