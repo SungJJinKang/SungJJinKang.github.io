@@ -74,6 +74,4 @@ AMD uProf CPU 프로파일러로 분석에 들어갔다.
 다음은 **6스레드 멀티 스레드** 상황에서의 프로파일링 결과이다.        
 ![멀티스레드-6스레드](https://user-images.githubusercontent.com/33873804/135473361-ebf81514-0f30-4619-a21c-42412209b139.png)           
 
-
-여기서
-
+Position 셋팅과 Radius 셋팅 두 연산을 완전히 다른 루프로 분리하니 Cache Prefetch를 극대화할 수 있었다.    
