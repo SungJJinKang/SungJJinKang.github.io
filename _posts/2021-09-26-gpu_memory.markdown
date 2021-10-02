@@ -23,5 +23,6 @@ refereucens :
 [GPU 메모리 종류](https://www.ce.jhu.edu/dalrymple/classes/602/Class13.pdf)          
 [DX12 메모리 관리 전략](https://docs.microsoft.com/ko-kr/windows/win32/direct3d12/memory-management-strategies)                
 [GPU - Pinned System Memory](https://mkblog.co.kr/2017/03/07/nvidia-gpu-pinned-host-memory-cuda/)      
-[GPU 메모리 관리](https://gpuopen.com/wp-content/uploads/2018/05/gdc_2018_tutorial_memory_management_vulkan_dx12.pptx)       
-[https://insujang.github.io/2017-04-27/gpu-architecture-overview/](https://insujang.github.io/2017-04-27/gpu-architecture-overview/0               )         
+[GPU 메모리 관리](https://gpuopen.com/wp-content/uploads/2018/05/gdc_2018_tutorial_memory_management_vulkan_dx12.pptx)            
+[gpu-architecture-overview](https://insujang.github.io/2017-04-27/gpu-architecture-overview/)         
+[https://insujang.github.io/2017-06-23/gpu-resource-management/](https://insujang.github.io/2017-06-23/gpu-resource-management/)             
