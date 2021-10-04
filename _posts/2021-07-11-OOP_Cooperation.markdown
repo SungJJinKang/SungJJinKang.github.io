@@ -2,7 +2,7 @@
 layout: post
 title:  "객체지향 프로그래밍과 협업의 관계"
 date:   2021-07-11
-categories: COWORK INTERN
+categories: COWORK
 ---
 
 협업을 하게 되면 작업을 분배해야하는데 이 때 가장 큰 실수는 "단순히 선호에 따라 작업을 분배하는 것"이다.     

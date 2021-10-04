@@ -39,7 +39,18 @@ Variadic Template을 사용하면 생성자의 매개 변수 전달도 쉽게 �
 
 실제 언리얼에서도 UObject는 new 할당을 금지하고 NewObject라는 함수를 사용한다. ( 사실 위의 이유 때문인지는 모른다. )        
 
+아래 사진은 게임이 완전히 로드 된 후 생성되어 있는 DObject들이다. 4000개 가량의 DObject가 프로그램에 존재한다.                    
+![20211005004506](https://user-images.githubusercontent.com/33873804/135882466-70aef90a-07d0-4a0f-92ed-b9755e18e343.png)            
+
+아래 사진은 이 글에서 소개한 전략으로 DObject들을 관리하고 일괄적으로 파괴한 후의 남은 DObject의 개수이다. 남은 1개는 전역 변수로 프로그램 종료시 해제될 것이다.           
+![20211005011520](https://user-images.githubusercontent.com/33873804/135887352-78229b1a-f1ab-4508-8603-a6a77025a007.png)
+
+[소스코드](https://github.com/SungJJinKang/ModernDoom2/tree/main/Doom3/Source/Core/DObject)       
+
+-------------
+
+
 현재는 unordered_map으로 오브젝트를 관리하는데 이렇게 하면 해시테이블의 버킷 속 아이템들이 링크드 리스트 형태로 구성되어서 캐시 측면에서 좋지 않을 것 같다.       
 나중에 std::vector로 크게 할당해두고 std::vector를 가지고 HashMap을 구현해서 사용해야할 것 같다. ( 메모리를 더 사용하는 대신 더 빠른 방법 )                       
 
-[소스코드](https://github.com/SungJJinKang/ModernDoom2/tree/main/Doom3/Source/Core/DObject)         
+       

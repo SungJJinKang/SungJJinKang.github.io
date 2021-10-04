@@ -2,7 +2,7 @@
 layout: post
 title:  "선택과 집중"
 date:   2021-08-24
-categories: COWORK INTERN
+categories: COWORK
 ---
 
 혼자 개발을 할 때는 상관이 없지만 회사에서 일을 하다보면 데드라인이 있고 반드시 그 데드라인 내에 일을 끝내야한다. 그런데 **간혹 사소한 것들에 시간을 많이 쏟아 그 데드라인을 맞추지 못하는 일이 발생하곤 한다.**    

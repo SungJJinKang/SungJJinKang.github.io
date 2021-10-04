@@ -2,7 +2,7 @@
 layout: post
 title:  "일정관리"
 date:   2021-09-11
-categories: COWORK INTERN
+categories: COWORK
 ---
 
 모든 프로젝트는 프로젝트 기한이 있다.         
