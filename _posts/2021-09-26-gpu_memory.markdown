@@ -21,8 +21,16 @@ refereucens :
 [Memory Hierarchy on GPUs](https://mkblog.co.kr/2019/03/20/gpgpu-series-9-memory-hierarchy-on-gpus/)            
 [Memory Coalescing이란?](https://mkblog.co.kr/2016/12/01/nvidia-gpu-memory-coalescing-coalesced-memory-access/)       
 [GPU 메모리 종류](https://www.ce.jhu.edu/dalrymple/classes/602/Class13.pdf)          
-[DX12 메모리 관리 전략](https://docs.microsoft.com/ko-kr/windows/win32/direct3d12/memory-management-strategies)                
 [GPU - Pinned System Memory](https://mkblog.co.kr/2017/03/07/nvidia-gpu-pinned-host-memory-cuda/)      
 [GPU 메모리 관리](https://gpuopen.com/wp-content/uploads/2018/05/gdc_2018_tutorial_memory_management_vulkan_dx12.pptx)            
 [gpu-architecture-overview](https://insujang.github.io/2017-04-27/gpu-architecture-overview/)         
-[https://insujang.github.io/2017-06-23/gpu-resource-management/](https://insujang.github.io/2017-06-23/gpu-resource-management/)             
+[https://insujang.github.io/2017-06-23/gpu-resource-management/](https://insujang.github.io/2017-06-23/gpu-resource-management/)          
+
+----------------
+
+[OpenGL Memory 전송 방식](https://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf)         
+[DX12 메모리 관리 전략](https://docs.microsoft.com/ko-kr/windows/win32/direct3d12/memory-management-strategies)                                  
+[DX12 커맨드 큐, 커맨드 리스트 디자인 철학](https://docs.microsoft.com/en-us/windows/win32/direct3d12/design-philosophy-of-command-queues-and-command-lists)           
+[DX12의 리소스 업로드](https://docs.microsoft.com/en-us/windows/win32/direct3d12/uploading-resources)           
+[DX12의 텍스쳐 데이터 업로드, 다시 읽기](https://docs.microsoft.com/en-us/windows/win32/direct3d12/upload-and-readback-of-texture-data)            
+
