@@ -7,11 +7,11 @@ categories: ComputerScience
 
 우선 목표 
 
-- Occlusion Culling
+- Masked SW Occlusion Culling 구현 완료
 - 오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. )
 - 간단한 물리, 충돌 처리
-- 메가 텍스쳐 ( 메모리 맵 IO 이용 )
-- 오브젝트 Bathcing
+- DX11 적용
+- 오브젝트 Bathcing 기능 구현
 
 ------------------------
 
@@ -20,5 +20,5 @@ categories: ComputerScience
 - Hierachy Shadow Map
 - 나만의 자료구조 만들기
 - 나만의 메모리 풀 ( 할당자 ) 만들기
-
+- 메가 텍스쳐 ( 메모리 맵 IO 이용 )
 
