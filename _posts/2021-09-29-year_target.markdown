@@ -18,7 +18,7 @@ categories: ComputerScience
 가능하면 
 
 - Hierachy Shadow Map
-- 나만의 자료구조 만들기
+- 나만의 자료구조 만들기 ( EASTL 같이 할당자를 런타임에 전달해서 할당자가 달라도 같은 타입으로 간주되게 구현 )          
 - 나만의 메모리 풀 ( 할당자 ) 만들기
 - 메가 텍스쳐 ( 메모리 맵 IO 이용 )
 
