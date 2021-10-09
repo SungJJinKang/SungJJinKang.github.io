@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "엔진 최적화 여정 ( 캐시 미스 )"
-date:   2021-09-30
+title:  "엔진 최적화 여정 ( 캐시 미스 ) ( 작성 중 )"
+date:   2000-09-30
 categories: ComputerScience ComputerGraphics
 ---
 
