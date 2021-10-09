@@ -8,10 +8,10 @@ categories: ComputerScience
 우선 목표 
 
 - Occlusion Culling
-- 오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. )
-- 간단한 물리, 충돌 처리
+- 오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. 아마도 멀티스레딩으로 해결해볼 예정 )
+- 간단한 물리, 충돌 처리 ( 둠3 정도의 수준 )
 - 메가 텍스쳐 ( 메모리 맵 IO 이용 )
-- 오브젝트 Bathcing
+- 오브젝트 렌더링 Bathcing 기능
 
 ------------------------
 
