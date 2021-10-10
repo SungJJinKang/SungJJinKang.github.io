@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Window 메모리 구조, 동작 원리"
+title:  "Windows 메모리 구조, 동작 원리"
 date:   2021-10-10
 categories: ComputerScience
 ---
