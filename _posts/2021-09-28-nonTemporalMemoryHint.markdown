@@ -73,14 +73,14 @@ volatile과 Write-Combined 타입은 다른 것이다. volatile은 레지스터�
 ---------------------
 
 근데 사실 위에서 말한 것과 같이 캐싱을 사용하는 메모리 연산에서 Write Combined 버퍼가 가져오는 성능 향상은 그렇게까지 크지는 않다.         
-**Write Combined 버퍼가 진가를 발휘하는 곳**은 접근하는 메모리가 Write Combined 타입의 데이터인 경우이다.           
+**Write Combined 버퍼가 진가를 발휘하는 곳**은 접근하는 메모리 영역이 Write Combined 타입의 페이지에 속한 경우이다.                            
 
-**Write Combined 타입 메모리**는 메모리 영역에 붙는 일종의 flag ( 페이지 테이블에 있는 페이지에 붙거나, MTRR - memory type range register를 통해 관리 )의 일종으로 이 타입의 메모리 영역의 데이터들은 **캐싱을 하지 않고 메모리 ( DRAM )에 바로 쓰인다** 캐싱을 하지 않는다는 것이다. ( Write - back 타입과 대비된다. ) Write Combined 타입 메모리는 캐싱이 되지 않고 프로세서에 의해 버스 일관성이 강제되지 않는다. 또한 Speculative 읽기가 허용된다. Write Combined 타입 메모리에 대한 쓰기 동작은 Write Combined 버퍼에 임시로 저장된다. 만약 **Write Combined 버퍼가 일부만 차있다면 메모리로의 쓰기는 지연**된다. 그렇기 때문에 메모리 in ordering이 보장되지 않는다. 다만 SFENCE 혹은 MFENCE 명령어, CPUID 실행, 캐싱이 되지 않는 메모리에 읽기 쓰기, 인터럽트 발생, LOCK 명령어가 발생하는 경우 Write Combined 버퍼가 일부만 찼더라도 메모리로 flush된다. 이러한 유형의 메모리 타입은 비디오 프레임 버퍼와 같은 데이터에 사용하기 적합한데 메모리 ordering이 중요하지 않고 캐싱이 되면 안되기 때문이다. 이러한 Write Combined 타입의 메모리에 대한 쓰기 동작을 수행하는 명령어로는 [MOVNTDQA](https://www.felixcloutier.com/x86/movntdqa)이 있다. ( 프레임버퍼와 같이 GPU 즉 IO 장치에 매핑된 데이터는 당연히 Write Combined 타입이어야 GPU가 볼 수 있다. 그래서 프레임버퍼에 쓰기를 수행할 때도 Write Combined 버퍼를 통한 쓰기 최적화가 들어간다. )                  
+**Write Combined 타입의 페이지**는 **메모리 영역 혹은 페이지에 붙는 일종의 flag** ( 페이지 테이블에 있는 페이지에 붙거나, MTRR - memory type range register를 통해 관리 )의 일종으로 **이 영역, 페이지에 대한 쓰기 동작은 Write Combined 버퍼에 임시로 저장**된다. 만약 **Write Combined 버퍼가 일부만 차있다면 메모리로의 쓰기는 지연**된다. 그렇기 때문에 메모리 in ordering이 보장되지 않는다. 다만 SFENCE 혹은 MFENCE 명령어, CPUID 실행, 캐싱이 되지 않는 메모리에 읽기 쓰기, 인터럽트 발생, LOCK 명령어가 발생하는 경우 Write Combined 버퍼가 일부만 찼더라도 메모리로 flush된다. 이러한 유형의 메모리 타입은 비디오 프레임 버퍼와 같은 데이터에 사용하기 적합한데 메모리 ordering이 중요하지 않고 캐싱이 되면 안되기 때문이다. 이러한 Write Combined 타입의 메모리에 대한 쓰기 동작을 수행하는 명령어로는 [MOVNTDQA](https://www.felixcloutier.com/x86/movntdqa)이 있다. ( 프레임버퍼와 같이 GPU 즉 IO 장치에 매핑된 데이터는 당연히 Write Combined 타입이어야 GPU가 볼 수 있다. 그래서 프레임버퍼에 쓰기를 수행할 때도 Write Combined 버퍼를 통한 쓰기 최적화가 들어간다. )                  
 
 잠깐 집고 넘어가야하는 것이 Write Combined 버퍼는 Write Combined 타입 메모리 쓰기에만 사용되는 것은 아니다. 위에서 배운 듯이 캐시에도 활용된다. Write Combined 타입 메모리 연산에 사용되니 Write Combined 버퍼라는 이름을 붙였지만 사실은 캐시에 쓸 때도 사용이 되니 정확하게는 "Store 버퍼"라는 용어가 더 정확한 것 같다.      
 
 **캐시의 경우 그래도 속도가 빠르니 Write Combined 버퍼의 효과가 크게 두드러지지 않는데 DRAM의 Write Combined 타입의 데이터에 쓰기 동작을 수행할 때 Write Combined 버퍼는 엄청난 성능 향상을 불러온다.**          
-DRAM에 데이터를 쓰려면 반드시 메모리 버스를 통해야 하는데 이**메모리 버스는 여러 코어가 공유하고 있고 DMA도 메모리 버스를 사용하기 때문에 메모리 버스를 자주 점유 ( 버스 마스터링 )하는 것은 성능상 매우 좋지 않다.** 그래서 데이터를 **모아두었다가** ( CPU의 Write Combined 버퍼에 ) **한번에 쓰는 것**이 **성능향상에 큰 도움**이 된다.            
+DRAM에 데이터를 쓰려면 반드시 메모리 버스를 통해야 하는데 이**메모리 버스는 여러 코어가 공유하고 있고 DMA도 메모리 버스를 사용하기 때문에 메모리 버스를 자주 점유 ( 버스 마스터링 )하는 것은 성능상 매우 좋지 않다.** 그래서 데이터를 **모아두었다가** ( CPU의 Write Combined 버퍼에 ) **버스 마스터링을 한 후 한번만에 모아둔 데이터를 쓰는 것 ( 버스트 모드 )**이 **성능향상에 큰 도움**이 된다.            
 이렇게 캐싱을 활용하지 않는 메모리 연산으로는 위에서 배운 것 처럼 **"non-temporal memory hint"** 연산이 경우가 대표적이다.         
 또한 **메모리 맵 IO**가 또 다른 예인데 메모리 맵 IO의 경우 알다 싶이 CPU 입장에서는 일반적인 메모리 연산과 명령어 코드가 똑같고, 디바이스가 최신의 데이터를 보기 위해 캐싱을 하면 안된다는 특징을 가지고 있다. ( 바로 DRAM에 써야 디바이스가 최신의 데이터를 읽어갈 수 있다. )      
 
