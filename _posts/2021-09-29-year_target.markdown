@@ -9,6 +9,7 @@ categories: ComputerScience
 
 - Masked SW Occlusion Culling 구현 완료
 - 오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. 아마도 멀티스레딩으로 해결해볼 예정 )
+- 빌드 시간 단축 ( 지금 너무 느림 )
 - 간단한 물리, 충돌 처리
 - DX11 적용
 - 오브젝트 렌더링 Bathcing 기능 구현
