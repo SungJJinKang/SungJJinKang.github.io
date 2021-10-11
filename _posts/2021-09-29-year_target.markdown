@@ -12,7 +12,7 @@ categories: ComputerScience
 - ~~빌드 시간 단축 ( 지금 너무 느림 )~~ -> Thank you! [Resharper](https://www.jetbrains.com/help/resharper/Analyzing_Includes.html#includees-view)          
 - 간단한 물리, 충돌 처리
 - DX11 적용
-- 오브젝트 렌더링 Bathcing 기능 구현
+- 포트나이트 느낌의 Imposter 구현, 관련 에디터 툴도 구현 ( [https://shaderbits.com/blog/octahedral-impostors](https://shaderbits.com/blog/octahedral-impostors) )
 
 ------------------------
 
@@ -22,4 +22,5 @@ categories: ComputerScience
 - 나만의 자료구조 만들기 ( EASTL 같이 할당자를 런타임에 전달해서 할당자가 달라도 같은 타입으로 간주되게 구현 )          
 - 나만의 메모리 풀 ( 할당자 ) 만들기
 - 메가 텍스쳐 ( 메모리 맵 IO 이용 )
+- 오브젝트 렌더링 Bathcing 기능 구현
 
