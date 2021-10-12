@@ -95,7 +95,10 @@ Fragment Shading에 Fragment가 덜 넘겨지니 당연히 연산은 훨씬 빨�
 
 
 
-그래서 멀티스레드로 Sorting을 수행한 결과는 무려 **6ms** 빨라졌다.           
-Front Back Sorting을 아예 수행하지 않았을 때 ( 이 경우 GPU가 고생한다 )에 비하면 1ms 느려졌다. 이 정도면 굉장한 성과이다.     
+그래서 멀티스레드로 Sorting을 수행한 결과는 **렌더링 부분 CPU 연산 시간**이 무려 **6ms** 빨라졌다.           
+Front Back Sorting을 아예 수행하지 않았을 때 ( 이 경우 GPU가 고생한다 )에 비하면 렌더링 부분 CPU 연산 시간이 1ms 느려졌다.          
+언뜻보면 Front Back Sorting을 수행하지 않을 때가 1ms 더 빠르니 Sorting을 안해야하는거 아닌가 생각할 수 있지만, 앞에서 말한대로 Early Depth Test의 축복으로 멀티스레드 Sorting을 수행한 경우 그렇지 않은 경우에 비해 프레임이 **7~8 fps 빨라졌다.** ( 항상 빠르지는 않고 카메라 앞에 크기가 큰 오브젝트가 있는 경우 그 만큼 그 뒤 오브젝트들의 Fragment가 Early Depth Test에서 더 많이 걸러질 수 있기 때문에 더 큰 효과를 볼 수 있었다. )                    
+
+이 정도면 굉장한 성과이다.     
 매우 만족하는 결과이다 ^^            
 
