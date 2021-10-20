@@ -40,6 +40,13 @@ categories: ComputerScience
     }
 ```
 
+이 두줄의 코드를 통해 엔진내 거의 모든 클래스들의 타입 정보를 DClass라는 클래스로 객체화하였다. 클래스명, 클래스들간의 상속 관계 등의 여러 클래스 타입 정보를 런타임에 얻을 수 있다.         
+
+언리얼 엔진과 같이 부모 클래스 타입을 임의로 적어줄 필요없이 "Base" type alias로 부모 클래스의 멤버에 접근할 수 있다.         
+
+다만 클래스 내부의 변수나 함수들의 정보를 런타임에 가져오지는 못한다.          
+구현하려면 할 수는 있지만 현재 필자의 프로젝트에서는 아직까지 필요하지 않아 차후에 필요시 추가할 예정이다.        
+
 상속 관계는 전역변수로 프로그램 시작 단계에서 부모 클래스를 타고 올라가면서 각 부모 클래스의 유니크한 타입 ID를 저장한다.          
 그럼 해당 컨테이너는 이러한 데이터 형태를 가질 것이다.       
 ```
@@ -53,7 +60,8 @@ categories: ComputerScience
 부모 리스트 컨테이너 [ 비교하려는 오브젝트의 부모들의 개수 ( 높이 ) - 1 - 비교하려는 클래스의 부모들의 개수 ] == 비교하려는 클래스의 타입 ID
 ```
 
-이를 통해 모든 부모 리스트를 탐색하지 않고 O1만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인할 수 있다.       
+이를 통해 모든 부모 리스트를 탐색하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인할 수 있다.       
+
 
 결과적으로 **모든 목표를 달성**했다.        
 언리얼엔진과 같이 런타임에 타입 정보를 가져올 수 있고, dynamic_cast 없이 안전한 타입 캐스팅을 구현하였다.     
@@ -63,4 +71,5 @@ categories: ComputerScience
 
 [소스코드1](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObject.h)          
 [소스코드2](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObjectGlobals.h)       
-[소스코드3](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObjectMacros.h)       
+[소스코드3](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObjectMacros.h)        
+[소스코드4](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DClass.h)
