@@ -160,28 +160,48 @@ struct DOBJECT_BASE_CHAIN
 };
 
 
-#define DOBJECT_CLASS_BASE_CHAIN(BASE_DOBJECT_TYPE_CLASS)												\
-	private:																							\
-	using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */							\
-	protected:																							\
-	static DOBJECT_BASE_CHAIN BASE_CHAIN_HILLCLIMB() {													\
-		D_ASSERT(CLASS_TYPE_ID_STATIC() != BASE_DOBJECT_TYPE_CLASS::CLASS_TYPE_ID_STATIC());			\
-		DOBJECT_BASE_CHAIN base_chain{};																\
-		BASE_DOBJECT_TYPE_CLASS::BASE_CHAIN_HILLCLIMB(base_chain);										\
-		return base_chain;																				\
-	}																									\
-	static void BASE_CHAIN_HILLCLIMB(doom::DOBJECT_BASE_CHAIN& base_chain) {							\
-		base_chain.BASE_CHAIN_COUNT++;																	\
-		base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - 1] = CLASS_TYPE_ID_STATIC();	\
-        BASE_DOBJECT_TYPE_CLASS::BASE_CHAIN_HILLCLIMB(base_chain);										\
-	}																									\
-	public:																								\
-	inline static const doom::DOBJECT_BASE_CHAIN& BASE_CHAIN_STATIC()									\
-	{																									\
-		static const doom::DOBJECT_BASE_CHAIN _BASE_CHAIN = BASE_CHAIN_HILLCLIMB();						\
-		return _BASE_CHAIN;																				\
-	}																									\
+
+namespace doom
+{
+	namespace details
+	{
+		template <typename BASE_DOBJECT_TYPE_CLASS>
+		extern constexpr void BASE_CHAIN_HILLCLIMB(doom::DOBJECT_BASE_CHAIN& base_chain)
+		{
+			base_chain.Increment_BASE_CHAIN_COUNT();
+			base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - 1] = BASE_DOBJECT_TYPE_CLASS::__CLASS_TYPE_ID;
+			if constexpr (std::is_same_v<doom::DObject, BASE_DOBJECT_TYPE_CLASS> == false) {
+				BASE_CHAIN_HILLCLIMB<typename BASE_DOBJECT_TYPE_CLASS::Base>(base_chain);
+			}
+		}
+
+		template <typename BASE_DOBJECT_TYPE_CLASS>
+		extern constexpr doom::DOBJECT_BASE_CHAIN BASE_CHAIN_HILLCLIMB()
+		{
+			doom::DOBJECT_BASE_CHAIN base_chain{};
+			base_chain.Increment_BASE_CHAIN_COUNT();
+			base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - 1] = BASE_DOBJECT_TYPE_CLASS::__CLASS_TYPE_ID;
+			if constexpr (std::is_same_v <doom::DObject, BASE_DOBJECT_TYPE_CLASS > == false) {
+				BASE_CHAIN_HILLCLIMB<typename BASE_DOBJECT_TYPE_CLASS::Base>(base_chain);
+			}
+			return base_chain;
+		}
+	}
+}
+
+
+#define DOBJECT_CLASS_BASE_CHAIN(BASE_DOBJECT_TYPE_CLASS)													\
+	public:																									\
+	using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */								\
+	private:																								\
+	constexpr static const DOBJECT_BASE_CHAIN _BASE_CHAIN = doom::details::BASE_CHAIN_HILLCLIMB<Current>();	\
+	public:																									\
+	FORCE_INLINE constexpr static const doom::DOBJECT_BASE_CHAIN& BASE_CHAIN_STATIC()						\
+	{																										\
+		return _BASE_CHAIN;																					\
+	}																										\
 	virtual const doom::DOBJECT_BASE_CHAIN& GetBaseChain() const { return BASE_CHAIN_STATIC(); }
+
 ```
 
 복잡해보이지만 별거 없다.      
@@ -204,14 +224,16 @@ struct DOBJECT_BASE_CHAIN
 ( 부모 클래스 유니크 타입 ID ) ( 조부모 클래스 유니크 타입 ID ) ( 증조부모 클래스 유니크 타입 ID ) ( 고조부모 클래스 유니크 타입 ID )
 ```
 
+그리고 **중요한 것은 위의 클래스 Hierarchy 데이터가 컴파일 타임에 다 결정**된다는 것이다!!
+
 그럼 어떤 오브젝트가 포인터로 넘어왔을 때 그 오브젝트가 어떤 다른 클래스의 자식인지를 어떻게 알 수 있을까?      
 방법은 간단하다.      
 
 ```
-부모 리스트 컨테이너 [ From 캐스팅 오브젝트의 부모들의 개수 ( 깊이 ) - 1 - To 캐스팅 클래스의 부모들의 개수 ( 깊이 )  ] == To 캐스팅 클래스의 타입 ID
+부모 리스트 컨테이너 [ From 캐스팅 오브젝트의 부모들의 개수 ( 깊이 ) - To 캐스팅 클래스의 부모들의 개수 ( 깊이 )  ] == To 캐스팅 클래스의 타입 ID
 ```
 
-이를 통해 **모든 부모, 조상들의 클래스 Hierarchy 를 탐색 ( 순회 )하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인**할 수 있다.    
+이를 통해 **모든 부모, 조상들의 클래스 Hierarchy 를 탐색 ( 순회 )하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인**할 수 있다.     
 참고로 이 방법은 언리얼 엔진에서 차용한 방법으로 매우 빠르게 수직 관계의 클래스들간의 런타임 캐스팅을 구현하게 해준다.         
 물론 부모 타입으로 캐스팅하는 경우에는 컴파일타임에 바로 타입 변환을 한다. 위의 알고리즘은 부모 타입의 포인터에서 자녀 타입으로 캐스팅을 할 경우에만 사용된다.                      
 
@@ -222,20 +244,13 @@ FORCE_INLINE bool IsChildOf() const
 {
     static_assert(IS_DOBJECT_TYPE(BASE_TYPE));
 
-    bool isChild = (BASE_TYPE::CLASS_TYPE_ID_STATIC() == GetClassTypeID());
-
-    if (isChild == false)
-    {
-        const DOBJECT_BASE_CHAIN& base_chain = GET_BASE_CHAIN();
-        isChild = (base_chain.BASE_CHAIN_COUNT > BASE_TYPE::BASE_CHAIN_STATIC().BASE_CHAIN_COUNT) && (base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - 1 - BASE_TYPE::BASE_CHAIN_STATIC().BASE_CHAIN_COUNT] == BASE_TYPE::CLASS_TYPE_ID_STATIC());
-    }
+    const DOBJECT_BASE_CHAIN& base_chain = GET_BASE_CHAIN();
+    const isChild = (base_chain.BASE_CHAIN_COUNT >= BASE_TYPE::BASE_CHAIN_STATIC().BASE_CHAIN_COUNT) && (base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - BASE_TYPE::BASE_CHAIN_STATIC().BASE_CHAIN_COUNT] == BASE_TYPE::CLASS_TYPE_ID_STATIC());
 
     return isChild;
 }
 ```
 
-**다만 현재는 BASE_CHAIN_STATIC()이 컴파일 타임에 해결되지 못하고 있다.**               
-조만간 이를 컴파일 타임에 해결할 방법을 고안할 예정이다.       
 
 
 또한 언리얼 엔진과 같이 부모 클래스 타입을 임의로 적어줄 필요없이 "Base" type alias로 부모 클래스의 멤버에 접근할 수 있다.      
@@ -244,8 +259,9 @@ using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */
 ```       
 
 
-결과적으로 **모든 목표를 달성**했다.        
-언리얼엔진과 같이 런타임에 타입 정보를 가져올 수 있고, dynamic_cast 없이 안전한 타입 캐스팅을 구현하였다.     
+결과적으로 **모든 목표를 달성**했다.         
+언리얼엔진과 같이 모든 클래스 타입 정보를 컴파일 타임에 저장하고 런타임에 가져올 수 있다.        
+또한 dynamic_cast 없이 안전하고 매우 빠른 타입 캐스팅을 구현하였다.      
 필자가 제시하는 방법이 절대 최선의 방법은 아니고 직접 고안한 방식이다보니 허점이 많을 수도 있다.       
 
 아래는 필자가 작성한 코드이다.        
