@@ -142,6 +142,24 @@ main    ENDP
 
 또한 구현한 Reflection 시스템을 통해 **매우 느려터진 dynamic_cast도 대체할 수 있다.**                 
 ```
+struct DOBJECT_BASE_CHAIN
+{
+    SIZE_T BASE_CHAIN_COUNT = 0;
+    
+    const char* BASE_CHAIN_TYPE_ID_LIST[MAX_DOBJECT_BASE_CHAIN_DEPTH];
+
+    //TODO : Make This Resolved at Compile Time!!!
+    DOBJECT_BASE_CHAIN() : BASE_CHAIN_COUNT(0)
+    {}
+
+    FORCE_INLINE void Increment_BASE_CHAIN_COUNT()
+    {
+        BASE_CHAIN_COUNT++;
+        D_ASSERT_LOG(BASE_CHAIN_COUNT < MAX_DOBJECT_BASE_CHAIN_DEPTH, "BaseChain Depth is over MAX_DOBJECT_BASE_CHAIN_DEPTH, Plase set higher value to MAX_DOBJECT_BASE_CHAIN_DEPTH");
+    }
+};
+
+
 #define DOBJECT_CLASS_BASE_CHAIN(BASE_DOBJECT_TYPE_CLASS)												\
 	private:																							\
 	using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */							\
@@ -183,18 +201,38 @@ main    ENDP
 상속 관계는 전역변수로 프로그램 시작 단계에서 부모 클래스를 타고 올라가면서 각 부모 클래스의 유니크한 타입 ID를 저장한다.          
 그럼 해당 컨테이너는 이러한 데이터 형태를 가질 것이다.        
 ```
-( 부모 클래스 ID ) ( 조부모 클래스 ID ) ( 증조부모 클래스 ID ) ( 고조부모 클래스 ID )
+( 부모 클래스 유니크 타입 ID ) ( 조부모 클래스 유니크 타입 ID ) ( 증조부모 클래스 유니크 타입 ID ) ( 고조부모 클래스 유니크 타입 ID )
 ```
 
 그럼 어떤 오브젝트가 포인터로 넘어왔을 때 그 오브젝트가 어떤 다른 클래스의 자식인지를 어떻게 알 수 있을까?      
 방법은 간단하다.      
 
 ```
-부모 리스트 컨테이너 [ 비교하려는 오브젝트의 부모들의 개수 ( 높이 ) - 1 - 비교하려는 클래스의 부모들의 개수 ] == 비교하려는 클래스의 타입 ID
+부모 리스트 컨테이너 [ From 캐스팅 오브젝트의 부모들의 개수 ( 깊이 ) - 1 - To 캐스팅 클래스의 부모들의 개수 ( 깊이 )  ] == To 캐스팅 클래스의 타입 ID
 ```
 
 이를 통해 **모든 부모, 조상들의 클래스 Hierarchy 를 탐색 ( 순회 )하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인**할 수 있다.    
 참고로 이 방법은 언리얼 엔진에서 차용한 방법으로 매우 빠르게 수직 관계의 클래스들간의 런타임 캐스팅을 구현하게 해준다.         
+물론 부모 타입으로 캐스팅하는 경우에는 컴파일타임에 바로 타입 변환을 한다. 위의 알고리즘은 부모 타입의 포인터에서 자녀 타입으로 캐스팅을 할 경우에만 사용된다.                      
+
+실제 코드이다.     
+```
+template <typename BASE_TYPE>
+FORCE_INLINE bool IsChildOf() const
+{
+    static_assert(IS_DOBJECT_TYPE(BASE_TYPE));
+
+    bool isChild = (BASE_TYPE::CLASS_TYPE_ID_STATIC() == GetClassTypeID());
+
+    if (isChild == false)
+    {
+        const DOBJECT_BASE_CHAIN& base_chain = GET_BASE_CHAIN();
+        isChild = (base_chain.BASE_CHAIN_COUNT > BASE_TYPE::BASE_CHAIN_STATIC().BASE_CHAIN_COUNT) && (base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - 1 - BASE_TYPE::BASE_CHAIN_STATIC().BASE_CHAIN_COUNT] == BASE_TYPE::CLASS_TYPE_ID_STATIC());
+    }
+
+    return isChild;
+}
+```
 
 **다만 현재는 BASE_CHAIN_STATIC()이 컴파일 타임에 해결되지 못하고 있다.**               
 조만간 이를 컴파일 타임에 해결할 방법을 고안할 예정이다.       
