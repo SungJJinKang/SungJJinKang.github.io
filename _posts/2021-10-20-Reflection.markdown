@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "언리얼 엔진의 리플랙션와 같은 시스템 구현하기 ( 작성 중 )"
+title:  "언리얼 엔진의 리플랙션와 같은 시스템 구현하기, 고속 dynamic_cast ( 작성 중 )"
 date:   2021-10-20
 categories: ComputerScience
 ---
@@ -24,6 +24,15 @@ categories: ComputerScience
 하지만 또 이상한 병이 도져 직접 만들기로 결정하였다.     
 그냥 만들어보고 싶었다.      
 
+------------------
+
+구현할 리플랙션 시스템의 목표를 몇가지 정했다.          
+```
+1. 컴파일 타임에 리플랙션 데이터가 결정되어서 실행파일에 데이터로 담길 것.
+2. 느려터진 dynamic_cast를 개선할 것
+
+```
+
 
 언리얼엔진이나 clReflect와 같이 소스파일을 분석해서 자동으로 타입 정보를  완전히 자동화되지는 않았지만 클래스 정의 맨 앞에 어떤 **매크로를 추가하고 타입명을 넘기면** 언리얼과 같은 리플렉션, 타입 정보를 런타임에 확인할 수 있게 구현하였다.          
 언리얼엔진, clReflect에서 컴퓨터가 해주는 일을 내가 만든 시스템에서는 프로그래머가 직접 해야하기 때문에 약간은 귀찮아보이지만, **각 클래스마다 딱 2줄의 코드만을 추가**하면 되기 때문에 이 정도면 납득 가능하다고 생각한다.          
@@ -42,13 +51,137 @@ categories: ComputerScience
 
 이 두줄의 코드를 통해 엔진내 거의 모든 클래스들의 타입 정보를 DClass라는 클래스로 객체화하였다. 클래스명, 클래스들간의 상속 관계 등의 여러 클래스 타입 정보를 런타임에 얻을 수 있다.         
 
-언리얼 엔진과 같이 부모 클래스 타입을 임의로 적어줄 필요없이 "Base" type alias로 부모 클래스의 멤버에 접근할 수 있다.         
+다만 클래스 내부의 변수나 함수들의 정보를 런타임에 가져오지는 못한다.           
+구현하려면 할 수는 있지만 현재 필자의 프로젝트에서는 아직까지 필요하지 않아 차후에 필요시 추가할 예정이다.     
 
-다만 클래스 내부의 변수나 함수들의 정보를 런타임에 가져오지는 못한다.          
-구현하려면 할 수는 있지만 현재 필자의 프로젝트에서는 아직까지 필요하지 않아 차후에 필요시 추가할 예정이다.        
+--------------------
+
+우선 클래스 타입들을 구분해주기 위해 각 클래스들을 구분해줄 유니크한 ID가 필요했다.       
+어떻게 이를 얻을 수 있을까?    
+```
+const std::type_info& ti1 = typeid(A);
+const std::type_info& ti2 = typeid(A);
+ 
+assert(&ti1 == &ti2); // not guaranteed
+assert(ti1.hash_code() == ti2.hash_code()); // guaranteed
+assert(std::type_index(ti1) == std::type_index(ti2)); // guaranteed
+```
+C++에서는 std::type_info의 hash_code()와 std::type_index를 통해 클래스 타입들의 유니크한 ID를 얻을 수 있다.       
+그러나 **이것들은 모두 런타임에 결정 ( 프로그램 시작 직후 )되는 데이터**다.        
+**필자가 구현하려는 리플랙션 시스템은 컴파일 타임에 모든 것들이 결정되어야 하기 때문에 다른 방법이 필요했다.**          
+
+좋은 방법이 떠올랐다.      
+위의 리플랙션 매크로에서 넘겼던 **클래스명을 문자열화해서 해당 Literal 문자열 ( 상수 문자열 )의 시작 주소를 유니크 ID로 사용**하면 될 것 같다.    
+같은 클래스명을 가진 클래스는 존재할 수 없으니 당연히도 유니크함이 보장된다.         
+```
+#define TYPE_ID_IMP(CLASS_TYPE)																							\
+		public:																											\
+		FORCE_INLINE static constexpr const char* CLASS_TYPE_ID_STATIC() {												\
+			return #CLASS_TYPE;	            																			\
+		}																												\
+        virtual const char* GetClassTypeID() const { return CLASS_TYPE::CLASS_TYPE_ID_STATIC(); }		
+```
+
+성공적으로 **클래스 타입들의 각각의 유니크 ID를 컴파일타임에 가져올 수 있었다.**                      
+당연히 두 클래스 타입의 유니크ID를 가지고 컴파일 타임에 비교하는 것도 가능하다.         
+
+GodBolt를 통해 어셈블리어를 확인해보면 유니크 ID를 얻을 시 아래와 같이 프로그램내의 문자열의 위치를 데이터 심볼로 가져오는 것을 알 수 있다.       
+```
+class A
+{
+    TYPE_ID_IMP(A)
+};
+
+class B
+{
+    TYPE_ID_IMP(B)
+};
+
+int main()
+{
+    int c = 0;
+    constexpr const char* a = A::CLASS_TYPE_ID_STATIC();
+    constexpr const char* b = B::CLASS_TYPE_ID_STATIC();
+    if constexpr(a != b)
+    {
+        c = 1;
+    }
+    else
+    {
+        c = 2;
+    }
+}
+```
+-->
+```
+$SG23072 DB     'A', 00H  <--- !!!!!!!!!!
+        ORG $+2
+$SG23073 DB     'B', 00H  <--- !!!!!!!!!!
+
+c$ = 0
+a$ = 8
+b$ = 16
+main    PROC
+$LN3:
+        sub     rsp, 40                             ; 00000028H
+        mov     DWORD PTR c$[rsp], 0
+        lea     rax, OFFSET FLAT:$SG23072 <--- !!!!!!!!!!
+        mov     QWORD PTR a$[rsp], rax
+        lea     rax, OFFSET FLAT:$SG23073 <--- !!!!!!!!!!
+        mov     QWORD PTR b$[rsp], rax
+        mov     DWORD PTR c$[rsp], 1
+        xor     eax, eax
+        add     rsp, 40                             ; 00000028H
+        ret     0
+main    ENDP
+```
+
+
+       
+     
+
+또한 구현한 Reflection 시스템을 통해 **매우 느려터진 dynamic_cast도 대체할 수 있다.**                 
+```
+#define DOBJECT_CLASS_BASE_CHAIN(BASE_DOBJECT_TYPE_CLASS)												\
+	private:																							\
+	using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */							\
+	protected:																							\
+	static DOBJECT_BASE_CHAIN BASE_CHAIN_HILLCLIMB() {													\
+		D_ASSERT(CLASS_TYPE_ID_STATIC() != BASE_DOBJECT_TYPE_CLASS::CLASS_TYPE_ID_STATIC());			\
+		DOBJECT_BASE_CHAIN base_chain{};																\
+		BASE_DOBJECT_TYPE_CLASS::BASE_CHAIN_HILLCLIMB(base_chain);										\
+		return base_chain;																				\
+	}																									\
+	static void BASE_CHAIN_HILLCLIMB(doom::DOBJECT_BASE_CHAIN& base_chain) {							\
+		base_chain.BASE_CHAIN_COUNT++;																	\
+		base_chain.BASE_CHAIN_TYPE_ID_LIST[base_chain.BASE_CHAIN_COUNT - 1] = CLASS_TYPE_ID_STATIC();	\
+        BASE_DOBJECT_TYPE_CLASS::BASE_CHAIN_HILLCLIMB(base_chain);										\
+	}																									\
+	public:																								\
+	inline static const doom::DOBJECT_BASE_CHAIN& BASE_CHAIN_STATIC()									\
+	{																									\
+		static const doom::DOBJECT_BASE_CHAIN _BASE_CHAIN = BASE_CHAIN_HILLCLIMB();						\
+		return _BASE_CHAIN;																				\
+	}																									\
+	virtual const doom::DOBJECT_BASE_CHAIN& GetBaseChain() const { return BASE_CHAIN_STATIC(); }
+```
+
+복잡해보이지만 별거 없다.      
+클래스마다 상속하는 클래스 타입을 적어주면 된다.      
+
+```
+    class DOOM_API MeshCollider : public Collider3DComponent, StaticContainer
+    {
+        DOBJECT_CLASS_BODY(MeshCollider)
+        DOBJECT_CLASS_BASE_CHAIN(Collider3DComponent) <- !!!!!
+    }
+```
+
+필자의 게임 엔진에서는 거의 모든 클래스들이 DObject라는 루트 클래스에서 뻗어나간다. ( Unreal Engine의 UObject와 비슷하다 )          
+위의 _BASE_CHAIN에는 현재 클래스 타입이 상속 중인 부모 타입을을 타고 올라가서 루트 클래스 타입인 DObject 클래스까지의 클래스 Type ID를 저장한다.       
 
 상속 관계는 전역변수로 프로그램 시작 단계에서 부모 클래스를 타고 올라가면서 각 부모 클래스의 유니크한 타입 ID를 저장한다.          
-그럼 해당 컨테이너는 이러한 데이터 형태를 가질 것이다.       
+그럼 해당 컨테이너는 이러한 데이터 형태를 가질 것이다.        
 ```
 ( 부모 클래스 ID ) ( 조부모 클래스 ID ) ( 증조부모 클래스 ID ) ( 고조부모 클래스 ID )
 ```
@@ -60,7 +193,17 @@ categories: ComputerScience
 부모 리스트 컨테이너 [ 비교하려는 오브젝트의 부모들의 개수 ( 높이 ) - 1 - 비교하려는 클래스의 부모들의 개수 ] == 비교하려는 클래스의 타입 ID
 ```
 
-이를 통해 모든 부모 리스트를 탐색하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인할 수 있다.       
+이를 통해 **모든 부모, 조상들의 클래스 Hierarchy 를 탐색 ( 순회 )하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인**할 수 있다.    
+참고로 이 방법은 언리얼 엔진에서 차용한 방법으로 매우 빠르게 수직 관계의 클래스들간의 런타임 캐스팅을 구현하게 해준다.         
+
+**다만 현재는 BASE_CHAIN_STATIC()이 컴파일 타임에 해결되지 못하고 있다.**               
+조만간 이를 컴파일 타임에 해결할 방법을 고안할 예정이다.       
+
+
+또한 언리얼 엔진과 같이 부모 클래스 타입을 임의로 적어줄 필요없이 "Base" type alias로 부모 클래스의 멤버에 접근할 수 있다.      
+```
+using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */							
+```       
 
 
 결과적으로 **모든 목표를 달성**했다.        
