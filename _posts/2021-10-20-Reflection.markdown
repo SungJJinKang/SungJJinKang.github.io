@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "언리얼 엔진의 리플랙션와 같은 시스템 구현하기, 고속 dynamic_cast ( 작성 중 )"
+title:  "리플랙션 시스템 구현, 고속 dynamic_cast ( 작성 중 )"
 date:   2021-10-20
 categories: ComputerScience
 ---
