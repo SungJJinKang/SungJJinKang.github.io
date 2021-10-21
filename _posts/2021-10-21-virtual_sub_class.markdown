@@ -17,7 +17,8 @@ categories: ComputerScience C++
 +------------------------------------+
 ```
 
-그래서 혹시나 **부모 클래스에서 this를 이용해서 자녀 클래스 타입으로 캐스팅을 한다면** 절대로 reinterpret_cast를 사용하면 안된다.       **반드시 static_cast를 사용하여서 위의 vtable pointer의 사이즈를 고려해서 offset을 추가하여 캐스팅** 해준다.          
+그래서 혹시나 **부모 클래스에서 this를 이용해서 자녀 클래스 타입으로 캐스팅을 한다면** 절대로 reinterpret_cast를 사용하면 안된다.         
+**반드시 static_cast를 사용하여서 위의 vtable pointer의 사이즈를 고려해서 offset을 추가하여 캐스팅** 해준다.           
 
 reference : [https://stackoverflow.com/questions/11593783/mismatch-of-this-address-when-base-class-is-not-polymorphic-but-derived-is](https://stackoverflow.com/questions/11593783/mismatch-of-this-address-when-base-class-is-not-polymorphic-but-derived-is)         
 
