@@ -146,7 +146,7 @@ namespace doom
 	namespace details
 	{
 		template <typename BASE_DOBJECT_TYPE_CLASS>
-		extern constexpr void BASE_CHAIN_HILLCLIMB_COUNT(SIZE_T& base_chain_count)
+		static constexpr void BASE_CHAIN_HILLCLIMB_COUNT(SIZE_T& base_chain_count)
 		{
 			base_chain_count++;
 			if constexpr (std::is_same_v<doom::DObject, BASE_DOBJECT_TYPE_CLASS> == false) {
@@ -155,7 +155,7 @@ namespace doom
 		}
 
 		template <typename BASE_DOBJECT_TYPE_CLASS>
-		extern constexpr SIZE_T BASE_CHAIN_HILLCLIMB_COUNT()
+		static constexpr SIZE_T BASE_CHAIN_HILLCLIMB_COUNT()
 		{
 			SIZE_T base_chain_count = 1;
 			if constexpr (std::is_same_v <doom::DObject, BASE_DOBJECT_TYPE_CLASS > == false) {
@@ -165,7 +165,7 @@ namespace doom
 		}
 
 		template <typename BASE_DOBJECT_TYPE_CLASS, SIZE_T COUNT>
-		extern constexpr void BASE_CHAIN_HILLCLIMB_DATA(SIZE_T& count, std::array<const char*, COUNT>& chain_data)
+		static constexpr void BASE_CHAIN_HILLCLIMB_DATA(SIZE_T& count, std::array<const char*, COUNT>& chain_data)
 		{
 			chain_data[count] = BASE_DOBJECT_TYPE_CLASS::__CLASS_TYPE_ID;
 			count++;
@@ -175,7 +175,7 @@ namespace doom
 		}
 
 		template <typename BASE_DOBJECT_TYPE_CLASS, SIZE_T COUNT>
-		extern constexpr std::array<const char*, COUNT> BASE_CHAIN_HILLCLIMB_DATA()
+		static constexpr std::array<const char*, COUNT> BASE_CHAIN_HILLCLIMB_DATA()
 		{
 			std::array<const char*, COUNT> chain_data{};
 			chain_data[0] = BASE_DOBJECT_TYPE_CLASS::__CLASS_TYPE_ID;
@@ -259,7 +259,10 @@ FORCE_INLINE bool IsChildOf() const
 }
 ```
 
-또한 저 막대한 코드를 만들어낼 HILL_CLIMB 템플릿 함수는 컴파일 타임 연산에서만 호출되고 런타임에는 호출되지 않으니 실행파일에는 빠지게되니 템플릿 Bloat를 가져오지도 않는다. ( 정확하지 않으니 나중에 한번 더 확인을 해보아야겠다. -> HILL_CLIMB 함수에 extern이 아닌 static 옵션을 주어서 해당 함수가 컴파일하는 소스파일마다 각자 정의를 가지고 해당 소스파일 내에서만 사용된다는 힌트를 주니 컴파일러가 HILL_CLIMB 함수를 .obj 파일에서 제외시켰다!!!! )           
+또한 저 막대한 코드를 만들어낼 HILL_CLIMB 템플릿 함수는 컴파일 타임 연산에서만 호출되고 런타임에는 호출되지 않으니 실행파일에는 빠지게되니 템플릿 Bloat를 가져오지도 않는다. ( 정확하지 않으니 나중에 한번 더 확인을 해보아야겠다.)        
+
+-> 후에 확인하였더니 HILL_CLIMB 함수에 extern이 아닌 static 옵션을 주어서 해당 함수가 컴파일하는 소스파일마다 각자 정의를 가지고 해당 소스파일 내에서만 사용된다는 힌트를 주니 컴파일러가 HILL_CLIMB 함수를 .obj 파일에서 제외시켰다!!!!       
+혹시나 인라이닝 때문에 이 함수들이 없어져 보이는 것이 아닌가 걱정되어서 인라이닝을 금지하는 컴파일러 옵션을 준 후에도 확인해보았다. 여전히 해당 함수들은 제거되어 있었다.        
 
 또한 언리얼 엔진과 같이 부모 클래스 타입을 임의로 적어줄 필요없이 "Base" type alias로 부모 클래스의 멤버에 접근할 수 있다.      
 ```
