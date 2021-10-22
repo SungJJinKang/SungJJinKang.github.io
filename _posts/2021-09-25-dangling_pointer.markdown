@@ -45,7 +45,7 @@ Variadic Template을 사용하면 생성자의 매개 변수 전달도 쉽게 �
 아래 사진은 이 글에서 소개한 전략으로 DObject들을 관리하고 일괄적으로 파괴한 후의 남은 DObject의 개수이다. 남은 1개는 전역 변수로 프로그램 종료시 해제될 것이다.           
 ![20211005011520](https://user-images.githubusercontent.com/33873804/135887352-78229b1a-f1ab-4508-8603-a6a77025a007.png)
 
-[소스코드](https://github.com/SungJJinKang/ModernDoom2/tree/main/Doom3/Source/Core/DObject)       
+[소스코드](https://github.com/SungJJinKang/DoomsEngine/tree/main/Doom3/Source/Core/DObject)       
 
 -------------
 

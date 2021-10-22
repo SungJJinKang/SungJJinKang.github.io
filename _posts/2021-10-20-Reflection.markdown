@@ -277,7 +277,7 @@ using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */
 
 아래는 필자가 작성한 코드이다.        
 
-[소스코드1](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObject.h)          
-[소스코드2](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObjectGlobals.h)       
-[소스코드3](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DObjectMacros.h)        
-[소스코드4](https://github.com/SungJJinKang/ModernDoom2/blob/main/Doom3/Source/Core/DObject/DClass.h)
+[소스코드1](https://github.com/SungJJinKang/DoomsEngine/blob/main/Doom3/Source/Core/DObject/DObject.h)          
+[소스코드2](https://github.com/SungJJinKang/DoomsEngine/blob/main/Doom3/Source/Core/DObject/DObjectGlobals.h)       
+[소스코드3](https://github.com/SungJJinKang/DoomsEngine/blob/main/Doom3/Source/Core/DObject/DObjectMacros.h)        
+[소스코드4](https://github.com/SungJJinKang/DoomsEngine/blob/main/Doom3/Source/Core/DObject/DClass.h)
