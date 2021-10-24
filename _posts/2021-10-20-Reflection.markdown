@@ -2,7 +2,7 @@
 layout: post
 title:  "C++ 리플랙션 ( 작성 중 )"
 date:   2021-10-20
-categories: ComputerScience
+categories: ComputerScience C++
 ---
 
 흔히 언리얼 엔진을 사용해보면 아주 편리함 시스템이 StaticClass, IsA와 같이 컴파일 타임이 아닌 런타임에 클래스간의 상속 관계를 판단하는 등의 여러 리플렉션 시스템이다.         
