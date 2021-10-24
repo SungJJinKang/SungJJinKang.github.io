@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "고속 dynamic_cast"
+title:  "C++ 리플랙션 ( 작성 중 )"
 date:   2021-10-20
 categories: ComputerScience
 ---
@@ -29,7 +29,7 @@ categories: ComputerScience
 구현할 리플랙션 시스템의 목표를 몇가지 정했다.          
 ```
 1. 컴파일 타임(!!!)에 리플랙션 데이터가 결정되어서 실행파일에 데이터로 담길 것. ( 리플랙션 시스템이 런타임 성능에 영향을 주지 않음 )
-2. 느려터진 dynamic_cast를 개선할 것
+...
 ```
 
 
@@ -138,148 +138,10 @@ main    ENDP
 또한 클래스의 멤버함수, 멤버변수에도 텍스트를 이용해서 접근할 수 있다.       
 
 
---------------------------------
-     
 
-또한 구현한 Reflection 시스템을 통해 **매우 느려터진 dynamic_cast도 대체할 수 있다.**                 
-```
-namespace doom
-{
-	namespace details
-	{
-		template <typename BASE_DOBJECT_TYPE_CLASS>
-		static constexpr void BASE_CHAIN_HILLCLIMB_COUNT(SIZE_T& base_chain_count)
-		{
-			base_chain_count++;
-			if constexpr (std::is_same_v<doom::DObject, BASE_DOBJECT_TYPE_CLASS> == false) {
-				BASE_CHAIN_HILLCLIMB_COUNT<typename BASE_DOBJECT_TYPE_CLASS::Base>(base_chain_count);
-			}
-		}
-
-		template <typename BASE_DOBJECT_TYPE_CLASS>
-		static constexpr SIZE_T BASE_CHAIN_HILLCLIMB_COUNT()
-		{
-			SIZE_T base_chain_count = 1;
-			if constexpr (std::is_same_v <doom::DObject, BASE_DOBJECT_TYPE_CLASS > == false) {
-				BASE_CHAIN_HILLCLIMB_COUNT<typename BASE_DOBJECT_TYPE_CLASS::Base>(base_chain_count);
-			}
-			return base_chain_count;
-		}
-
-		template <typename BASE_DOBJECT_TYPE_CLASS, SIZE_T COUNT>
-		static constexpr void BASE_CHAIN_HILLCLIMB_DATA(SIZE_T& count, std::array<const char*, COUNT>& chain_data)
-		{
-			chain_data[count] = BASE_DOBJECT_TYPE_CLASS::__CLASS_TYPE_ID;
-			count++;
-			if constexpr (std::is_same_v<doom::DObject, BASE_DOBJECT_TYPE_CLASS> == false) {
-				BASE_CHAIN_HILLCLIMB_DATA<typename BASE_DOBJECT_TYPE_CLASS::Base>(count, chain_data);
-			}
-		}
-
-		template <typename BASE_DOBJECT_TYPE_CLASS, SIZE_T COUNT>
-		static constexpr std::array<const char*, COUNT> BASE_CHAIN_HILLCLIMB_DATA()
-		{
-			std::array<const char*, COUNT> chain_data{};
-			chain_data[0] = BASE_DOBJECT_TYPE_CLASS::__CLASS_TYPE_ID;
-			if constexpr (std::is_same_v <doom::DObject, BASE_DOBJECT_TYPE_CLASS > == false) {
-				SIZE_T count = 1;
-				BASE_CHAIN_HILLCLIMB_DATA<typename BASE_DOBJECT_TYPE_CLASS::Base>(count, chain_data);
-			}
-			return chain_data;
-		}
-	}
-}
-
-
-
-
-#define DOBJECT_CLASS_BASE_CHAIN(BASE_DOBJECT_TYPE_CLASS)													\
-	public:																									\
-	using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */								\
-	private:																								\
-	constexpr static SIZE_T _BASE_CHAIN_COUNT = doom::details::BASE_CHAIN_HILLCLIMB_COUNT<Current>();		\
-	constexpr static std::array<const char*, _BASE_CHAIN_COUNT> _BASE_CHAIN_DATA = doom::details::BASE_CHAIN_HILLCLIMB_DATA<Current, _BASE_CHAIN_COUNT>();			\
-	public:																									\
-	FORCE_INLINE constexpr static SIZE_T BASE_CHAIN_COUNT_STATIC()											\
-	{																										\
-		return _BASE_CHAIN_COUNT;																			\
-	}																										\
-	FORCE_INLINE constexpr static const char* const * const BASE_CHAIN_DATA_STATIC()						\
-	{																										\
-		return _BASE_CHAIN_DATA.data();																		\
-	}																										\
-	virtual SIZE_T GetBaseChainCount() const { return BASE_CHAIN_COUNT_STATIC(); }							\
-	virtual const char* const * const GetBaseChainData() const { return BASE_CHAIN_DATA_STATIC(); }
-
-```
-
-복잡해보이지만 별거 없다.      
-클래스마다 상속하는 클래스 타입을 적어주면 된다.      
-
-```
-    class DOOM_API MeshCollider : public Collider3DComponent, StaticContainer
-    {
-        DOBJECT_CLASS_BODY(MeshCollider)
-        DOBJECT_CLASS_BASE_CHAIN(Collider3DComponent) <- !!!!!
-    }
-```
-
-필자의 게임 엔진에서는 거의 모든 클래스들이 DObject라는 루트 클래스에서 뻗어나간다. ( Unreal Engine의 UObject와 비슷하다 )          
-위의 _BASE_CHAIN에는 현재 클래스 타입이 상속 중인 부모 타입을 타고 올라가서 루트 클래스 타입인 DObject 클래스까지의 클래스 Type ID를 저장한다.       
-
-상속 관계에 관한 데이터가 전역변수로 저장되어 컴파일 타임에 부모 클래스를 타고 올라가면서 각 부모 클래스의 유니크한 타입 ID를 저장한다.           
-그럼 해당 컨테이너는 이러한 데이터 형태를 가질 것이다.        
-```
-( 현재 속해 있는 클래스 유니크 타입 ID ) ( 부모 클래스 유니크 타입 ID ) ( 조부모 클래스 유니크 타입 ID ) ( 증조부모 클래스 유니크 타입 ID ) ( 고조부모 클래스 유니크 타입 ID )
-```
-
-**중요한 것은 위의 클래스 Hierarchy 데이터가 컴파일 타임에 다 결정**된다는 것이다!!
-
-그럼 어떤 오브젝트가 포인터로 넘어왔을 때 그 오브젝트가 어떤 다른 클래스의 자식인지를 어떻게 알 수 있을까?      
-방법은 간단하다.      
-
-```
-부모 리스트 컨테이너 [ From 캐스팅 오브젝트의 부모들의 개수 ( 깊이 ) - To 캐스팅 클래스의 부모들의 개수 ( 깊이 )  ] == To 캐스팅 클래스의 타입 ID
-```
-
-이를 통해 **모든 부모, 조상들의 클래스 Hierarchy 를 탐색 ( 순회 )하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인**할 수 있다.     
-참고로 이 방법은 언리얼 엔진에서 차용한 방법으로 매우 빠르게 수직 관계의 클래스들간의 런타임 캐스팅을 구현하게 해준다.         
-물론 부모 타입으로 캐스팅하는 경우에는 컴파일타임에 바로 타입 변환을 한다. 위의 알고리즘은 부모 타입의 포인터에서 자녀 타입으로 캐스팅을 할 경우에만 사용된다.        
-
-<img width="437" alt="20211023013700" src="https://user-images.githubusercontent.com/33873804/138491569-e507bfb8-be3b-4d3e-989e-54abe565a927.png">          
-
-벤치마크 결과 dynamic_cast에 비해 2배 이상 빠른 것으로 확인되었다.           
-
-당연히 RTTI 생성 컴파일러 옵션도 완전히 껐다.         
-
-실제 코드이다.     
-```
-template <typename BASE_TYPE>
-FORCE_INLINE bool IsChildOf() const
-{
-    static_assert(IS_DOBJECT_TYPE(BASE_TYPE));
-    
-    const bool isChild = ( GetBaseChainCount() >= BASE_TYPE::BASE_CHAIN_COUNT_STATIC() ) && ( GetBaseChainData()[GetBaseChainCount() - BASE_TYPE::BASE_CHAIN_COUNT_STATIC()] == BASE_TYPE::CLASS_TYPE_ID_STATIC() );
-
-    return isChild;
-}
-```
-
-또한 저 막대한 코드를 만들어낼 HILL_CLIMB 템플릿 함수는 컴파일 타임 연산에서만 호출되고 런타임에는 호출되지 않으니 실행파일에는 빠지게되니 템플릿 Bloat를 가져오지도 않는다. ( 정확하지 않으니 나중에 한번 더 확인을 해보아야겠다.)        
-
--> 후에 확인하였더니 HILL_CLIMB 함수에 extern이 아닌 static 옵션을 주어서 해당 함수가 컴파일하는 소스파일마다 각자 정의를 가지고 해당 소스파일 내에서만 사용된다는 힌트를 주니 컴파일러가 HILL_CLIMB 함수를 .obj 파일에서 제외시켰다!!!!       
-혹시나 인라이닝 때문에 이 함수들이 없어져 보이는 것이 아닌가 걱정되어서 인라이닝을 금지하는 컴파일러 옵션을 준 후에도 확인해보았다. 여전히 해당 함수들은 제거되어 있었다.        
-
-또한 언리얼 엔진과 같이 부모 클래스 타입을 임의로 적어줄 필요없이 "Base" type alias로 부모 클래스의 멤버에 접근할 수 있다.      
-```
-using Base = BASE_DOBJECT_TYPE_CLASS; /* alias Base DObject Type Class */							
-```       
-
-
-결과적으로 **모든 목표를 달성**했다.         
-언리얼엔진과 같이 모든 클래스 타입 정보를 컴파일 타임에 저장하고 런타임에 가져올 수 있다.        
-또한 dynamic_cast 없이 안전하고 매우 빠른 타입 캐스팅을 구현하였다.      
-필자가 제시하는 방법이 절대 최선의 방법은 아니고 직접 고안한 방식이다보니 허점이 많을 수도 있다.       
+//결과적으로 **모든 목표를 달성**했다.         
+//언리얼엔진과 같이 모든 클래스 타입 정보를 컴파일 타임에 저장하고 런타임에 가져올 수 있다.        
+//필자가 제시하는 방법이 절대 최선의 방법은 아니고 직접 고안한 방식이다보니 허점이 많을 수도 있다.       
 
 아래는 필자가 작성한 코드이다.        
 
