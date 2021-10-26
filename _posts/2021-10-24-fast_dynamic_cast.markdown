@@ -10,7 +10,7 @@ namespace __fast_runtime_type_casting_details
 {
 	//!!!!!!!!!!!!
 	//Never change static to extern. static give hint to compiler that this definition is used only in source file(.cpp)
-	//								 Then Compiler remove this functions definition from compiler if it is called only at compile time
+	//								 Then Compiler remove this functions definition From compiler if it is called only at compile time
 	template <typename BASE_DOBJECT_TYPE_CLASS>
 	static constexpr void BASE_CHAIN_HILLCLIMB_COUNT(size_t& base_chain_count)
 	{
@@ -74,7 +74,7 @@ namespace __fast_runtime_type_casting_details
 	}																										\
 	virtual size_t __FAST_RUNTIME_TYPE_CASTING_GET_BASE_CHAIN_COUNT() const { return __FAST_RUNTIME_TYPE_CASTING_BASE_CHAIN_COUNT_STATIC(); }	\
 	virtual const char* const * __FAST_RUNTIME_TYPE_CASTING_GET_BASE_CHAIN_DATA() const {					\
-	static_assert(std::is_base_of_v<BASE_DOBJECT_TYPE_CLASS, std::decay<decltype(*this)>::type> == true, "Current Class Type is not derived from Passed Base ClassType is passed");	\
+	static_assert(std::is_base_of_v<BASE_DOBJECT_TYPE_CLASS, std::decay<decltype(*this)>::type> == true, "Current Class Type is not derived From Passed Base ClassType is passed");	\
 	return __FAST_RUNTIME_TYPE_CASTING_BASE_CHAIN_DATA_STATIC(); }
 
 /////////////////////////////////
@@ -83,7 +83,7 @@ namespace __fast_runtime_type_casting_details
 
 #define FAST_RUNTIME_TYPE_CASTING_DOBJECT_CLASS_BODY(CURRENT_CLASS_TYPE, BASE_CLASS_TYPE)	\
 		public:																		\
-		static_assert(std::is_base_of_v<FAST_RUNTIME_TYPE_CASTING_ROOT_CLASS, BASE_CLASS_TYPE>, "Base ClassType is not derived from DObejct");	\
+		static_assert(std::is_base_of_v<FAST_RUNTIME_TYPE_CASTING_ROOT_CLASS, BASE_CLASS_TYPE>, "Base ClassType is not derived From DObejct");	\
 		using __FAST_RUNTIME_TYPE_CASTING_CURRENT_TYPE = CURRENT_CLASS_TYPE;				\
 		__FAST_RUNTIME_TYPE_CASTING_TYPE_ID_IMP(CURRENT_CLASS_TYPE)							\
 		__FAST_RUNTIME_TYPE_CASTING_DOBJECT_CLASS_BASE_CHAIN(BASE_CLASS_TYPE)
@@ -133,7 +133,7 @@ if(object->IsChildOf<MeshCollider>() == true)
 방법은 간단하다.      
 
 ```
-부모 리스트 컨테이너 [ From 캐스팅 오브젝트의 부모들의 개수 ( 깊이 ) - To 캐스팅 클래스의 부모들의 개수 ( 깊이 )  ] == To 캐스팅 클래스의 타입 ID
+부모 리스트 컨테이너 [ FromPtr 캐스팅 오브젝트의 부모들의 개수 ( 깊이 ) - ToPtr 캐스팅 클래스의 부모들의 개수 ( 깊이 )  ] == ToPtr 캐스팅 클래스의 타입 ID
 ```
 
 이를 통해 **모든 부모, 조상들의 클래스 Hierarchy 를 탐색 ( 순회 )하지 않고 O(1)만에 비교하려는 클래스가 현재 오브젝트의 부모인지 아닌지를 확인**할 수 있다.     
@@ -150,7 +150,7 @@ if(object->IsChildOf<MeshCollider>() == true)
 template <typename BASE_TYPE>
 D_FORCE_INLINE bool IsChildOf() const
 {
-	static_assert(IS_DERIVED_FROM_FAST_RUNTIME_TYPE_CASTING_ROOT_CLASS(BASE_TYPE));
+	static_assert(IS_DERIVED_From_FAST_RUNTIME_TYPE_CASTING_ROOT_CLASS(BASE_TYPE));
 
 	const bool isChild = (__FAST_RUNTIME_TYPE_CASTING_GET_BASE_CHAIN_COUNT() >= BASE_TYPE::__FAST_RUNTIME_TYPE_CASTING_BASE_CHAIN_COUNT_STATIC()) && (__FAST_RUNTIME_TYPE_CASTING_GET_BASE_CHAIN_DATA()[__FAST_RUNTIME_TYPE_CASTING_GET_BASE_CHAIN_COUNT() - BASE_TYPE::__FAST_RUNTIME_TYPE_CASTING_BASE_CHAIN_COUNT_STATIC()] == BASE_TYPE::__FAST_RUNTIME_TYPE_CASTING_CLASS_TYPE_ID_STATIC());
 
@@ -172,3 +172,60 @@ D_FORCE_INLINE bool IsChildOf() const
 [레딧에도 올려봤다.](https://www.reddit.com/r/cpp/comments/qenrtn/i_wrote_runtime_time_casting_code_faster_than/)          
       
 [소스코드](https://github.com/SungJJinKang/Fast_Runtime_Type_Casting_cpp)          
+
+그리고 현재는 프로그래머가 일일이 Base 클래스의 정보를 매크로로 넣어주어야하지만 필자의 게임엔진에서는 리플랙션 기능을 이용해서 이러한 Class hierarchy 데이터를 자동으로 만들어주는 시스템을 만들 예정이다.           
+[ C++ 리플랙션 ](https://sungjjinkang.github.io/computerscience/c++/2021/10/20/Reflection.html)      
+
+---------------
+
+이후 레딧에는 **다중 상속**을 지원하지 않는다는점이 치명적이라는 댓글이 있었고 필자 또한 다중 상속을 지원할 필요성을 느꼈다.     
+처음에는 기존의 방식처럼 다중 상속을 만날 때마다 Class Hierarchy를 하나 더 만들어주려고 시도했지만 엄청난 템플릿 코드로 인한 코드이 더러워짐, 상속하는 클래스가 늘어날 수록 그만큼 Class Hierarchy 데이터의 개수가 기하급수적으로 늘어나서 obj 파일이 너무나도 커지는 문제가 발생하였다.        
+그래서 필자는 클래스의 부모 클래스를 모두 따라 올라가면서 다중상속을 하고 있는지 여부를 컴파일 타임에 저장해두고, **만약 Casting 하려는 오브젝트가 다중 상속을 가진 클래스의 서브 클래스인 경우 다른 알고리즘을 적용하기로 하였다.**      
+
+그래서 찾은 것이 이 방법이다.       
+[https://github.com/tobspr/FastDynamicCast](https://github.com/tobspr/FastDynamicCast)          
+간단히 설명하면은 어떤 타입에서 어떤 타입으로 캐스팅이 발생했을 때 캐스팅 하려는 오브젝트의 vtable 주소를 전역변수로 저장해두고 똑같은 vtable 주소가 한번 더 들어오면은 미리 저장해둔 offset을 바로 적용하는 것이다.         
+
+대강의 알고리즘은 아래와 같다.     
+
+```
+#if _WIN64
+  #define DCAST_NO_OFFSET 0x7FFFFFFFFFFFFFFFLL
+#else 
+  #define DCAST_NO_OFFSET 0x7FFFFFFLL
+#endif
+
+
+typename <typename ToPtr, typename FromPtr>
+ToPtr CastTo(FromPtr castedObject)
+{
+	static size_t vTableAddress;
+	static std::ptrdiff_t CastOffset = DCAST_NO_OFFSET;
+
+	size_t CastedObject_vTableAddress = GetVTableAddress(castedObject);
+	if(CastOffset != DCAST_NO_OFFSET && CastedObject_vTableAddress == vTableAddress)
+	{
+		//Cache Hit!!!!
+		char* newAddress = reinterpret_cast<char*>(castedObject) + CastOffset;
+		return reinterpret_cast<ToPtr>(newAddress);
+	}
+	else
+	{
+		//Cache Miss!
+		ToPtr dynamic_casted_address = dynamic_cast<ToPtr>(castedObject);
+
+		vTableAddress = dynamic_casted_address; // Store at Cache
+		CastOffset = reinterpret_cast<const char*>(castedObject) - reinterpret_cast<const char*>(dynamic_casted_address); // Store at Cache
+
+		return dynamic_casted_address;
+	}
+}
+
+```
+
+이 방법에도 **여전히 단점은 존재**한다.     
+만약 **특정 타입의 포인터에서 다른 특정 타입으로의 캐스팅을 할 때 캐스팅할 오브젝트의 실제 타입이 매번 다른 경우 매번 캐시 미스가 발생하고 이는 느려터진 dynamic_cast의 사용으로 이어진다.**     
+( 반면 앞에서 소개한 방법에서는 매번 일정하게 빠른 속도로 캐스팅을 해준다. )
+
+그래서 필자는 엔진에서 앞에서 소개한 빠른 방법을 활용하기 위해 **되도록이면 다중 상속을 사용하지 않을 것**이다.         
+그러나 **다중상속이 불가피하게 사용되는 경우**가 생길 수 있으니 그에 대비하여 후자의 방법을 사용하도록 코드를 짠 것이다.       

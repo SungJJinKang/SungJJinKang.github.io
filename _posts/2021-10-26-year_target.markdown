@@ -1,15 +1,21 @@
 ---
 layout: post
 title:  "2021, 2022년 엔진 구현 목표"
-date:   2021-09-29
-categories: ComputerScience
+date:   2021-10-26
+categories: ComputerScience GameEngine
 ---
 
-2021년
+2021년 우선 순위
 
 - [clReflect](https://github.com/Celtoys/clReflect)를 이용하여 엔진 리플랙션 기능 구현. 
-- C#을 이용해서 프로젝트 폴더 분석하고 자동으로 clReflect를 통한 리플랙션 데이터 자동 생성 툴 만들기 ( 프로젝트 파일 분석해서 자동으로 clReflect csv 파일 생성 후 한 파일로 merge까지 )
+- C#을 이용해서 프로젝트 폴더 분석하고 자동으로 clReflect를 통한 리플랙션 데이터 자동 생성 툴 ( 파이프라인 ) 만들기 ( 프로젝트 파일 분석해서 자동으로 clReflect csv 파일 생성 후 한 파일로 merge까지 )     
+- clReflect를 사용해서 기존의 [Fast Dynamic Cast](https://sungjjinkang.github.io/computerscience/c++/2021/10/24/fast_dynamic_cast.html)에서 매크로를 다 빼고 이 clReflect를 이용한 클래스 Hierarchy 데이터를 이용.
 - imgui 연동 ( 위에서 구현한 리플랙션 기능 이용 )
+
+-----------
+
+2021년 차순위
+
 - Masked SW Occlusion Culling 구현 완료
 - ~~오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. 아마도 멀티스레딩으로 해결해볼 예정 )~~ -> [해결!](https://sungjjinkang.github.io/computerscience/2021/10/12/MultiThread_SortFrontToBack.html)                 
 - ~~빌드 시간 단축 ( 지금 너무 느림 )~~ -> Thank you! [Resharper](https://www.jetbrains.com/help/resharper/Analyzing_Includes.html#includees-view)          
