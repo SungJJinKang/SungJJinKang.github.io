@@ -7,9 +7,8 @@ categories: ComputerScience GameEngine
 
 2021년 우선 순위
 
-- [clReflect](https://github.com/Celtoys/clReflect)를 이용하여 엔진 리플랙션 기능 구현. 
-- C#을 이용해서 프로젝트 폴더 분석하고 자동으로 clReflect를 통한 리플랙션 데이터 자동 생성 툴 ( 파이프라인 ) 만들기 ( 프로젝트 파일 분석해서 자동으로 clReflect csv 파일 생성 후 한 파일로 merge까지 )     
-- clReflect를 사용해서 기존의 [Fast Dynamic Cast](https://sungjjinkang.github.io/computerscience/c++/2021/10/24/fast_dynamic_cast.html)에서 매크로를 다 빼고 이 clReflect를 이용한 클래스 Hierarchy 데이터를 이용.
+- [clReflect](https://github.com/Celtoys/clReflect)를 이용하여 엔진 리플랙션 기능 구현, 리플랙션용 자체 데이터 컨테이너 타입, 기능 구현.
+- ~~C#을 이용해서 프로젝트 폴더 분석하고 자동으로 clReflect를 통한 리플랙션 데이터 자동 생성 툴 ( 파이프라인 ) 만들기 ( 프로젝트 파일 분석해서 자동으로 clReflect csv 파일 생성 후 한 파일로 merge까지 )~~     
 - imgui 연동 ( 위에서 구현한 리플랙션 기능 이용 )
 
 -----------
