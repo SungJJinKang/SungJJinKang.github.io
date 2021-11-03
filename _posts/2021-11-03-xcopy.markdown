@@ -5,7 +5,7 @@ date:   2021-11-03
 categories: ComputerScience GameEngine
 ---
 
-[msdn xcpoy](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/xcopy)          
+[msdn xcopy](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/xcopy)          
 
 <img width="772" alt="20211103152240" src="https://user-images.githubusercontent.com/33873804/140021825-df5dcee8-8987-40cd-b18e-66baa7471b52.png">          
 
