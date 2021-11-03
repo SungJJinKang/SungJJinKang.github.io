@@ -1,0 +1,12 @@
+---
+layout: post
+title:  "빌드시 원하는 파일들을 빌드에 함께 포함시키는 방법"
+date:   2021-11-03
+categories: ComputerScience GameEngine
+---
+
+[msdn xcpoy](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/xcopy)          
+
+<img width="772" alt="20211103152240" src="https://user-images.githubusercontent.com/33873804/140021825-df5dcee8-8987-40cd-b18e-66baa7471b52.png">          
+
+다만 이는 msbuild 전용이다.          
