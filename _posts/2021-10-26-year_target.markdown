@@ -19,15 +19,16 @@ categories: ComputerScience GameEngine
 - ~~오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. 아마도 멀티스레딩으로 해결해볼 예정 )~~ -> [해결!](https://sungjjinkang.github.io/computerscience/2021/10/12/MultiThread_SortFrontToBack.html)                 
 - ~~빌드 시간 단축 ( 지금 너무 느림 )~~ -> Thank you! [Resharper](https://www.jetbrains.com/help/resharper/Analyzing_Includes.html#includees-view)          
 - ~~물리, 충돌 처리 성능 개선~~
+- 오브젝트 렌더링 Bathcing 기능 구현
 
 ------------------------
 
 2022년
 
-- 포트나이트 느낌의 Imposter 구현, 관련 에디터 툴도 구현 ( [https://shaderbits.com/blog/octahedral-impostors](https://shaderbits.com/blog/octahedral-impostors) )
+
 - Hierachy Shadow Map
-- 나만의 자료구조 만들기 ( EASTL 같이 할당자를 런타임에 전달해서 할당자가 달라도 같은 타입으로 간주되게 구현 )          
+- 나만의 자료구조 만들기 ( EASTL 같이 할당자를 런타임에 전달해서 할당자가 달라도 같은 타입으로 간주되게 구현, 내 리플렉션 시스템 적용하려면 어차피 자체적으로 컨테이너들 만들어야함 )          
 - 나만의 메모리 풀 ( 할당자 ) 만들기
 - 메가 텍스쳐 ( 메모리 맵 IO 이용 )
-- 오브젝트 렌더링 Bathcing 기능 구현
+- 포트나이트 느낌의 Imposter 구현, 관련 에디터 툴도 구현 ( [https://shaderbits.com/blog/octahedral-impostors](https://shaderbits.com/blog/octahedral-impostors) )
 
