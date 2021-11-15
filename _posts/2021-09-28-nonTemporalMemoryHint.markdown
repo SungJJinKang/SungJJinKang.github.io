@@ -114,6 +114,9 @@ GPU와 관련해서 Write-Combined 버퍼가 제일 많이 활용되는 것이 G
 
 
 
-근데 [Write - Combined 기법이 항상 빠르지는 않다는 글](https://fgiesen.wordpress.com/2013/01/29/write-combining-is-not-your-friend/)도 있다... 고려할 경우의 수가 너무 많다. 궁금하다면 한번 읽어보아라.                         
+근데 [Write - Combined 기법이 항상 빠르지는 않다는 글](https://fgiesen.wordpress.com/2013/01/29/write-combining-is-not-your-friend/)도 있다... 고려할 경우의 수가 너무 많다. 궁금하다면 한번 읽어보아라.          
+
+참고 글 : [https://megayuchi.com/2021/06/06/ddraw-surface-d3d-dynamic-buffer-%EC%97%90%EC%84%9C%EC%9D%98-write-combine-memory/](https://megayuchi.com/2021/06/06/ddraw-surface-d3d-dynamic-buffer-%EC%97%90%EC%84%9C%EC%9D%98-write-combine-memory/), [https://stackoverflow.com/questions/45623007/wc-vs-wb-memory-other-types-of-memory-on-x86-64/45634024?fbclid=IwAR1XGxliAepTdP4f_uqKB-QFGjGn9bK8Q91NOuSSMu3R4SgiNJS96LgdYHw](https://stackoverflow.com/questions/45623007/wc-vs-wb-memory-other-types-of-memory-on-x86-64/45634024?fbclid=IwAR1XGxliAepTdP4f_uqKB-QFGjGn9bK8Q91NOuSSMu3R4SgiNJS96LgdYHw)               
+
 
 references : [https://stackoverflow.com/a/37092/7138899](https://stackoverflow.com/a/37092/7138899), [https://mechanical-sympathy.blogspot.com/2011/07/write-combining.html](https://mechanical-sympathy.blogspot.com/2011/07/write-combining.html), [https://sites.utexas.edu/jdm4372/2018/01/01/notes-on-non-temporal-aka-streaming-stores/](https://sites.utexas.edu/jdm4372/2018/01/01/notes-on-non-temporal-aka-streaming-stores/), [https://stackoverflow.com/questions/14106477/how-do-non-temporal-instructions-work](https://stackoverflow.com/questions/14106477/how-do-non-temporal-instructions-work), [https://vgatherps.github.io/2018-09-02-nontemporal/](https://vgatherps.github.io/2018-09-02-nontemporal/),  [http://www.nic.uoregon.edu/~khuck/ts/acumem-report/manual_html/ch05s03.html](http://www.nic.uoregon.edu/~khuck/ts/acumem-report/manual_html/ch05s03.html), [https://stackoverflow.com/questions/49959963/where-is-the-write-combining-buffer-located-x86](https://stackoverflow.com/questions/49959963/where-is-the-write-combining-buffer-located-x86)                               
