@@ -58,11 +58,6 @@ clReflect를 이용하면 런타임에 간단히 해결할 수도 있지만 필�
                     
 
 ------------------------------------
-                  
-앞으로 진행해야할 작업은 아래와 같다.        
-- Runtime에 함수 호출을 위한 MSVC X64용 함수 호출 어셈블리어 작성하기 ( 동적으로 함수를 호출하기 위해 필요하다. ) [x64 calling convention](https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=msvc-170) 
-
-------------------------------------
 
 또한 clReflect를 내 엔진에 적용하기 위해 자동화 툴도 만들었다. ( [clReflect_automation](https://github.com/SungJJinKang/clReflect_automation) )                         
 간단히 설명하면 **비주얼 스튜디오 프로젝트 폴더를 분석해서 소스파일 목록을 모두 가져오고 소스파일의 Dependency 파일들을 모두 분석하여서 소스파일의 리플랙션 데이터가 다시 생성될 필요가 있다고 판단되면 ( 소스파일 혹은 소스파일의 Dependency 파일이 수정된 경우 ) clReflect를 호출해서 자동으로 Reflection 데이터를 재생성**해준다.          
@@ -70,7 +65,15 @@ clReflect를 이용하면 런타임에 간단히 해결할 수도 있지만 필�
 그렇지만 비주얼 스튜디오 프로젝트 폴더 경로만 던져주면 알아서 Reflection 데이터를 생성해주니 매우 매우 편리한다.          
 
 
------------------------------
+-----------------------------            
+
+이후 리플랙션 시스템을 imgui와 완전히 연동하여서 언리얼 엔진과 같은 시스템을 구현하였다.          
+원하는 멤버 변수나 함수를 추가하고 리플랙션 매크로만 붙여주면 알아서 gui가 생기는 방식이다.         
+매우 편리하고 간편하여서 향후 개발에 유용하게 사용될 것 같다.            
+
+[imgui와 리플랙션 시스템 연동 영상](https://youtu.be/wxZIGoTRcpo)            
+
+----------------------
 
 필자가 작성한 코드들은 아래에서 볼 수 있다.        
 [커스터마이징한 clReflect](https://github.com/SungJJinKang/clReflect)           
