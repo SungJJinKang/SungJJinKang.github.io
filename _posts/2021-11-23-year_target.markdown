@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "2021, 2022년 엔진 구현 목표"
-date:   2021-10-26
+title:  "2021, 2022년 엔진 구현 목표 ( 2021-11-23 업데이트 )"
+date:   2021-11-23
 categories: ComputerScience GameEngine
 ---
 
@@ -18,10 +18,10 @@ categories: ComputerScience GameEngine
 
 2021년 차순위
 
-- imgui 연동 ( 위에서 구현한 리플랙션 기능 이용 )
+- ~~imgui 연동 ( 위에서 구현한 리플랙션 기능 이용 )~~ -> 구현 완료 [https://youtu.be/wxZIGoTRcpo](https://youtu.be/wxZIGoTRcpo)
 - ~~오브젝트 Front to Back Sorting 최적화 ( 지금 너무 느림. 아마도 멀티스레딩으로 해결해볼 예정 )~~ -> [해결!](https://sungjjinkang.github.io/computerscience/2021/10/12/MultiThread_SortFrontToBack.html)                 
 - ~~빌드 시간 단축 ( 지금 너무 느림 )~~ -> Thank you! [Resharper](https://www.jetbrains.com/help/resharper/Analyzing_Includes.html#includees-view)          
-- ~~물리, 충돌 처리 성능 개선~~
+- ~~물리, 충돌 처리 성능 개선~~ -> 구현 완료
 - 오브젝트 렌더링 Bathcing 기능 구현
 
 ------------------------
