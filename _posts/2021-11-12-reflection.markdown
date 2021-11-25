@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "clang을 이용한 Reflection 시스템 ( 작성 중 )"
+title:  "clang을 이용한 Reflection 시스템"
 date:   2021-11-12
-categories: ComputerScience
+categories: ComputerScience GameEngine
 ---
 
 얼마전부터 계속 만들고 있는 게임 엔진에 사용할 리플랙션 시스템에 대한 연구를 하고 있다.             
