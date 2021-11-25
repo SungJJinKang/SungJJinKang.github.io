@@ -75,6 +75,14 @@ std::atomic의 핵심은 위에서 설명한 Atomicity의 개념이고 아무리
 메모리 Reordering에 대해서는 [이 글](https://sungjjinkang.github.io/computerscience/2021/05/13/MemoryReordering.html)을 읽어보기 바란다.        
 
 
+--------------------------------
+
+추가적으로 **std::atomic**은 mfence 명령어를 동반하는데 이는 **CPU의 Write Buffer ( Write Combined Buffer )을 flush**하는 동작을 수행하기 때문에 **큰 성능 저하**를 불러온다.       
+Write Buffer에 대해서는 [이 글](https://sungjjinkang.github.io/computerscience/2021/09/28/nonTemporalMemoryHint.html)을 읽어보기 바란다.       
+
+reference : [https://stackoverflow.com/a/51847653](https://stackoverflow.com/a/51847653)
+
+
 -------------------------------
 
 
