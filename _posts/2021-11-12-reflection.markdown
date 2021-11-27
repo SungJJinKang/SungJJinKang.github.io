@@ -59,6 +59,51 @@ clReflect를 이용하면 런타임에 간단히 해결할 수도 있지만 필�
 
 ------------------------------------
 
+또한 고속 런타임 타입 캐스팅을 위한 기능도 추가했다.
+
+```
+class DObject
+{
+    virtual void Do1(){}
+};
+class B
+{
+    virtual void Do2(){}
+};
+class C : public B, public DObject // vs public DObject, public B
+{
+
+};
+
+int main()
+{
+    DObject* dObjectPtr = new C():
+    C* c = CastTo<C*>(dObjectPtr); // CastTo는 DObject 클래스를 상속받는 클래스들간의 런타임 타입 캐스팅에 사용된다.        
+    printf("%llu %llu", (unsigned long long)a, (unsigned long long)c);
+}
+
+output : 94025612332728(!!!) 94025612332720
+
+```
+위의 상황에서 C 스타일 타입 캐스팅을 하면 포인터 dObjectPtr와 포인터 c는 같은 주소를 반환할까?         
+정답은 No이다.      
+클래스 C는 클래스 B, DObject 두 개의 virtual 클래스를 상속하고 있는데 이러한 다중 상속 때문에 클래스 C는 오브젝트의 맨 앞에 두 개의 virtual table 포인터를 가지고 있게 된다.            
+
+그러므로 위의 경우 포인터 a는 실제 클래스 C의 오브젝트에서 포인터 사이즈 ( virtual table pointer )를 더한 주소를 가리키고 있게 된다.        
+이는 클래스 C에서 상속을 할 때 클래스 DObject를 두 번째로 상속하였기 때문이다.        
+
+이는 현재 필자의 엔진에서 사용 중인 타입 캐스팅에서 큰 문제가 된다. 길게는 설명하지 않겠고 필자의 엔진에서는 런타임 타입 캐스팅에서 reinterpret_cast를 사용한다. ( 자세한건 [이 글](https://sungjjinkang.github.io/computerscience/c++/2021/10/24/fast_dynamic_cast.html)을 읽어보라. )           
+
+즉 virtual table pointer의 offset을 고려하지 않는다는 것이다.....     
+
+그렇기 때문에 이 상속 순서를 강제할 필요가 있다.        
+DObject 클래스 혹은 그 자녀 클래스를 상속할 때는 반드시 첫번째로 상속을 선언해야한다. 또한 DObject 클래스에 대한 다중 상속 또한 해서는 안된다.      
+
+이를 감지하고 에러를 발생시키는 코드도 추가해서 리플랙션 툴에 넣었다.        
+
+
+----------------------------------
+
 또한 clReflect를 내 엔진에 적용하기 위해 자동화 툴도 만들었다. ( [clReflect_automation](https://github.com/SungJJinKang/clReflect_automation) )                         
 간단히 설명하면 **비주얼 스튜디오 프로젝트 폴더를 분석해서 소스파일 목록을 모두 가져오고 소스파일의 Dependency 파일들을 모두 분석하여서 소스파일의 리플랙션 데이터가 다시 생성될 필요가 있다고 판단되면 ( 소스파일 혹은 소스파일의 Dependency 파일이 수정된 경우 ) clReflect를 호출해서 자동으로 Reflection 데이터를 재생성**해준다.          
 이 부분은 **C#으로 작성**하였고 코드도 간단하다.           
