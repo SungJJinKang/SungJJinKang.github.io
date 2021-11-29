@@ -5,7 +5,13 @@ date:   2021-11-29
 categories: ComputerScience
 ---
 
-No. x86 gets release/acquire ordering for no additional cost (paid for by the chip). The default for std::atomic is SC, which requires an mfence for stores on x86. Mfence I wouldn't describe as cheap, but I don't know if it's accurate to say that it flushes all writes.
+std::atomic 연산은 mfence 명령어를 동반하는데 이는 CPU의 [Write-Combined 버퍼](https://sungjjinkang.github.io/computerscience/2021/09/28/nonTemporalMemoryHint.html)를 flush 해버린다.         
+
+[https://www.felixcloutier.com/x86/mfence](https://www.felixcloutier.com/x86/mfence)         
+
+-----------------------
+
+No. x86 gets release/acquire ordering for no additional cost (paid for by the chip). The default for std::atomic is SC, which **requires an mfence for stores on x86.** Mfence I wouldn't describe as cheap, but I don't know if it's accurate to say that it flushes all writes.
 
 Also, std::atomic is not guaranteed to be lockfree. It can be promoted to use a mutex. On x86 you can get up to 16 bytes lockfree atomic. If you need to check, member functions are provided.
 
