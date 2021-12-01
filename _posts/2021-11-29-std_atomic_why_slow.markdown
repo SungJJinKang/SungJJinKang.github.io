@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "std::atomic 느린 이유 ( 작성 중 )"
+title:  "std::atomic 느린 이유"
 date:   2021-11-29
 categories: ComputerScience
 ---
