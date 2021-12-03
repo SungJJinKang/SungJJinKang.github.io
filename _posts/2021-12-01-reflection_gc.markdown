@@ -18,21 +18,21 @@ categories: ComputerScience
 
 ------------------------------              
 
-동작 원리
+**동작 원리**           
 
-1. Unreachability 플래그 셋팅 단계        
+- Unreachability 플래그 셋팅 단계           
 
 프로그램 내의 모든 DObject ( 게임 내 거의 모든 클래스들의 조상 클래스 [참고](https://sungjjinkang.github.io/computerscience/gameengine/2021/09/25/dangling_pointer.html) )들의 Unreachability 플래그를 1로 셋팅한다. 이 플래그도 캐시 극대화를 위해 연속되게 배치하였다. ( SOA!! )                       
 
 
-2. Mark 단계
+- Mark 단계       
 
 **멀티스레드로 각각의 스레드들은 자신에게 할당된 루트 오브젝트들을 순회하면서 해당 루트 오브젝트에서 뻗는 모든 reference를 돌아다니면서 Unreachability 플래그를 0으로 셋팅**한다.           
 그 후 최종적으로 Unreachability가 여전히 1인 플래그는 해당 오브젝트에 대한 reference가 없는 것으로 판단하고 파괴한다.        
 여기서도 [False sharing](https://sungjjinkang.github.io/computerscience/2021/05/14/cachecohrencyAndFalsesharing.html)을 고려하였다. 각각의 스레드들이 순회를 하다보면 같은 오브젝트에 flag에 셋팅을 할 일이 생길 수 있다. 이때 캐시 동기화가 발생하면서 성능 저하가 발생한다.        
 필자는 이를 막기 위해서 각각의 스레드들은 우선 작업 시작시 로컬 변수로 각 오브젝트들에 대한 flag를 저장할 변수를 따로 각자 만든다. 스레드들이 순회를 하는 동안에는 이 로컬 변수에 flag를 적어두었다가 마지막에 모든 스레드가 동작이 끝나면 한번에 오브젝트 flag를 관리하는 전역 변수로 옮길 것이다.         
 
-3. Sweep 단계         
+- Sweep 단계          
 
 Mark 단계가 끝나고도 여전히 Unreachability 플래그가 1인 오브젝트들은 해당 오브젝트에 대한 reference가 없다고 판단을 하고 파괴시킨다.         
 이는 Mark 단계와 달리 싱글스레드에서 동작한다. 오브젝트 파괴 동작을 멀티스레드로 하려면 고려해야하는 변수가 너무 많아진다. 그래서 싱글스레드로 수행한다.        
