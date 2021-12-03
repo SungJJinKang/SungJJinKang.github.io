@@ -10,12 +10,21 @@ categories: ComputerScience
 이전에도 [메모리 누수를 방지하기 위한 구조](https://sungjjinkang.github.io/computerscience/gameengine/2021/09/25/dangling_pointer.html)가 존재했지만 이 방법은 씬이 끝나거나 특수한 상황에서 임의로 모든 DObject들을 한꺼번에 회수해주는 기능이라 엄연히 참조가 되지 않은 오브젝트를 주기적으로 회수해주는 가비지 컬렉터와는 역할이 다르다.              
 
 **언리얼 엔진의 가비지 컬렉터**를 생각하면 된다.     
-일일이 오브젝트를 파괴(해제)해줄 필요 없이 그냥 포인터를 null로 바꾸어두면 가비지 컬렉터가 알아서 한번도 다른 오브젝트에 의해 참조가 되지 않은 오브젝트들의 메모리를 수거해가는 시스템이다.        
+가비지 컬렉터는 루트 오브젝트부터 프로퍼티들을 순회하면서 ( 리플렉션 데이터 이용 ) 최종적으로 참조되지 않은 오브젝트를 회수한다.          
+또한 회수된 오브젝트에 대한 주소를 가지고 있는 포인터에는 null 값을 넣어준다. 이를 통해서 게임 내의 IsValid 함수에 대한 안전성을 높인다.        
 
 
-가비지 컬렉터를 위한 보조 기능들은 다 구현이 되어 있어서 금방 만들 것 같다.          
+가비지 컬렉터를 위한 보조 기능들은 다 구현이 되어 있어서 금방 만들 것 같다.             
 
--------------------------------     
+------------------------------              
+
+멀티스레드로 각각의 스레드들은 자신에게 할당된 루트 오브젝트들을 순회하면서 해당 루트 오브젝트에서 뻗는 모든 reference를 돌아다니면서 Unreachability 플래그를 0으로 셋팅한다.           
+그 후 최종적으로 Unreachability가 여전히 1인 플래그는 해당 오브젝트에 대한 reference가 없는 것으로 판단하고 파괴한다.        
+여기서도 [False sharing](https://sungjjinkang.github.io/computerscience/2021/05/14/cachecohrencyAndFalsesharing.html)을 고려하였다. 각각의 스레드들이 순회를 하다보면 같은 오브젝트에 flag에 셋팅을 할 일이 생길 수 있다. 이때 캐시 동기화가 발생하면서 성능 저하가 발생한다.        
+필자는 이를 막기 위해서 각각의 스레드들은 우선 작업 시작시 로컬 변수로 각 오브젝트들에 대한 flag를 저장할 변수를 따로 각자 만든다. 스레드들이 순회를 하는 동안에는 이 로컬 변수에 flag를 적어두었다가 마지막에 모든 스레드가 동작이 끝나면 한번에 오브젝트 flag를 관리하는 전역 변수로 옮길 것이다.         
+
+
+-------------------------------         
 
 처음에는 우선 기능 구현에 집중을 하고 기능이 구현되면 성능을 높여갈 예정이다.        
 
@@ -30,3 +39,6 @@ categories: ComputerScience
 
 
 -------------------------------     
+
+
+references : [https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Optimizations/](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Optimizations/)          
