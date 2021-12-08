@@ -110,8 +110,7 @@ GPU와 관련해서 Write-Combined 버퍼가 제일 많이 활용되는 것이 G
 
 렌더링에서 활용되는 write-combined 버퍼에 대해서는 [이 글](https://fgiesen.wordpress.com/2013/01/29/write-combining-is-not-your-friend/)을 읽어보기 바란다.       
 
-또한 write-combined 버퍼에 쓰는 경우 경우 메모리 ordering을 보장 ( 코어간 데이터 일관성을 보장 )하지 않는다. write-combined store -> read -> write-combined store에서 read가 앞의 store가 보인다는 것을 보장하지 않는다는 것이다. 그래서 write - combined 최적화는 대량의 데이터를 빠르게 보내고자 할 때 사용되고 대량의 데이터를 다 전송하는 중간에 read를 하는 것이 필요없는 상황에서 사용되어야한다.         
-또한 write-combined 버퍼의 경우 snoop도 되지 않는다.       
+또한 write-combined 버퍼에 쓰는 경우 경우 메모리 ordering을 보장 ( 코어간 데이터 일관성을 보장 )하지 않는다. write-combined store -> read -> write-combined store에서 read가 앞의 store가 보인다는 것을 보장하지 않는다는 것이다. 그래서 write - combined 최적화는 대량의 데이터를 빠르게 보내고자 할 때 사용되고 대량의 데이터를 다 전송하는 중간에 read를 하는 것이 필요없는 상황에서 사용되어야한다.            
 
 
 
