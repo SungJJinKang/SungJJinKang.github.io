@@ -18,7 +18,6 @@ std::vector의 아이템 개수가 많을 수록 성능 저하는 더 커진다.
 std::vector에 들어간 아이템 타입이 숫자나 포인터인 경우 단순 비트 비교만으로 비교가 가능하니 SIMD를 활용하면 성능을 극대화할 수 있다고 생각했다.          
 간단한 SIMD 함수를 통해서 구현을 했다.           
 그리고 SIMD 레지스터 사이즈에 alignment 해야하는 문제도 다 해결해준다. 이 함수를 사용하는 사람이 alignment 문제를 신경쓰지 않아도 된다는 것이다.             
-( 그리고 처음에는 iterator을 함수 parameter로 지원하려고 했지만 value initialized 타입의 iterator를 dereference하려하니 msvc에서 에러를 발생시켜서 일단은 std::vecotr를 전달해야하도록 작성했다. )                        
 
 [std_find_simd Github](https://github.com/SungJJinKang/std_find_simd)          
 
