@@ -63,10 +63,24 @@ categories: ComputerScience
 일단 필자의 계획은 **순회를 하면서 어떤 오브젝트를 파괴해주어야할지 결정하는 과정은 멀티스레드로 분배해서 수행**할 것이다. ( 다만 유효하지 않은 포인터에 null 값을 넣는 과정에서 데이터 레이스, 가비지 컬렉터를 위한 flag 셋팅 과정에서 캐시 동기화, false sharing ( 각 오브젝트들의 flag들이 연속되게 할당되어 있다 )으로 인한 성능 저하가 약간은 걱정되기도 한다. )           
 멀티스레드로 파괴할 오브젝트들이 모두 정해지면 **파괴하는 작업 ( delete )은 싱글 스레드에서 수행**할 것이다. ( 파괴 동작을 멀티스레드로 하려면 고려해야할 변수가 너무 많아진다. )           
 
-일단은 False Sharing과 같은 문제들을 차치해두고 단순히 **멀티스레드로 구현을 해보니 Mark 단계의 성능이 3배가 빨라졌다.**         
-매우 만족하는 결과이다.          
+일단은 False Sharing과 같은 문제들을 차치해두고 단순히 **멀티스레드로 구현을 해보니 Mark 단계의 성능이 3배가 빨라졌다.**                 
+매우 만족하는 결과이다.            
 
-여기서 조금 더 최적화를 할까 생각을 하였지만 프로파일링을 해보니 GC 동작 자체가 딱히 느린 동작이 아니라서 그냥 두기로 하였다.      
+Marking 중인 오브젝트 개수와 Marking이 끝난 오브젝트 개수를 카운팅하기 std::atomic을 사용하는데 엔티티 개수가 많아질 수록 카운팅 연산 횟수가 늘어나면서 인접한 atomic 변수들간의 **[false sharing](https://sungjjinkang.github.io/computerscience/2021/05/14/cachecohrencyAndFalsesharing.html)**이 우려되어서 중간에 padding을 넣어주었다.                   
+
+```
+namespace dooms::gc::garbageCollectorSolver
+{
+	struct GCMultithreadCounter
+	{
+	    std::atomic<size_t> workingOnRootObjectCount;
+	    UINT8 padding[64]; // padding for preventing false sharing
+	    std::atomic<size_t> completedOnRootObjectCount;
+	};
+}
+```
+
+여기서 조금 더 최적화를 할까 생각을 하였지만 프로파일링을 해보니 현재 엔진 규모에서 GC 동작 자체가 그렇게 느린 동작이 아니라서 그냥 두기로 하였다.      
 
 -------------------------------     
 
