@@ -126,12 +126,11 @@ Frostbite 엔진에서 참고한 방식으로 **오브젝트들의 AABB의 각 V
 
 -----------------------------
 
-아직 Clipping 구현을 하지 못해서 삼각형 중 하나의 Vertex라도 View volume 밖에 있으면 그 삼각형의 Depth 값은 연산되지 않지만 일단은 Clipping 부분을 제외하고는 아주 잘 동작한다.        
-
-Masked SW ( CPU ) Occlusion Culling를 통해 엄청난 성능 향상을 이룰 수 있었다.               
+Masked SW ( CPU ) Occlusion Culling를 통해 성능 향상을 이룰 수 있었다.               
 또한 멀티스레드를 적극 활용한다는 점에서 개발 중인 엔진의 지향점에도 잘 맞다.           
-Occlusion Culling을 극대화하기 위한 환경을 조성한 경우 거의 2배에 가까운 성능 향상을 이룰 수 있었다.      
-성능에 관한 부분은 아래 영상을 참조하기 바란다.        
+Occlusion Culling을 극대화하기 위한 환경을 조성한 경우 거의 2배에 가까운 성능 향상을 이룰 수 있었다.       
+조금 더 복잡한 씬에서의 성능 테스트도 할 예정이다.            
+성능에 관한 부분은 아래 영상을 참조하기 바란다.          
 [영상 1](https://youtu.be/tMgokVljvAY), [영상 2](https://youtu.be/1IKTXsSLJ5g)          
 
 
