@@ -50,10 +50,12 @@ Masked SW ( CPU ) OC과 흔히 사용하는 **HI-Z Occlusion Culling과의 가�
 
 **첫번째 단계**는 Occluder를 선정하는 작업이다.                     
 이 부분은 논문에 다루는 부분이 아니어서 필자가 고안하였다.         
-오브젝트의 **Bounding Sphere를 Screen Space로 Project해서 그 반지름의 길이를 기준**으로 정하였다. 그 반지름이 일정 크기보다 큰 경우 Occluder로서의 가치가 있다고 판단하고 Occluder로 사용한다.        
-Occluder들은 해당 오브젝트의 모든 삼각형을 Depth Buffer에 그리는 동작을 해야하기 때문에 너무 많은 오브젝트를 Occluder로 선정하게 되는 경우 그 만큼 성능 저하가 발생한다. 그래서 Occluder의 기준을 적절하게 정하는 것이 Occlusion Culling의 성능에 큰 영향을 미친다.        
+오브젝트의 **AABB를 Screen Space로 Project한 후 화면 상 차지하는 넓이를 기준**으로 정하였다. 그 넓이가 일정 크기보다 큰 경우 Occluder로서의 가치가 있다고 판단하고 Occluder로 사용한다.        
 여기서도 Cache를 최대한 활용하기 위해서 오브젝트들의 Bounding Sphere 데이터를 연속되게 저장하였다.                
-( **Screen Space Bounding Sphere를 멀티스레드로 연**하는데 여기서 스레드들간의 Cache Coherency에 의한 성능 저하를 방지하기 위한 데이터 구조가 따로 있는데 여기서 굳이 설명하지는 않겠다. )                   
+( Screen Space AABB를 멀티스레드로 연산하는데 여기서 스레드들간의 Cache Coherency에 의한 성능 저하를 방지하기 위한 데이터 구조가 따로 있는데 여기서 굳이 설명하지는 않겠다. )              
+**사실 이 단계에서 Occlusion Culling의 성능이 모두 결정된다.** 매우 매우 중요한 단계이다.         
+왜냐면 **Occluder를 너무 많이 선정해버리면 Occluder를 Depth Buffer에 Rasterize하기 위한 연산시간으로 인해 오히려 Occlusion Culling시 더 성능이 느려질 수 있다.** 또한 Occluder로서 가치가 없는 오브젝트를 선택해버리면 Rasterize하는데 시간만 버리고 실제 Occlude에 도움이 되지 않을 수 있다.         
+
                            
                              
 **두번째 단계**는 **Occluder를 Bin한다**       
@@ -61,7 +63,7 @@ Bin한다는 것은 Occluder의 각각의 삼각형이 그려질 32x8 ( 8x4 타�
 만약에 이 동작이 없다면 멀티스레드로 Occluder을 그릴 때 큰 성능 저하가 발생할 수 밖에 없다. 왜냐면 **여러 스레드들이 각자 맡은 삼각형의 Depth 값을 동시에 동일한 Depth Buffer에 쓰려면 당연히 Race condition이 발생할 수 있으니 불가피하게 lock을 걸어야하는데 이는 엄청난 성능 저하**를 가져온다. 렌더링 코드에서 lock과 같은 느려터진 동작은 성능에 매우 치명적이다.            
 그렇기 때문에 전체 Depth Buffer를 일정한 크기로 나눈 타일( 32x8 )들에 그 타일에 그려질 삼각형을 미리 저장해두는 것이다. 그 후 **각각의 스레드들은 자신이 연산할 타일을 하나 정해 그 타일에 대해서만 삼각형을 그리는 연산을 하는 것**이다. 스레드들은 서로 다른 타일에 Depth값을 쓰니 당연히 Race condition 상황은 발생하지 않고 이를 통해 성능을 향상 시킬 수 있다.         
 또한 Bin을 할 때는 가까운 오브젝트부터 Bin을 한다. Masked OC에서는 가까운 Occluder부터 Rasterize하여야 정확도가 높아지기 때문에 Sorting된 순서대로 Bin을 수행하여야 Rasterize 단계에서 Sorting된 순서대로 Rasterize를 수행할 수 있다.         
-사실 이 단계가 Masked OC의 가장 중요한 성능 요소이다. ( 실제 프로파일링 결과 전체 Stage 중 가장 많은 시간을 잡아먹는다. )        
+이 Stage가 전체 Stage 중 가장 연산 시간을 많이 잡아먹는 Stage이다. ( 실제 프로파일링 결과 전체 Stage 중 가장 많은 시간을 잡아먹는다. )         
 Stage 특성상 싱글스레드에서 돌아가기 때문에 느릴 수 밖에 없다. ( 멀티스레드로 수행하거나 더 빠르게 동작 시킬 방법을 찾는 중이다... )        
 
                     
