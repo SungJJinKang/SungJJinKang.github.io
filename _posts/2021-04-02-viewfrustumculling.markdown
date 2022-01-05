@@ -191,12 +191,53 @@ inline char CheckInFrustumSIMDWithTwoPoint(math::Vector<4, float>* eightPlanes, 
 
 게임 월드 내 모든 Entity의 Position과 Bounding Sphrere의 Radius 정보 이렇게 총 4개의 floating data가 Linear하게 배치되어 한 Block을 구성한다. 중요한건 Cache Hitting률을 높이기 위해 SoA 구조로 데이터를 배치한다는 것이다.     
 ```c++
-struct CullingBlock
-{
-    alignas(32) math::Vector4 mPositions[ENTITY_COUNT_IN_ENTITY_BLOCK];
-    alignas(32) char mIsVisibleBitflag[ENTITY_COUNT_IN_ENTITY_BLOCK];
-    EntityHandle mHandles[ENTITY_COUNT_IN_ENTITY_BLOCK];
-    TransformData mTransformDatas[ENTITY_COUNT_IN_ENTITY_BLOCK];
+struct alignas(CACHE_LINE_SIZE) EntityBlock
+	{
+		/// <summary>
+		/// You don't need to worry about false sharing.
+		/// void* mRenderer[ENTITY_COUNT_IN_ENTITY_BLOCK] and mCurrentEntityCount isn't read during CullJob
+		/// </summary>
+		char mIsVisibleBitflag[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		
+		/// <summary>
+		/// x, y, z : components is position of entity
+		/// w : component is radius of entity's sphere bound
+		/// 
+		/// This will be used for linearlly Frustum intersection check
+		///
+		/// If Size of mIsVisibleBitflag isn't multiples of 256bit,
+		/// Setting mIsVisibleBitflag make mPositionAndBoundingSpheres value dirty
+		/// </summary>
+		culling::Position_BoundingSphereRadius mPositionAndBoundingSpheres[ENTITY_COUNT_IN_ENTITY_BLOCK];
+
+		/// <summary>
+		/// Whether renderer component is enabled.
+		/// </summary>
+		bool mIsObjectEnabled[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		
+		VertexData mVertexDatas[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		
+		culling::Vec4 mAABBMinWorldPoint[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		culling::Vec4 mAABBMaxWorldPoint[ENTITY_COUNT_IN_ENTITY_BLOCK];
+
+		// This variable is for a camera
+		float mAABBMinScreenSpacePointX[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		float mAABBMinScreenSpacePointY[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		float mAABBMaxScreenSpacePointX[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		float mAABBMaxScreenSpacePointY[ENTITY_COUNT_IN_ENTITY_BLOCK];
+
+		/// <summary>
+		/// This values is set only when mIsAABBMinNDCZDataUsedForQuery[entityIndex] is true
+		/// </summary>
+		float mAABBMinNDCZ[ENTITY_COUNT_IN_ENTITY_BLOCK];
+
+		/// <summary>
+		/// If All vertex's homogeneous w of object aabb is negative.
+		///	So AABBScreenSpacePoint is invalid
+		/// </summary>
+		bool mIsAABBMinNDCZDataUsedForQuery[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		bool mIsAABBScreenSpacePointValid[ENTITY_COUNT_IN_ENTITY_BLOCK];
+		culling::Mat4x4 mModelMatrixes[ENTITY_COUNT_IN_ENTITY_BLOCK];
 }
 ```
 위와 같은 CullingBlock들이 여러개 존재한다. 그럼 각 스레드에 이 CullingBlock을 넘겨주어 Culling 연산을 하면 된다.    
