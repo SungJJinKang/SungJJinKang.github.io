@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "읽어볼 글들"
+date:   2022-01-13
+categories: ComputerScience
+---
+
+[https://www.cppstories.com/2015/01/persistent-mapped-buffers-in-opengl/](https://www.cppstories.com/2015/01/persistent-mapped-buffers-in-opengl/)
