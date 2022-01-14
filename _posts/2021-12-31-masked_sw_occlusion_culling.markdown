@@ -143,7 +143,15 @@ Masked SW ( CPU ) Occlusion Culling를 통해 성능 향상을 이룰 수 있었
 
 조금 더 복잡한 씬에서의 성능 테스트도 할 예정이다.            
 성능에 관한 부분은 아래 영상을 참조하기 바란다.          
-[영상 1](https://youtu.be/tMgokVljvAY), [영상 2](https://youtu.be/1IKTXsSLJ5g)          
+[영상 1](https://youtu.be/tMgokVljvAY), [영상 2](https://youtu.be/1IKTXsSLJ5g)        
+
+
+---------------------------------------------
+
+이후 **2, 3 단계인 Occluder Bin 단계와 Rasterize 단계가 너무 느리다고 판단**되어서 ( 두 단계는 매우 느리고, 두 단계의 연산 소요 시간은 비슷하다. ) **두 단계를 2 프레임에 걸쳐서 번갈아 수행**되게 바꾸었다.                                   
+현재 프레임에서 Occluder Bin 단계만을 수행하면, 그 다음 프레임에 이전 프레임의 Bin 결과를 가지고 Rasterize 단계를 수행하는 것이다.        
+결과적으로는 Depth Buffer에 1 프레임 딜레이가 발생하여서 Occludee 테스트시 약간의 오차가 발생할 수 있다.           
+**이를 통한 얻어지는 성능 향상을 생각하면 1 프레임의 오차는 용인 가능**하다 생각한다.                       
 
 
 
