@@ -20,12 +20,12 @@ GPU에서는 Occlusion Query라고 하는 방법이 있는데 쉽게 얘기하�
 다만 **GPU를 사용하는 방법**은 한계가 있는데 결국 Occludee가 그려질지를 테스트한 후 그 결과를 다신 CPU로 가져와야하는데 이걸 가져오는 **시간이 많이걸린다.** 그만큼 느려진다는 것이다. ( PCI버스는 레이턴시가 매우 높다. 다만 대역폭은 높다. )            
 
 그래서 대부분의 엔진에서는 이 Occlusion Culling을 **CPU에서 수행**한다. **CPU에서 Occluder의 삼각형을 일일이 그려가면서 Depth Buffer을 쓰고 테스트**를 하는 것이다. GPU로 데이터가 가기 전 CPU에서 매우 일찍 컬링을 하는 것이다.                       
-다만 CPU는 GPU만큼 이러한 엄청난 양의 연산에 특화되어 있지 않다보니 약간의 트릭을 사용하는데 바로 Depth Buffer의 사이즈를 줄이는 것이다.           
-예를 들면 1920x1080이 게임의 해상도라면 그 절반만큼의 해상도로 Depth Buffer를 그리는 것이다. 연산할 Fragment가 줄어들었으니 그만큼 연산량도 줄일 수 있다.        
-이를 흔히 **Hierarchical Depth Buffer**라고 한다. 여러 해상도의 Depth Buffer를 그려두고 Occludee를 가지고 비교할 때 그때 그때 알맞은 해상도의 Depth Buffer와 비교를 하는 것이다.       
-이를 위해 Depth Buffer를 축소할 때는 축소되는 Depth 값을의 최대 값을 Depth 값으로 채택한다.    
+다만 CPU는 GPU만큼 이러한 엄청난 양의 연산에 특화되어 있지 않다보니 약간의 트릭을 사용하는데 바로 Depth Buffer를 여러 사이즈로 만들어 두고 Occludee를 비교하는 것이다. 일명 **HI(Hierarchical)-Z Occlusion Culling**이다                                
+예를 들면 1920x1080이 게임의 해상도라면 일단은 전체 해상도 버전의 Dpeth 버퍼를 그리고, 그 Depth 버퍼를 축소하여서 여러 해상도의 Depth Buffer를 만들어 두는 것이다.                    
+이를 위해 Depth Buffer를 축소할 때는 축소되는 Fragment들 중 최대 Depth 값을 축소된 버전의 Fragment의 Depth 값으로 채택한다.             
 안그려도 될 ( 가려진 ) 오브젝트를 그리는 것 ( GPU로 Draw 명령어 전송 )은 괜찮지만, 그려야할 오브젝트를 그리지 않는 일은 발생하면 안되기 때문이다.      
 그래서 **Depth Buffer는 최대 Depth 값을 취하고 Occludee는 최소 Depth 값을 취해서 이 둘을 비교**한다. **Occludee의 최소 Depth값이 Depth Buffer의 최대 Depth 값보다 크다면 그 Occludee는 Occluder에 의해 완전히 가려진 것이 확실**하다.         
+이러한 
 
 ----------------------------------------
 
@@ -33,14 +33,15 @@ GPU에서는 Occlusion Query라고 하는 방법이 있는데 쉽게 얘기하�
 Masked SW ( CPU ) Occlusion Culling의 가장 큰 특징은 **멀티스레드 활용**, **SIMD 명령어 활용**이다.
 
 Masked SW ( CPU ) OC과 흔히 사용하는 **HI-Z Occlusion Culling과의 가장 큰 차이**는 무엇일까?       
-우선 **Masked OC은 Depth Buffer가 한개**이다. HI-Z 방식이 정확도를 위해 여러 해상도의 Depth Buffer를 만드는데 비해 Masked OC은 8x4 픽셀당 하나의 Depth 값을 가진다.         
-또한 다른 큰 차이점은 **Masked OC은 해당 8x4 픽셀 타일 ( 전체 해상도를 8x4 사이즈로 각각 나눔 )이 다른 삼각형에 의해 완전히 덮였다고 판단이되면 최대 Depth 값을 업데이트**하는 것이다.      
+우선 **Masked OC은 Depth Buffer가 한개**이다. HI-Z 방식이 전체 해상도로 Depth Buffer를 하나 그리고 그 Depth Buffer를 축소한 여러 해상도의 Depth Buffer를 만드는데 비해 Masked OC은 8x4 픽셀당 하나의 Depth 값을 가진다.         
+또한 다른 큰 차이점은 **Masked OC은 해당 8x4 픽셀 타일 ( 전체 해상도를 8x4 사이즈로 각각 나눔 )이 다른 삼각형에 의해 완전히 덮였다고 판단이되면 최대 Depth 값을 업데이트**하는 것이다. 이는 **HI-Z 방식이 일단은 전체 해상도를 그려야하는데 여기서 오는 엄청난 양의 연산을 줄이기 위함이다.**                  
 
-기존의 HI-Z OC가 항상 최대 Depth 값을 취한다고 했을 때 만약 그 위를 완전히 덮는 더 가까운 삼각형이 그려지는 경우 어떠한가? 논리적으로 따졌을 때 기존의 Depth Buffer를 완전히 덮은 더 가까운 삼각형이 있다면 이 더 가까운 삼각형의 Depth 값을 최대 Depth 값으로 취해도 된다. 그러나 이 삼각형이 덮였다는 것을 판단하는 동작이 기존 HI-Z OC에는 없다.          
+**HI-Z OC에서 오류가 발생하지 않기 위해서는 우선 모든 Fragment들에 Depth 값을 알아야(그러야)한다.** 그래야 축소된 버전의 Dpeth Buffer에서 줄어든 Fragment들 중 최대 Depth 값을 취해 그려야할 오브젝트를 그리지 않는 오류를 방지할 수 있기 떄문이다.             
 
-반면 Masked OC는 **각각의 8x4 타일이 삼각형에 덮여있는지를 판단하는 "Coverage Mask"라는 것이 존재**한다. 이를 통해 **각 타일이 삼각형에 의해 완전히 덮인 경우 해당 타일의 최대 Depth 값을 업데이트**한다. ( Coverage Mask를 쓸 때 SIMD 연산을 활용해서 32x8 총 256개의 Fragment가 삼각형에 의해 덮여져 있는지 여부를 몇개의 SIMD만으로 매우 빠르게 기록한다. )                 
-결과적으로 더 가까운 최대 Depth 값을 취함에 따라 더 공격적으로 Culling을 수행할 수 있는 것이다. 기존의 삼각형와 그 위를 덮는 더 가까운 삼각형 사이에 오브젝트가 있는 경우 Masked OC의 경우에는 그 오브젝트를 Culling할 수 있다.                  
+반면 Masked OC는 **각각의 8x4 타일이 삼각형에 덮여있는지를 판단하는 "Coverage Mask"라는 것이 존재**한다. 각 타일이 삼각형에 의해 완전히 덮혀있는지를 체크하여 완전히 덮혀있는 경우에만 Depth Buffer에 Depth 값을 쓰는 것이다.                    
+이를 통해 일반적인 HI-Z OC가 전체 해상도의 Depth Buffer를 Rasterize해야하는데 반해 Masked OC는 HI-Z Buffer ( 낮은 해상도의 버퍼 )를 직접 연산하고 그럼에도 불구하고 줄어든 Fragment들의 최대 Depth 값을 취한다는 성질을 유지한다.             
 
+( Coverage Mask를 쓸 때 SIMD 연산을 활용해서 32x8 총 256개의 Fragment가 삼각형에 의해 덮여져 있는지 여부를 몇개의 SIMD만으로 매우 빠르게 기록한다. )                  
 자세한 알고리즘은 이 글 [Masked Occlusion Culling 알고리즘 한글 설명](https://github.com/SungJJinKang/EveryCulling/blob/main/CullingModule/MaskedSWOcclusionCulling/MaskedSWOcclusionCulling_HowWorks.md)을 참고하라.          
 
 --------------------------------

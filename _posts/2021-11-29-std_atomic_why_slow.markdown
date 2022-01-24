@@ -5,7 +5,10 @@ date:   2021-11-29
 categories: ComputerScience
 ---
 
-std::atomic 연산은 mfence 명령어를 동반하는데 이는 CPU의 [Write-Combined 버퍼](https://sungjjinkang.github.io/computerscience/2021/09/28/nonTemporalMemoryHint.html)를 flush 해버린다.         
+std::atomic 연산은 mfence 명령어를 동반하는데 이는 CPU의 [Write-Combined 버퍼](https://sungjjinkang.github.io/computerscience/2021/09/28/nonTemporalMemoryHint.html)를 flush 해버린다. ( Cache에만 써도 Cache coherency로 코어간 데이터 동기화가 된다. )                  
+
+
+또한 memory reordering 옵션이 있는 경우 reordering을 제한하여서 out-of-order 명령어 처리를 수행하지 못하는데서 오는 성능 하락도 있다.          
 
 [https://www.felixcloutier.com/x86/mfence](https://www.felixcloutier.com/x86/mfence)         
 
