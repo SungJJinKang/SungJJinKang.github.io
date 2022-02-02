@@ -5,4 +5,4 @@ date:   2022-02-02
 categories: ComputerScience Math
 ---
 
-reference : [https://seanmiddleditch.github.io/matrices-handedness-pre-and-post-multiplication-row-vs-column-major-and-notations/](https://seanmiddleditch.github.io/matrices-handedness-pre-and-post-multiplication-row-vs-column-major-and-notations/)          
+reference : [https://seanmiddleditch.github.io/matrices-handedness-pre-and-post-multiplication-row-vs-column-major-and-notations/](https://seanmiddleditch.github.io/matrices-handedness-pre-and-post-multiplication-row-vs-column-major-and-notations/), [https://cmichel.io/understanding-front-faces-winding-order-and-normals](https://cmichel.io/understanding-front-faces-winding-order-and-normals)                     
