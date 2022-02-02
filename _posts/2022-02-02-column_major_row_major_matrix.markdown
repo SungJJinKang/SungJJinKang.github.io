@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Column Major Matrix vs Row Major Matrix"
+title:  "OpenGL vs D3D Matrix 연산, Coordinate 차이"
 date:   2022-02-02
 categories: ComputerScience Math
 ---
