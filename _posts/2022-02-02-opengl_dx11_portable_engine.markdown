@@ -42,43 +42,6 @@ categories: ComputerScience
 
 아쉽게도 HLSL -> GLSL로의 변환은 불가능해보인다.         
 
-그런데 문제가 하나 있었는데 glslcc가 Column-major을 기준으로 작성한 쉐이더 코드를 맘대로 Row-major matrix의 연산으로 바꾸어 버리는 것이다. mat4x4 * vec4 연산을 vec4 * mat4x4 연산으로 바꾸어버린다. 이렇게 되면 엔진에서 Matrix 데이터를 쉐이더로 넘길 때 Transpose를 일일이 해주어야한다..... 기존 수학 라이브러리는 Column-major로 작성되어 있고 hlsl도 column-major가 기본 값이기 때문에 그냥 사용하면 될 것이라 생각했는데 이 glslcc 요놈이 맘대로 Matrix convention을 바꾸어버린 것이다. glslccc단에서는 D3D가 HLSL에서는 Column-major을 사용하고, D3D API 단에서는 Row-major을 사용하니 이렇게 한 것 같은데 내가 원하는 동작은 아니다... 나는 그냥 Column-major을 그대로 사용하고 싶었다.....      
-
-아래와 같은 OPENGL 쉐이더가 있으면
-```
-layout(binding = 0, std140) uniform Global
-{
-    mat4 viewProjection;
-    mat4 model;
-}
-
-void main()
-{
-	gl_Position =  viewProjection * model * vec4(aPos, 1.0);
-}
-```
-
-glslcc는 아래와 같은 HLSL로 변환을 한다.         
-
-```
-cbuffer Global : register(b0)
-{
-    row_major float4x4 _26_viewProjection : packoffset(c0);
-    row_major float4x4 _32_model : packoffset(c4);
-}
-void vert_main()
-{
-    gl_Position = mul(float4(aPos, 1.0f), mul(_32_model, _26_viewProjection));
-}
-```                    
-
-matrix 변수들에 row_major 옵션이 붙어 있고, 밑에 vert_main 함수에서 곱셈을 할 때도 mat4x4 * vec4 연산을 vec4 * mat4x4으로 바꾼다.        
-아마 D3D11의 API들이 Row-major로 되어 있으니 쉐이더단에서도 이렇게 바꾸는 것 같은데....       
-이러면 엔진단에서 matrix 데이터를 넘길 때 한번 transpose를 해야하니 매우 매우 귀찮아진다........       
-.....
-....작성중
-
-
 문제는 또 있었다. 두 API의 좌표 시스템이 다르다는 것이다.           
 Matrix 곱셈 연산은 오른손 좌표계든, 왼손 좌표계든 어차피 결과는 똑같아서 상관이 없지만, LookAt 매트릭스나, 카메라 관련 행렬을 구할 때 이는 문제가 된다.         
-그래서 이러한 수확 관련 명령어 코드들 또한 런타임에 동적으로 불러오기로 결정하였다. 그냥 if, else 문으로 처리할까 고민을 하였는데 그냥 명령어 코드단에서 완전히 분리하기로 결정하였다. ( if, else으로 처리했을 때와 동적링킹을 사용하기 때문에 inlining을 하지 못하는데서 오는 성능 하락을 비교해보지 못하였다.... )            
+그냥 if, else 문으로 처리하기로 했다. 카메라 관련 행렬 연산은 어차피 한 프레임에 몇번 호출 안된다. 또한 CPU Culling쪽 코드들을 Right Hand를 기준으로 작성하였기 때문에 Left Hand, Right Hand 두가지 데이터 모두 필요했다.                   
