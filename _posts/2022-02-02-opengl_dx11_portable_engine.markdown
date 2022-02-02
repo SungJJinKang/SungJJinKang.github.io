@@ -39,9 +39,42 @@ categories: ComputerScience
 그리고 이 Reflection 데이터를 활용하여서 D3D에서 요구하는 Input Layout 또한 자동으로 생성하여 적용되게 구현하였다.                              
 
 프로그래머는 그냥 유니티 처럼 쉐이더를 Material 클래스에 붙이고 사용하면 된다. InputLayout이나 UniformBuffer 와 같은 번거러운 일은 윗단에서는 몰라도 된다. 아랫단에서 다 자동화를 시켜서 사용 중인 API에 맞게 필요한 동작을 수행하게 구현하였다.                
+[glslcc](https://github.com/septag/glslcc)가 Column-major ( Post multiplication )로 짜여진 코드도 모두 Row-major ( Pre multiplication ) 연산으로 바꾸어준다.            
+
+기존의 아래와 같은 glsl 코드를
+```
+layout(binding = 1, std140) uniform ModelData
+{
+    mat4 model; 
+};
+void main()
+{
+	UV0 = aUV0;
+	FragPos = vec3(model * vec4(aPos, 1.0));
+}
+```
+아래의 코드로 바꾸어준다.       
+```
+cbuffer ModelData : register(b1)
+{
+    row_major float4x4 _18_model : packoffset(c0);
+};
+
+void vert_main()
+{
+    UV0 = aUV0;
+    FragPos = float3(mul(float4(aPos, 1.0f), _18_model).xyz);
+}
+```
+CPU쪽에서 기존의 Column Major 행렬을 전치해줄 필요없이 그대로 GPU로 보내면된다. 자세한건 [이 글](https://github.com/KhronosGroup/SPIRV-Cross/issues/1742)을 참고하라.          
 
 아쉽게도 HLSL -> GLSL로의 변환은 불가능해보인다.         
 
-문제는 또 있었다. 두 API의 좌표 시스템이 다르다는 것이다.           
-Matrix 곱셈 연산은 오른손 좌표계든, 왼손 좌표계든 어차피 결과는 똑같아서 상관이 없지만, LookAt 매트릭스나, 카메라 관련 행렬을 구할 때 이는 문제가 된다.         
-그냥 if, else 문으로 처리하기로 했다. 카메라 관련 행렬 연산은 어차피 한 프레임에 몇번 호출 안된다. 또한 CPU Culling쪽 코드들을 Right Hand를 기준으로 작성하였기 때문에 Left Hand, Right Hand 두가지 데이터 모두 필요했다.                   
+문제는 또 있었다. 두 API의 좌표 시스템이 다르다는 것이다.          
+Matrix 곱셈 연산의 경우 기존의 코드가 아무런 문제가 안되었다. OPENGL, D3D11 모두 쉐이더 언어에서는 Column-Major 방식을 사용하기 때문에 기존 데이터 그래도 D3D11로 보내면된다.      
+문제는 카메라 관련 행렬 연산이다. View 행렬, Project 행렬의 경우 D3D는 왼손 좌표계를 사용하는 반면 기존의 OPENGL 기반 코드에서는 오른손 좌표계로 코드가 짜여있었다.        
+내가 원한건 Portable한 엔진이기 때문에 엔진의 좌표계는 오른손 좌표계 ( OPENGL )를 사용하기로 결정하였다. 그러니 문제는 오른손 좌표계의 카메라 관련 행렬을 D3D11에 적용하니 삼각형의 Front Face가 Counter Clock Wise가 되었다. D3D11은 기본적으로 Front Face를 Clock Wise로 간주하고 렌더링을 한다. 그래서 임의로 D3D11의 Front Face를 Counter Clock Wise로 변경하였다.               
+
+또한 OPENGL의 경우 NDC의 Z값이 -1 ~ 1까지의 범위를 가지지만, D3D의 경우 0 ~ 1까지의 범위를 가지기 때문에 Projection matrix에도 추가적인 연산이 필요하다. 기존의 OPENGL로 짜여진 Projection Matrix 연산의 결과에 Translate( 0, 0, 1.0f ), Scale ( 1.0f, 1.0f, 0.5f )을 차례대로 곱해준다.             
+
+또 문제가 생겼다. OpenGL의 경우 Screen Space의 Origin 좌표가 "왼쪽 아래"이지만, D3D의 경우 "왼쪽 위"이다. 현재 엔진에서 Deferred rendering을 사용 중인데 어쩐지 화면이 뒤집혀서 렌더링이 됬는데 Renderdoc으로 확인해보니 1 pass에서는 렌더링이 제대로 됬는데 2 pass 단계에서 화면을 렌더링 할 때 Screen space가 바뀐 것을 고려하지 않아 생긴 문제였다. ( 나는 그런지도 모르고 수학쪽 라이브러리를 한참 봤다. )                           
