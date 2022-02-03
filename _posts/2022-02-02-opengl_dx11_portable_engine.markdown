@@ -77,4 +77,6 @@ Matrix 곱셈 연산의 경우 기존의 코드가 아무런 문제가 안되었
 
 또한 OPENGL의 경우 NDC의 Z값이 -1 ~ 1까지의 범위를 가지지만, D3D의 경우 0 ~ 1까지의 범위를 가지기 때문에 Projection matrix에도 추가적인 연산이 필요하다. 기존의 OPENGL로 짜여진 Projection Matrix 연산의 결과에 Translate( 0, 0, 1.0f ), Scale ( 1.0f, 1.0f, 0.5f )을 차례대로 곱해준다.             
 
-또 문제가 생겼다. OpenGL의 경우 Screen Space의 Origin 좌표가 "왼쪽 아래"이지만, D3D의 경우 "왼쪽 위"이다. 현재 엔진에서 Deferred rendering을 사용 중인데 어쩐지 화면이 뒤집혀서 렌더링이 됬는데 Renderdoc으로 확인해보니 1 pass에서는 렌더링이 제대로 됬는데 2 pass 단계에서 화면을 렌더링 할 때 Screen space가 바뀐 것을 고려하지 않아 생긴 문제였다. ( 나는 그런지도 모르고 수학쪽 라이브러리를 한참 봤다. )                           
+또 문제가 생겼다. OpenGL의 경우 Screen Space의 Origin 좌표가 "왼쪽 아래"이지만, D3D의 경우 "왼쪽 위"이다. 현재 엔진에서 Deferred rendering을 사용 중인데 어쩐지 화면이 뒤집혀서 렌더링이 됬는데 Renderdoc으로 확인해보니 1 pass에서는 렌더링이 제대로 됬는데 2 pass 단계에서 화면을 렌더링 할 때 Screen space가 바뀐 것을 고려하지 않아 생긴 문제였다. ( 나는 그런지도 모르고 수학쪽 라이브러리를 한참 봤다. ) 이를 해결하기 위해서는 쉐이더에서 UV를 뒤집거나 ( OPENGL쪽 Extension이 있다 )하여야 하는데 내 엔진에서는 쉐이더를 glsl로 작성하면 자동으로 hlsl로 변환하여 사용하기 때문에 이러한 extension을 사용할 수 없었다. 그래서 일단은 임시 방편으로 Deferred Rendering 2Pass와 같은 용도로 사용하는 메쉬에서는 UV를 Flip할 수 있는 옵션을 주어서 if, else문으로 사용 중인 Graphics API에 따라 다르게 처리하였다.             
+
+텍스쳐 좌표도 마찬가지이다. 이 경우 OPENGL에 한해 Texture를 위 아래로 뒤집으려 하였느나 압축된 DDS의 파일의 경우 ( 엔진 내의 모든 텍스쳐 파일은 항상 dds파일로 변환하여 보관되고 로드된다. ) 뒤집을 수가 없어서 불가피하게 3D Mesh 모델 로드시 UV를 뒤집는 방법으로 해결하였다.              
