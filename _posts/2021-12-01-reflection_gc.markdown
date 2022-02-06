@@ -84,7 +84,44 @@ namespace dooms::gc::garbageCollectorSolver
 
 여기서 조금 더 최적화를 할까 생각을 하였지만 프로파일링을 해보니 현재 엔진 규모에서 GC 동작 자체가 그렇게 느린 동작이 아니라서 그냥 두기로 하였다.      
 
--------------------------------     
+-------------------------------       
+
+2022-02-05           
+         
+이후 좋은 아이디어가 떠올라 최적화 작업을 한번 더 하였다.                     
+기존에는 포인터가 유효하지 않은 주소를 가진 경우 null 값을 넣어줄 때 포인터가 가지고 있는 주소가 유효한지 판단하기 위해 게임 엔진 내의 모든 DObject를 들고 있는 해시테이블을 참조했었다. 해시테이블 물론 빠르다. 그렇지만 오브젝트 개수가 많아지면 많이질수록 이 또한 부담이 될 수 있다.                     
+그래서 최적화를 수행하였다. "그냥 포인터가 가지고 있는 오브젝트가 유효한지 그렇지 않은지를 해시테이블로 확인하지 말고 그냥 참조해보는 것이다"          
+그럼 유효하지 않은 주소인 경우 Exeption이 발생하지 않나? 그렇다. 그렇지만 Exception이 발생한 경우 Catch하면 된다. 그리고 그 주소를 유효하지 않은 주소라고 판단하면 되는 것이다.        
+게임 내의 오브젝트들은 파괴를 하여도 즉시 파괴되지 않고 ( PendingKill ) 가비지 컬렉터에 의해 메모리가 회수되기 때문에 포인터 타입의 멤버변수가 유효하지 않은 주소를 들고 있을 가능성은 매우 매우 극히 드물다. ( 프로그래머가 의도적으로 주소에 이상한 값을 넣지 않는 이상말이다. ) 이러한 매우 매우 드문 상황을 대비해서 매번 해시 테이블을 탐색하는건 낭비이다.           
+그냥 참조하고 Exception이 발생하는지 확인해보면 된다.          
+실제 작성한 코드는 아래와 같다.          
+```
+FORCE_INLINE static bool CheckDObjectIsValid(const dooms::DObject* const dObject)
+{
+	bool isDObjectValid = false;
+
+#if _MSC_VER
+	__try 
+	{
+#else
+#error Unsupported Compiler
+#endif
+		isDObjectValid = IsValid(dObject);
+#if _MSC_VER
+	}
+	__except (_exception_code() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+	{
+		isDObjectValid = false;
+		D_ASSERT(IsLowLevelValid(dObject) == false);
+	}
+#endif
+
+	return isDObjectValid;
+}
+```
+뭐 이러한 계획된 Exception의 경우 SEH ( Structured Exception Handling )라고 부른다.             
+
+프로파일링을 해보니 GC의 Mark 단계에서 20% ~ 30% 정도의 성능 향상이 있었다.                
 
 
 
