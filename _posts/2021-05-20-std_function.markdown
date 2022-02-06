@@ -46,6 +46,10 @@ int main() {
     
 **std::function**은 lambda를 직접 호출하지 못하고 **lambda의 포인터를 std::function 내부적으로 저장했다가 호출하는 것이기 때문에 컴파일러는 std::function 내부 함수포인터에서 어떤 함수를 호출할지를 알 수 없기 때문에 inlining을 하지 못한다.**            
 반면 **use_lambda**를 호출하는 경우에는 **lambda의 타입을 템플릿 매개변수로 받아 직접 lambda를 호출하고 있다. 이 경우 컴파일러는 inlining을 한다.**         
-**템플릿 매개변수를 사용하여 컴파일 타임에 어떤 함수를 호출할지가 확정되기 때문에 컴파일러가 inlining을 할 수 있는 것이다.**
+**템플릿 매개변수를 사용하여 컴파일 타임에 어떤 함수를 호출할지가 확정되기 때문에 컴파일러가 inlining을 할 수 있는 것이다.**          
+                   
+----------------------                
+                       
+나중에 알게된 것은 이 이유 말고도 힙할당의 문제가 있다. 흔히 람다를 사용할 때 Capture를 하는데 이 Capture한 오브젝트를 std::function에 저장하기 위해서는 결국 힙할당이 필요한데 여기 드는 비용이 큰 것이다. 물론 std::string 처럼 Small Size 버퍼가 내부적으로 있어서 일정 사이즈보다 작은 경우 힙할당을 하지는 않지만 그 버퍼 사이즈가 크지 않다. 그래서 [협업에서는 이 Small Size 버퍼를 늘려서 자제 std::function을 사용한다.](https://youtu.be/tD4xRNB0M_Q?t=1725)         
 
 references : [https://stackoverflow.com/questions/18453145/how-is-stdfunction-implemented](https://stackoverflow.com/questions/18453145/how-is-stdfunction-implemented), [https://stackoverflow.com/questions/5057382/what-is-the-performance-overhead-of-stdfunction](https://stackoverflow.com/questions/5057382/what-is-the-performance-overhead-of-stdfunction), [https://stackoverflow.com/questions/18608888/c11-stdfunction-slower-than-virtual-calls](https://stackoverflow.com/questions/18608888/c11-stdfunction-slower-than-virtual-calls), [https://stackoverflow.com/questions/67615330/why-stdfunction-is-too-slow-is-cpu-cant-utilize-instruction-reordering](https://stackoverflow.com/questions/67615330/why-stdfunction-is-too-slow-is-cpu-cant-utilize-instruction-reordering), 
