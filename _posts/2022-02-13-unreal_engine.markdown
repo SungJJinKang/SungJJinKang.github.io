@@ -9,6 +9,9 @@ categories: ComputerScience UnrealEngine
                
 [Setting Up Visual Studio for Unreal Engine](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/DevelopmentSetup/VisualStudioSetup/)              
            
+[UE4 Modules](https://youtu.be/DqqQ_wiWYOw)                
+[UE4 모듈 추가](https://locketgoma.tistory.com/31)           
+[UE4 에서의 Unreal Build Tool](https://bbagwang.com/unreal-engine/ue4-%EC%97%90%EC%84%9C%EC%9D%98-unreal-build-tool/)            
 [The Unreal Engine Game Framework: From int main() to BeginPlay](https://youtu.be/IaU2Hue-ApI)              
 [What do you do when Unreal Editor crashes?](https://youtu.be/TXZGIvpEhW8)           
 [Unreal Engine C++ Project Setup, From Scratch](https://youtu.be/94FvzO1HVzY)                      
