@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "읽어볼 글들"
+title:  "Persistent Mapped Buffers in OpenGL"
 date:   2022-01-13
 categories: ComputerScience
 ---
