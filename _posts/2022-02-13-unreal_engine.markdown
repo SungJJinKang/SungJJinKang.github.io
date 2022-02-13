@@ -20,4 +20,7 @@ categories: ComputerScience UnrealEngine
 [UE4 Graphics Profiling: Measuring Performance](https://youtu.be/SXLYy6D1y80)         
 [Unreal Build System](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/UnrealBuildSystem/)             
 [언리얼 빌드 시스템 가이드](https://lifeisforu.tistory.com/302)                    
-[언리얼 엔진 관련 한국어 블로그](https://lifeisforu.tistory.com/category/Engines/UE4)                       
+[언리얼 엔진 관련 한국어 블로그](https://lifeisforu.tistory.com/category/Engines/UE4)                      
+[UE4 Build Operations: Cook, Package, Deploy, and Run](https://docs.unrealengine.com/4.27/ko/SharingAndReleasing/Deployment/BuildOperations/)            
+[UE4 의 Package, Asset, 그리고 Paths 에 대해...](https://lifeisforu.tistory.com/360)        
+   
