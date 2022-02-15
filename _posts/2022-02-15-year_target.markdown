@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "2022년 상반기 목표 프로젝트"
-date:   2022-02-16
+date:   2022-02-15
 categories: ComputerScience
 ---
 
