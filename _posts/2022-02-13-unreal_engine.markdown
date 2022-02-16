@@ -27,4 +27,4 @@ categories: ComputerScience UnrealEngine
 [UE4 Build Operations: Cook, Package, Deploy, and Run](https://docs.unrealengine.com/4.27/ko/SharingAndReleasing/Deployment/BuildOperations/)            
 [UE4 의 Package, Asset, 그리고 Paths 에 대해...](https://lifeisforu.tistory.com/360)          
 [포트나이트 모바일 아트 최적화](https://youtu.be/npX-HYQwlPk)                      
-   
+[원신 콘솔 플랫폼 개발 경험 및 렌더링 파이프라인 기술 소개](https://youtu.be/00QugD5u1CU)           
