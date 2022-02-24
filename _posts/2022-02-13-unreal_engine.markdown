@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진 관련 공부 리소스들"
 date:   2022-02-13
-categories: ComputerScience UnrealEngine
+categories: UnrealEngine4 UE4
 ---
 
 [https://algorfati.tistory.com/category/Unreal](https://algorfati.tistory.com/category/Unreal)          
@@ -32,3 +32,18 @@ categories: ComputerScience UnrealEngine
 [UE4 의 Package, Asset, 그리고 Paths 에 대해...](https://lifeisforu.tistory.com/360)          
 [포트나이트 모바일 아트 최적화](https://youtu.be/npX-HYQwlPk)                      
 [원신 콘솔 플랫폼 개발 경험 및 렌더링 파이프라인 기술 소개](https://youtu.be/00QugD5u1CU)           
+[언리얼 엔진에서 C++ 사용할 때 대략적인 내용들, 좋은 내용 많음](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/IntroductionToCPP/)         
+[Dynamic Memory Allocation](https://unrealcommunity.wiki/garbage-collection-and-dynamic-memory-allocation-u29878mo)      
+[The Absolute Minimum Every Software Developer Absolutely, Positively Must Know About Unicode and Character Sets (No Excuses!)](https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/)          
+[Unreal Object Handling](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Optimizations/)                
+[프로그래머를 괴롭히는 ue4의 함정들](https://www.slideshare.net/secret/EywLl7Qd2CWYkc)                  
+[UE4 Assert](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/Assertions/)             
+[Asset 레퍼런스, 강참조, 약참조](https://jhtop0419.tistory.com/27?category=944635)                     
+[Asset 레지스트리](https://jhtop0419.tistory.com/28?category=944635)               
+[비동기 애셋 로딩](https://jhtop0419.tistory.com/25?category=944635)                
+[Unreal Build System 1](https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/UnrealBuildSystem/)                                                            
+[Unreal Build System 2](https://kyoun.tistory.com/121)                 
+[Gameplay Classes](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/GameplayArchitecture/Classes/)              
+[TestingAndOptimization](https://docs.unrealengine.com/4.27/en-US/TestingAndOptimization/)                                                                             
+
+
