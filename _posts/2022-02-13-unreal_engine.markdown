@@ -45,5 +45,6 @@ categories: UnrealEngine4 UE4
 [Unreal Build System 2](https://kyoun.tistory.com/121)                 
 [Gameplay Classes](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/GameplayArchitecture/Classes/)              
 [TestingAndOptimization](https://docs.unrealengine.com/4.27/en-US/TestingAndOptimization/)                                                                             
-
+[모듈 제작](https://blog.naver.com/PostView.naver?blogId=destiny9720&logNo=220934079863&categoryNo=19&parentCategoryNo=0)            
+[Plug-ins & Third-Party SDKs in UE4](https://www.slideshare.net/GerkeMaxPreussner/plugins-thirdparty-sdks-in-ue4)          
 
