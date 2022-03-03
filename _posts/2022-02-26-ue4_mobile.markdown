@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine4 모바일 렌더링"
 date:   2022-02-26
-categories: UnrealEngine4 UE4
+categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
 ---
 
 references : [언리얼 엔진 4 모바일 렌더링 개요](https://youtu.be/qvRyBWxTAAo)            

@@ -122,7 +122,7 @@ virtual void RHIReadSurfaceData(FRHITexture* Texture, FIntRect Rect, TArray<FLin
 내가 이해하지 못하는 무언가가 있는지 모르겠다.          
 일단은 내가 보기에는 이러하다...........         
 
-일단은 언리얼 엔진 리포지터리에 Pull Request를 날려보아야겠다.         
+일단은 언리얼 엔진 리포지터리에 [Pull Request](https://github.com/EpicGames/UnrealEngine/pull/8953)를 날려보아야겠다.           
 
 
 

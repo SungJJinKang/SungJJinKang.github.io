@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine4 FMobileSceneRenderer 분석"
 date:   2022-02-26
-categories: UnrealEngine4 UE4
+categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
 ---
 
 **FMobileSceneRenderer**는 언리얼 엔진4의 모바일용 그래픽스 파이프라인이다.                
