@@ -44,7 +44,8 @@ bool FRenderTarget::ReadFloat16Pixels(TArray<FFloat16Color>& OutputBuffer,ECubeF
 
 이상함이 안느껴지는가?....          
 
-**OutputBuffer를 "TArray::Empty" 함수로 내부 버퍼 ( Capacity ( Slack ) )를 힙 할당 해제해버리고 다시 "TArray::AddUninitialized"로 내부 버퍼를 다시 힙 할당**한다.                
+**OutputBuffer를 "TArray::Empty" 함수로 내부 버퍼 ( Capacity ( Slack ) )를 힙 할당 해제해버리고 다시 "TArray::AddUninitialized"로 내부 버퍼를 다시 힙 할당**한다.       
+필자의 경우에는 매프레임 이 함수를 호출해야하기 때문에 매 프레임 힙 재할당이 발생하는 것이다.                      
 이해가 안갔다.      
 어차피 "GetSizeXY().X * GetSizeXY().Y"만큼의 Element 개수가 필요하면 **그냥 "TArray::SetNumUninitialized" 함수를 사용하면 되는데 왜 힙 할당 해제를 하고 다시 힙 할당을 받아오는가.........** ( "TArray::SetNumUninitialized"를 사용하면 현재 Capacity ( Slack ) )보다 요구하는 Element 개수가 적으면 힙 할당을 하지 않고 내부 Element 개수의 숫자 값만 바꾸어주면된다. )           
     
