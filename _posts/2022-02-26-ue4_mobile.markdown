@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine4 모바일 렌더링"
 date:   2022-02-26
-categories: UnrealEngine4 UE4
+categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
 ---
 
 references : [언리얼 엔진 4 모바일 렌더링 개요](https://youtu.be/qvRyBWxTAAo)            
@@ -51,7 +51,7 @@ references : [언리얼 엔진 4 모바일 렌더링 개요](https://youtu.be/qv
 - **Dynamic** Lighting ( Point, Spot Light만 해당 ) : 각 라이트는 라이트 타입 ( Point, Spot Light만 해당 )에 따라 각기 다른 Bound를 가짐. 그 Bound에 속하는 Geometry들만 라이팅 연산을 받음. Geometry Shading 단계에서 각 Geometry가 어떤 라이트에 영향을 받는지를 추가.            
 - Dynamic Shadow : 쉐도우맵 사용.         
 - **Static** Lighting : 빌드 타임에 Lighting 정보를 모두 연산 후 빌드에 넣어둠. 런타임 오버헤드 적음.            
-- **Stationary** Directional Light = Directional Lightmap ( Static ) + CSM ( Dynamic )                    
+- **Stationary** Directional Light = Directional Lightmap ( Static ) + Cascade Shadow Map ( Dynamic )                    
 
 - 아래 내용들 잘 모르겠다. 나중에 공부하자.       
 <img width="552" alt="20220226191500" src="https://user-images.githubusercontent.com/33873804/155839334-1c4f0e2c-1d0e-44dc-a6b8-35b693614b87.png">               
