@@ -46,5 +46,7 @@ categories: UnrealEngine4 UE4
 [Gameplay Classes](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/GameplayArchitecture/Classes/)              
 [TestingAndOptimization](https://docs.unrealengine.com/4.27/en-US/TestingAndOptimization/)                                                                             
 [모듈 제작](https://blog.naver.com/PostView.naver?blogId=destiny9720&logNo=220934079863&categoryNo=19&parentCategoryNo=0)            
-[Plug-ins & Third-Party SDKs in UE4](https://www.slideshare.net/GerkeMaxPreussner/plugins-thirdparty-sdks-in-ue4)          
+[Plug-ins & Third-Party SDKs in UE4](https://www.slideshare.net/GerkeMaxPreussner/plugins-thirdparty-sdks-in-ue4)       
+[From 0 to 60 FPS in 60 Minutes for Mobile | GitHub 2015 Event Coverage | Unreal Engine](https://youtu.be/Rtzi4SRbDTc)             
+[Refactoring the Mesh Drawing Pipeline for Unreal Engine 4.22 | GDC 2019 | Unreal Engine](https://youtu.be/qx1c190aGhs)           
 

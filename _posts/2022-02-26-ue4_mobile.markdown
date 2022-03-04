@@ -18,8 +18,8 @@ references : [언리얼 엔진 4 모바일 렌더링 개요](https://youtu.be/qv
 --------------------------------
 
 - 위의 한계를 극복하기 위한 것들로 Tile-Based GPU, Early Z Testing 사용.      
-- Tile-Based GPU : 전체 화면을 일정 크기의 타일로 나누어서 타일 단위로 렌더링을 수행. 
-- 한 타일을 그리기 위한 리소스들을 GPU의 In-chip 메모리에 올려둠. In-Chip 메모리로의 접근은 상대적으로 빠름.              
+- Tile-Based GPU : 전체 화면을 일정 크기의 타일로 나누어서 타일 단위로 렌더링을 수행. ( 더 자세한 내용은 [이 글](https://scahp.tistory.com/33?category=837896)을 참고 )                      
+- 한 타일을 그리기 위한 리소스들을 GPU의 In-chip 메모리에 올려둠. In-Chip 메모리로의 접근은 상대적으로 빠름. ( Tile-Based 방식이 아닌 경우 전체 프레임 버퍼에 접근해야하는데 너무 커서 In-Chip에 안들어감 -> DRAM으로 접근해야함 -> 느림 )                         
 ![model-imr](https://user-images.githubusercontent.com/33873804/155837856-d12931c9-202f-4f0a-9eb4-3de95da4e615.png)           
 ![model-tbr](https://user-images.githubusercontent.com/33873804/155837858-9f862719-8e44-4161-979f-c8f897212b19.png)          
             
