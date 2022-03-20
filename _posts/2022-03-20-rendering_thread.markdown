@@ -20,13 +20,13 @@ GPU까지 해서 **CPU의 게임 스레드, 렌더 스레드(Draw 스레드), GP
                     
 D3D12, Vulkan에 와서는 RHI 스레드라는 것을 만들어서 렌더 스레드에서는 플랫폼 독립적인 커맨드 큐를 CPU쪽에 생성해두었다가, RHI 스레드에서 목표로 하는 플랫폼(Graphics API)에 맞는 그래픽 API를 호출해준다. 그러나 필자의 게임 엔진은 D3D11, OpenGL만을 지원하기 때문에 그래픽 API를 호출하는 부분도 렌더 스레드에 넣을 생각이다.             
                 
-참고 자료 : [Unreal Engine4 렌더링 파이프라인 분석](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/ue4_rendering.html), [그래픽 프로그래밍 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/Overview/), [스레디드 렌더링](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ThreadedRendering/), [https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/)            
+참고 자료 : [Unreal Engine4 렌더링 파이프라인 분석 - SungJJinKang](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/ue4_rendering.html), [그래픽 프로그래밍 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/Overview/), [스레디드 렌더링](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ThreadedRendering/), [병렬 렌더링 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/)            
             
 -------------------------------------------------           
              
 사실 이렇게 게임 스레드와 렌더 스레드를 분리한다고 해도 얼마나 성능이 향상될지는 알 수 없다.                
 언리얼 엔진4 정도의 수준까지 구현을 하는 것은 당연히 불가능하기 때문에 **오히려 싱글 스레드에서 모두 연산을 하는 것보다 더 느릴수도 있다.**                    
-그렇지만 **언리얼 엔진4의 렌더링이 어떻게 동작하는지를 공부할 겸**해서 내 게임 엔진에서 구현을 해보면 언리얼 엔진을 이해하는데 큰 도움이 될 것 같아 이러한 결정을 하게 되었다.        
+그렇지만 **언리얼 엔진4의 렌더링이 어떻게 동작하는지를 공부할 겸**해서 [내 게임 엔진](https://github.com/SungJJinKang/DoomsEngine)에서 구현을 해보면 언리얼 엔진을 이해하는데 큰 도움이 될 것 같아 이러한 결정을 하게 되었다.          
             
 ----------------------------------------------------           
             
