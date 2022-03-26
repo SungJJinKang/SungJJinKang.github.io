@@ -13,7 +13,7 @@ GPU까지 해서 **CPU의 게임 스레드, 렌더 스레드(Draw 스레드), GP
            
 약간은 생소한 개념인데 **게임 스레드**는 흔히 에니메이션, 오브젝트의 Transform 데이터, 물리 연산 처리, AI 연산 처리 등등 **게임 로직과 관련된 전반적인 연산들을 수행하는 스레드**이다. 게임 스레드는 CPU에서 수행된다. 후에 렌더 스레드가 활용할 여러 렌더링 관련 변수 값 셋팅도 게임 스레드에서 수행한다. 예를 들면 게임 스레드에서 Distance Culling을 위한 어떤 오브젝트의 Max Desired Draw Distance 값을 수정하면 이 값을 다음 프레임에 렌더 스레드가 Distance Culling을 수행하는데 사용한다.                                      
 
-**렌더 스레드**도 대부분 CPU에서 수행된다. 렌더 스레드에서는 **각종 가시성 연산을 수행**한다. 쉽게 말하면 컬링 연산을 수행한다. 현대 게임들은 대부분 GPU Bound한 경우가 많기 때문에 최대한 GPU의 연산 부담을 덜어주기 위해 CPU에서 렌더링 할 필요가 없는 오브젝트들을 걸러내기 위한 연산을 수행한다. Distance 컬링, 뷰 프러스텀 컬링, (SW) 오클루전 컬링, PreComputed Visibility 등이 있다. 대부분 CPU에서 수행된다. 필자는 이미 [EveryCulling](https://github.com/SungJJinKang/EveryCulling)이라는 라이브러리로 Distance 컬링, 뷰 프러스텀 컬링, 오클루전 컬링을 모듈화해두었다.                           
+**렌더 스레드**도 대부분 CPU에서 수행된다. 렌더 스레드에서는 **각종 가시성 연산을 수행**한다. 쉽게 말하면 컬링 연산을 수행한다. 현대 게임들은 대부분 GPU Bound한 경우가 많기 때문에 최대한 GPU의 연산 부담을 덜어주기 위해 CPU에서 렌더링 할 필요가 없는 오브젝트들을 걸러내기 위한 연산을 수행한다. Distance 컬링, 뷰 프러스텀 컬링, (SW) 오클루전 컬링, PreComputed Visibility 등이 있다. 대부분 CPU에서 수행된다. 필자는 이미 [EveryCulling](https://github.com/SungJJinKang/EveryCulling)이라는 라이브러리로 Distance 컬링, 뷰 프러스텀 컬링, CPU 오클루전 컬링은 멀티스레드로 처리하는 기능을 모듈화해두었다.                                   
 또한 렌더 스레드에서는 **렌더링 커맨드를 생성하여 GPU에 제출**한다. 흔히 **그래픽스 API를 호출하는 곳이 이 렌더 스레드**라고 생각하면 된다.                   
 
 마지막으로 **GPU**는 그냥 GPU이다. 렌더 스레드의 커맨드를 받아서 GPU 연산을 수행한다.          
@@ -32,5 +32,83 @@ D3D12, Vulkan에 와서는 RHI 스레드라는 것을 만들어서 렌더 스레
             
 게임 스레드와 렌더 스레드를 분리하게 되면 당연히 가장 큰 문제는 **Data Race**이다.                                                
 그렇다고 무턱대고 **Mutex로 Lock을 해버리면 겁나게 느려진다.......**                
-게임 스레드와 렌더 스레드가 동시에(!) 도는 것이 중요하다. 한 스레드가 다른 스레드를 멈추게 구현하면 안된다.        
+게임 스레드와 렌더 스레드가 동시에(!) 쉬지(Idle 상태) 않고 도는 것이 중요하다. 한 스레드가 다른 스레드를 멈추게 구현하면 안된다.         
+
+--------------------------------------------------           
+
+언리얼 엔진4의 구현을 분석하는 것부터 시작해서 내 엔진에 구현을 해보겠다.        
+언리얼 엔진4에서는 기본적으로 렌더스레드에서 수행되어야할 동작은 "ENQUEUE_RENDER_COMMAND"라는 매크로를 통해 수행한다.           
+```
+template<typename TSTR, typename LAMBDA>
+FORCEINLINE_DEBUGGABLE void EnqueueUniqueRenderCommand(LAMBDA&& Lambda)
+{
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_EnqueueUniqueRenderCommand);
+	typedef TEnqueueUniqueRenderCommandType<TSTR, LAMBDA> EURCType;
+
+#if 0 // UE_SERVER && UE_BUILD_DEBUG
+	UE_LOG(LogRHI, Warning, TEXT("Render command '%s' is being executed on a dedicated server."), TSTR::TStr())
+#endif
+	if (IsInRenderingThread())
+	{
+		FRHICommandListImmediate& RHICmdList = GetImmediateCommandList_ForRenderCommand();
+		Lambda(RHICmdList);
+	}
+	else
+	{
+		if (ShouldExecuteOnRenderThread())
+		{
+			CheckNotBlockedOnRenderThread();
+			TGraphTask<EURCType>::CreateTask().ConstructAndDispatchWhenReady(Forward<LAMBDA>(Lambda));
+		}
+		else
+		{
+			EURCType TempCommand(Forward<LAMBDA>(Lambda));
+			FScopeCycleCounter EURCMacro_Scope(TempCommand.GetStatId());
+			TempCommand.DoTask(ENamedThreads::GameThread, FGraphEventRef());
+		}
+	}
+}
+
+#define ENQUEUE_RENDER_COMMAND(Type) \
+	struct Type##Name \
+	{  \
+		static const char* CStr() { return #Type; } \
+		static const TCHAR* TStr() { return TEXT(#Type); } \
+	}; \
+	EnqueueUniqueRenderCommand<Type##Name>
+```
+
+언리얼 엔진4에서 렌더링 관련 변수 값을 수정하는 경우 그 값이 수정되었음을 뒤따라 오는 렌더링 스레드에 알려주기 위해 3가지 변수를 사용한다.       
+
+```
+/** Is this component in need of its whole state being sent to the renderer? */
+uint8 UActorComponent::bRenderStateDirty:1;
+
+/** Is this component's transform in need of sending to the renderer? */
+uint8 UActorComponent::bRenderTransformDirty:1;
+
+/** Is this component's dynamic data in need of sending to the renderer? */
+uint8 UActorComponent::bRenderDynamicDataDirty:1;
+```
+UActorComponent::bRenderStateDirty는 
+
+```
+void UActorComponent::MarkRenderStateDirty()
+{
+	// If registered and has a render state to mark as dirty
+	if(IsRegistered() && bRenderStateCreated && (!bRenderStateDirty || !GetWorld()))
+	{
+		// Flag as dirty
+		bRenderStateDirty = true;
+		MarkForNeededEndOfFrameRecreate();
+
+		MarkRenderStateDirtyEvent.Broadcast(*this);
+	}
+}
+```
  
+
+
+
+
+references : [https://ikrima.dev/ue4guide/graphics-development/render-architecture/render-thread-code-flow/](https://ikrima.dev/ue4guide/graphics-development/render-architecture/render-thread-code-flow/), [https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/ThreadedRendering/](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/ThreadedRendering/), [https://twitter.com/sebaaltonen/status/1102783202891104256](https://twitter.com/sebaaltonen/status/1102783202891104256), [https://twitter.com/timsweeneyepic/status/1084336154772680705](https://twitter.com/timsweeneyepic/status/1084336154772680705), [https://twitter.com/benjinsmith/status/1387446710289457157](https://twitter.com/benjinsmith/status/1387446710289457157)                    
