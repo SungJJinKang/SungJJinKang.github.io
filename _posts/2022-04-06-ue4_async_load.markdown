@@ -15,7 +15,8 @@ Asynchronous Loading Thread 옵션을 켜서 사용하면 ASync 로드 관련 �
 -------------------------
 
 
-FStreamableManager::RequestAsyncLoad 함수를 통해 에셋들에 대한 Async Load를 수행한다. return 되는 TSharedPtr<FStreamableHandle>를 통해 진행 중인 에셋 로딩과 관련된 데이터에 접근할 수 있다.     
+FStreamableManager::RequestAsyncLoad 함수를 통해 에셋들에 대한 Async Load를 수행한다. return 되는 TSharedPtr<FStreamableHandle>를 통해 진행 중인 에셋 로딩과 관련된 데이터에 접근할 수 있다.        
+      
 ```
 TSharedPtr<FStreamableHandle> FStreamableManager::RequestAsyncLoad(TArray<FSoftObjectPath> TargetsToStream, FStreamableDelegate DelegateToCall, TAsyncLoadPriority Priority, bool bManageActiveHandle, bool bStartStalled, FString DebugName)
 {
