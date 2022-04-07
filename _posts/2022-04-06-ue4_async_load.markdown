@@ -9,8 +9,14 @@ categories: UE4 UnrealEngine4 ComputerScience
           
 -----------------------------            
         
-Asynchronous Loading Thread Enabled 옵션은 꺼진, Event-Driven Loader Enabled 옵션은 킨 상태를 기준으로 한다. ( 기본 셋팅이기 때문이다... )                        
-Asynchronous Loading Thread 옵션을 켜서 사용하면 ASync 로드 관련 처리 동작을 별개 스레드에서 처리할 수 있지만 UObject 클래스 생성자, PostInitProperties 함수, Serialize 함수 이 3개의 함수가 Thread-Safety해야한다는 요구 조건이 붙기 때문에 잘 사용하지 않는다.            
+Asynchronous Loading Thread Enabled 옵션과 Event-Driven Loader Enabled 옵션을 킨 상태를 기준으로 한다.               
+Asynchronous Loading Thread 옵션을 키면 ASync 동작을 게임 스레드와 별개의 스레드에서 수행할 수 있다. 게임 스레드dhk 동시에(!) 동작 할 수 있다는 것이다.                
+다만 이로 인해 몇가지 제약이 생긴다.         
+UE4 공식 문서에서는 아래와 같이 말한다.          
+
+```
+시리얼라이즈와 포스트 로딩 코드를 두 개의 별도 스레드에 동시 실행시키는 방식으로 작동하므로, 그에 따라 게임 코드의 UObject 클래스 생성자, PostInitProperties 함수, Serialize 함수는 반드시 스레드 안전성을 확보(thread-safe)한다.
+```
 
 -------------------------
 
@@ -438,17 +444,9 @@ EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncThread(bool bUseTimeLimit
 		bShouldCancelLoading = false;
 	}
 
-#if LOOKING_FOR_PERF_ISSUES
-	// Update stats
-	SET_FLOAT_STAT( STAT_AsyncIO_AsyncLoadingBlockingTime, FPlatformTime::ToSeconds( BlockingCycles.GetValue() ) );
-	BlockingCycles.Set( 0 );
-#endif
-
 	return Result;
 }
 ```
-
-
 
 위에서 게임스레드에서 FAsyncLoadingThread::QueuedPackages에 추가한 FAsyncPackageDesc를 ASync Load용 큐 ( FAsyncLoadingThread::AsyncPackages )로 옮긴다.       
 
@@ -567,9 +565,7 @@ void FAsyncLoadingThread::ProcessAsyncPackageRequest(FAsyncPackageDesc* InReques
 	}
 }
 ```
-
-
-모든 조건이 만족한 경우 이제 정말로 ASync 스레드가 ASync 로드를 수행한다.          
+             
 이 함수 내부에서 프로젝트 셋팅 중 "Event Driven Loader" 셋팅에 따라 분기가 나뉘는데, "Event Driven Loader" 셋팅이 기본적으로 Enabled되어 있으니 Enabled되어 있는 경우를 기준으로 코드를 설명하겠다.        
 사실 "Event Driven Loader" ( EDL )이 무엇인지 모르겠다. ( 나중에 조사를 더 해보겠다. ) ( UE4에서는 대부분의 경우 EDL 옵션을 켜둔 경우)          
 
@@ -581,166 +577,146 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 	FAsyncLoadingTickScope InAsyncLoadingTick(*this);
 	uint32 LoopIterations = 0;
 
-	while (true)
+	if (GEventDrivenLoaderEnabled)
 	{
-		if (bNeedsHeartbeatTick && (++LoopIterations) % 32 == 31)
+		while (true)
 		{
-			// Update heartbeat after 32 events
-			FThreadHeartBeat::Get().HeartBeat();
-			FCoreDelegates::OnAsyncLoadingFlushUpdate.Broadcast();
-		}
-
-		bool bDidSomething = false;
-		{
-			bDidSomething = GetPrecacheHandler().ProcessIncoming(); 
-			OutPackagesProcessed += (bDidSomething ? 1 : 0);
-
-			if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("ProcessIncoming"), nullptr))
 			{
-				return EAsyncPackageState::TimeOut;
-			}
-		}
-
-		if (IsAsyncLoadingSuspendedInternal())
-		{
-			return EAsyncPackageState::TimeOut;
-		}
-
-		{
-			const float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
-			int32 NumCreated = CreateAsyncPackagesFromQueue(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit); // 위에서 본 함수이다. 여기서도 다시 한번 호출해준다.
-			OutPackagesProcessed += NumCreated;
-			bDidSomething = NumCreated > 0 || bDidSomething;
-			if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("CreateAsyncPackagesFromQueue")))
-			{
-				return EAsyncPackageState::TimeOut;
-			}
-		}
-		if (bDidSomething)
-		{
-			continue;
-		}
-
-		{
-			FAsyncLoadEventArgs Args;
-			Args.bUseTimeLimit = bUseTimeLimit;
-			Args.TickStartTime = TickStartTime;
-			Args.TimeLimit = TimeLimit;
-
-			Args.OutLastTypeOfWorkPerformed = nullptr;
-			Args.OutLastObjectWorkWasPerformedOn = nullptr;
-			if (EventQueue.PopAndExecute(Args)) // EDL 기반 이벤트를 처리해준다.
-			{
-				OutPackagesProcessed++;
-				if (IsTimeLimitExceeded(Args.TickStartTime, Args.bUseTimeLimit, Args.TimeLimit, Args.OutLastTypeOfWorkPerformed, Args.OutLastObjectWorkWasPerformedOn))
+				const float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
+				int32 NumCreated = CreateAsyncPackagesFromQueue(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit); // 위에서 본 함수이다. 여기서도 다시 한번 호출해준다.
+				OutPackagesProcessed += NumCreated;
+				bDidSomething = NumCreated > 0 || bDidSomething;
+				if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("CreateAsyncPackagesFromQueue")))
 				{
 					return EAsyncPackageState::TimeOut;
 				}
-				bDidSomething = true;
 			}
-		}
-		if (bDidSomething)
-		{
-			continue;
-		}
-		if (AsyncPackagesReadyForTick.Num())
-		{
-			SCOPE_CYCLE_COUNTER(STAT_FAsyncLoadingThread_ProcessAsyncLoading);
-
-			OutPackagesProcessed++;
-			bDidSomething = true;
-			FAsyncPackage* Package = AsyncPackagesReadyForTick[0];
-			check(Package->AsyncPackageLoadingState == EAsyncPackageLoadingState::PostLoad_Etc);
-			SCOPED_LOADTIMER(ProcessAsyncLoadingTime);
-
-			EAsyncPackageState::Type LocalLoadingState = EAsyncPackageState::Complete;
-			if (Package->HasFinishedLoading() == false)
+			if (bDidSomething)
 			{
-				float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
-				LocalLoadingState = Package->TickAsyncPackage(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit, FlushTree); // !!!!!
-				if (LocalLoadingState == EAsyncPackageState::TimeOut)
+				continue;
+			}
+
+			{
+				FAsyncLoadEventArgs Args;
+				Args.bUseTimeLimit = bUseTimeLimit;
+				Args.TickStartTime = TickStartTime;
+				Args.TimeLimit = TimeLimit;
+
+				Args.OutLastTypeOfWorkPerformed = nullptr;
+				Args.OutLastObjectWorkWasPerformedOn = nullptr;
+				if (EventQueue.PopAndExecute(Args)) // EDL 기반 이벤트를 처리해준다.
 				{
-					if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("TickAsyncPackage")))
+					OutPackagesProcessed++;
+					if (IsTimeLimitExceeded(Args.TickStartTime, Args.bUseTimeLimit, Args.TimeLimit, Args.OutLastTypeOfWorkPerformed, Args.OutLastObjectWorkWasPerformedOn))
 					{
 						return EAsyncPackageState::TimeOut;
 					}
-					UE_LOG(LogStreaming, Error, TEXT("Should not have a timeout when the time limit is not exceeded."));
-					continue;
+					bDidSomething = true;
 				}
 			}
-			else
+			if (bDidSomething)
 			{
-				check(0); // if it has finished loading, it should not be in AsyncPackagesReadyForTick
+				continue;
 			}
-			if (LocalLoadingState == EAsyncPackageState::Complete)
+			if (AsyncPackagesReadyForTick.Num())
 			{
-				// 패키지를 완전히 로드한 경우
-				{
-#if THREADSAFE_UOBJECTS
-					FScopeLock LockAsyncPackages(&AsyncPackagesCritical);
-#endif
-					AsyncPackageNameLookup.Remove(Package->GetPackageName());
-					int32 PackageIndex = AsyncPackages.Find(Package);
-					AsyncPackages.RemoveAt(PackageIndex);
-					AsyncPackagesReadyForTick.RemoveAt(0, 1, false); //@todoio this should maybe be a heap or something to avoid the removal cost
-				}
+				//이 Scope가 우리가 관심이 있는 ASync 로드 부분이다.
 
-				// We're done, at least on this thread, so we can remove the package now.
-				// 로드 된 패키지에 대해서는 게임 스레드에서 PostLoad를 수행해야하기 때문에 우선 로드된 패키지를 LoadedPackages로 옮김.
-				AddToLoadedPackages(Package); 
-			}
-			if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("TickAsyncPackage")))
-			{
-				return EAsyncPackageState::TimeOut;
-			}
-		}
-		if (bDidSomething)
-		{
-			continue;
-		}
-		bool bAnyIOOutstanding = GetPrecacheHandler().AnyIOOutstanding();
-		if (bAnyIOOutstanding)
-		{
-			SCOPED_LOADTIMER(Package_EventIOWait);
-			double StartTime = FPlatformTime::Seconds();
-			if (bUseTimeLimit)
-			{
-				if (bUseFullTimeLimit)
+				OutPackagesProcessed++;
+				bDidSomething = true;
+				FAsyncPackage* Package = AsyncPackagesReadyForTick[0];
+				check(Package->AsyncPackageLoadingState == EAsyncPackageLoadingState::PostLoad_Etc);
+				SCOPED_LOADTIMER(ProcessAsyncLoadingTime);
+
+				EAsyncPackageState::Type LocalLoadingState = EAsyncPackageState::Complete;
+				if (Package->HasFinishedLoading() == false)
 				{
-					const float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
-					if (RemainingTimeLimit > 0.0f)
+					float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
+					LocalLoadingState = Package->TickAsyncPackage(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit, FlushTree); // !!!!! ASync 로드할 패키지에 대한 TickAsyncPackage를 호출해준다.      
+					if (LocalLoadingState == EAsyncPackageState::TimeOut)
 					{
-						bool bGotIO = GetPrecacheHandler().WaitForIO(RemainingTimeLimit);
-						if (bGotIO)
+						if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("TickAsyncPackage")))
 						{
-							OutPackagesProcessed++;
-							continue; // we got some IO, so start processing at the top
+							return EAsyncPackageState::TimeOut;
 						}
-						{
-							float ThisTime = float(FPlatformTime::Seconds() - StartTime);
-						}
+						UE_LOG(LogStreaming, Error, TEXT("Should not have a timeout when the time limit is not exceeded."));
+						continue;
 					}
 				}
-				//UE_LOG(LogStreaming, Error, TEXT("Not using full time limit, waiting for IO..."));
-				return EAsyncPackageState::TimeOut;
+				else
+				{
+					check(0); // if it has finished loading, it should not be in AsyncPackagesReadyForTick
+				}
+				if (LocalLoadingState == EAsyncPackageState::Complete)
+				{
+					// 패키지를 완전히 로드한 경우
+					{
+	#if THREADSAFE_UOBJECTS
+						FScopeLock LockAsyncPackages(&AsyncPackagesCritical);
+	#endif
+						AsyncPackageNameLookup.Remove(Package->GetPackageName());
+						int32 PackageIndex = AsyncPackages.Find(Package);
+						AsyncPackages.RemoveAt(PackageIndex);
+						AsyncPackagesReadyForTick.RemoveAt(0, 1, false); //@todoio this should maybe be a heap or something to avoid the removal cost
+					}
+
+					// We're done, at least on this thread, so we can remove the package now.
+					// 로드 된 패키지에 대해서는 게임 스레드에서 PostLoad를 수행해야하기 때문에 우선 로드된 패키지를 LoadedPackages로 옮김.
+					AddToLoadedPackages(Package); 
+				}
+				if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("TickAsyncPackage")))
+				{
+					return EAsyncPackageState::TimeOut;
+				}
+			}
+			if (bDidSomething)
+			{
+				continue;
+			}
+			bool bAnyIOOutstanding = GetPrecacheHandler().AnyIOOutstanding();
+			if (bAnyIOOutstanding)
+			{
+				SCOPED_LOADTIMER(Package_EventIOWait);
+				double StartTime = FPlatformTime::Seconds();
+				if (bUseTimeLimit)
+				{
+					if (bUseFullTimeLimit)
+					{
+						const float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
+						if (RemainingTimeLimit > 0.0f)
+						{
+							bool bGotIO = GetPrecacheHandler().WaitForIO(RemainingTimeLimit);
+							if (bGotIO)
+							{
+								OutPackagesProcessed++;
+								continue; // we got some IO, so start processing at the top
+							}
+							{
+								float ThisTime = float(FPlatformTime::Seconds() - StartTime);
+							}
+						}
+					}
+					//UE_LOG(LogStreaming, Error, TEXT("Not using full time limit, waiting for IO..."));
+					return EAsyncPackageState::TimeOut;
+				}
+				else
+				{
+					bool bGotIO = GetPrecacheHandler().WaitForIO(10.0f); // wait "forever"
+					if (!bGotIO)
+					{
+						//UE_LOG(LogStreaming, Error, TEXT("Waited for 10 seconds on IO...."));
+						FPlatformMisc::LowLevelOutputDebugString(TEXT("Waited for 10 seconds on IO...."));
+					}
+					{
+						OutPackagesProcessed++;
+					}
+				}
 			}
 			else
 			{
-				bool bGotIO = GetPrecacheHandler().WaitForIO(10.0f); // wait "forever"
-				if (!bGotIO)
-				{
-					//UE_LOG(LogStreaming, Error, TEXT("Waited for 10 seconds on IO...."));
-					FPlatformMisc::LowLevelOutputDebugString(TEXT("Waited for 10 seconds on IO...."));
-				}
-				{
-					OutPackagesProcessed++;
-				}
+				LoadingState = EAsyncPackageState::Complete;
+				break;
 			}
-		}
-		else
-		{
-			LoadingState = EAsyncPackageState::Complete;
-			break;
 		}
 	}
 	return LoadingState;
@@ -850,9 +826,106 @@ EAsyncPackageState::Type FAsyncPackage::TickAsyncPackage(bool InbUseTimeLimit, b
 }
 ```
 
+***ASync 스레드***는 로딩이 끝난 오브젝트들에 대해 PostLoad를 호출해준다.
+
 ```cpp
+EAsyncPackageState::Type FAsyncPackage::PostLoadObjects()
+{
+	SCOPE_CYCLE_COUNTER(STAT_FAsyncPackage_PostLoadObjects);
+
+	SCOPED_LOADTIMER(PostLoadObjectsTime);
+
+	// GC can't run in here
+	FGCScopeGuard GCGuard;
+
+	FUObjectThreadContext& ThreadContext = FUObjectThreadContext::Get();
+	TGuardValue<bool> GuardIsRoutingPostLoad(ThreadContext.IsRoutingPostLoad, true);
+
+	FUObjectSerializeContext* LoadContext = GetSerializeContext();
+	TArray<UObject*>& ThreadObjLoaded = LoadContext->PRIVATE_GetObjectsLoadedInternalUseOnly();
+	if (ThreadObjLoaded.Num())
+	{
+		// New objects have been loaded. They need to go through PreLoad first so exit now and come back after they've been preloaded.
+		PackageObjLoaded.Append(ThreadObjLoaded);
+		ThreadObjLoaded.Reset();
+		return EAsyncPackageState::TimeOut;
+	}
+
+	if (GEventDrivenLoaderEnabled)
+	{
+		PreLoadIndex = PackageObjLoaded.Num(); // we did preloading in a different way and never incremented this
+	}
+
+	const bool bAsyncPostLoadEnabled = FAsyncLoadingThreadSettings::Get().bAsyncPostLoadEnabled;
+	const bool bIsMultithreaded = AsyncLoadingThread.IsMultithreaded();
+
+	// PostLoad objects.
+	while (PostLoadIndex < PackageObjLoaded.Num() && PostLoadIndex < PreLoadIndex && !IsTimeLimitExceeded())
+	{
+		UObject* Object = PackageObjLoaded[PostLoadIndex++];
+		if (Object)
+		{
+			if (!Object->IsReadyForAsyncPostLoad())
+			{
+				--PostLoadIndex;
+				break;
+			}
+			else if (!bIsMultithreaded || (bAsyncPostLoadEnabled && CanPostLoadOnAsyncLoadingThread(Object)))
+			{
+				SCOPED_ACCUM_LOADTIME(PostLoad, StaticGetNativeClassName(Object->GetClass()));
+
+				FScopeCycleCounterUObject ConstructorScope(Object, GET_STATID(STAT_FAsyncPackage_PostLoadObjects));
+
+				// We want this check only with EDL enabled
+				check(!GEventDrivenLoaderEnabled || !Object->HasAnyFlags(RF_NeedLoad));
+
+				ThreadContext.CurrentlyPostLoadedObjectByALT = Object;
+				{
+					TRACE_LOADTIME_POSTLOAD_EXPORT_SCOPE(Object);
+					Object->ConditionalPostLoad();
+				}
+				ThreadContext.CurrentlyPostLoadedObjectByALT = nullptr;
+
+				LastObjectWorkWasPerformedOn = Object;
+				LastTypeOfWorkPerformed = TEXT("postloading_async");
+
+				if (ThreadObjLoaded.Num())
+				{
+					// New objects have been loaded. They need to go through PreLoad first so exit now and come back after they've been preloaded.
+					PackageObjLoaded.Append(ThreadObjLoaded);
+					ThreadObjLoaded.Reset();
+					return EAsyncPackageState::TimeOut;
+				}
+			}
+			else
+			{
+				DeferredPostLoadObjects.Add(Object);
+			}
+			// All object must be finalized on the game thread
+			DeferredFinalizeObjects.Add(Object);
+			check(Object->IsValidLowLevelFast());
+			// Make sure all objects in DeferredFinalizeObjects are referenced too
+			AddObjectReference(Object);
+		}
+	}
+
+	PackageObjLoaded.Append(ThreadObjLoaded);
+	ThreadObjLoaded.Reset();
+
+	// New objects might have been loaded during PostLoad.
+	EAsyncPackageState::Type Result = (PreLoadIndex == PackageObjLoaded.Num()) && (PostLoadIndex == PackageObjLoaded.Num()) ? EAsyncPackageState::Complete : EAsyncPackageState::TimeOut;
+	return Result;
+}
+```
+
+이제 **ASync 스레드**가 패키지를 디스크에서 메모리로 가져오는 작업을 끝내고 FAsyncLoadingThread::LoadedPackage에 그 패키지를 담았다.       
+             
+이제 **게임 스레드**는 로딩이 끝난 패키지 ( FAsyncLoadingThread::LoadedPackage )에 대해 PostLoad 동작을 수행한다.              
+
+```cpp
+// 게임스레드가 호출하는 함수이다.
 /**
-* [GAME THREAD] Performs game-thread specific operations on loaded packages (not-thread-safe PostLoad, callbacks)
+* [GAME THREAD] Ticks game thread side of async loading.
 *
 * @param bUseTimeLimit True if time limit should be used [time-slicing].
 * @param bUseFullTimeLimit True if full time limit should be used [time-slicing].
@@ -860,6 +933,45 @@ EAsyncPackageState::Type FAsyncPackage::TickAsyncPackage(bool InbUseTimeLimit, b
 * @param FlushTree Package dependency tree to be flushed
 * @return The current state of async loading
 */
+EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncLoading(bool bUseTimeLimit, bool bUseFullTimeLimit, float TimeLimit, FFlushTree* FlushTree)
+{
+	LLM_SCOPE(ELLMTag::AsyncLoading);
+
+	check(IsInGameThread());
+	check(!IsGarbageCollecting());
+
+	const bool bLoadingSuspended = IsAsyncLoadingSuspendedInternal();
+	EAsyncPackageState::Type Result = bLoadingSuspended ? EAsyncPackageState::PendingImports : EAsyncPackageState::Complete;
+
+	if (!bLoadingSuspended)
+	{
+		// First make sure there's no objects pending to be unhashed. This is important in uncooked builds since we don't 
+		// detach linkers immediately there and we may end up in getting unreachable objects from Linkers in CreateImports
+		if (FPlatformProperties::RequiresCookedData() == false && IsIncrementalUnhashPending() && IsAsyncLoadingPackages())
+		{
+			// Call ConditionalBeginDestroy on all pending objects. CBD is where linkers get detached from objects.
+			UnhashUnreachableObjects(false);
+		}
+
+		const bool bIsMultithreaded = FAsyncLoadingThread::IsMultithreaded();
+		double TickStartTime = FPlatformTime::Seconds();
+		double TimeLimitUsedForProcessLoaded = 0;
+
+		bool bDidSomething = false;
+		{
+			Result = ProcessLoadedPackages(bUseTimeLimit, bUseFullTimeLimit, TimeLimit, bDidSomething, FlushTree);
+			TimeLimitUsedForProcessLoaded = FPlatformTime::Seconds() - TickStartTime;
+			UE_CLOG(!GIsEditor && bUseTimeLimit && TimeLimitUsedForProcessLoaded > .1f, LogStreaming, Warning, TEXT("Took %6.2fms to ProcessLoadedPackages"), float(TimeLimitUsedForProcessLoaded) * 1000.0f);
+		}
+
+		...
+		...
+		...
+		...
+	}
+	return Result;
+}
+
 EAsyncPackageState::Type FAsyncLoadingThread::ProcessLoadedPackages(bool bUseTimeLimit, bool bUseFullTimeLimit, float TimeLimit, bool& bDidSomething, FFlushTree* FlushTree)
 {
 	EAsyncPackageState::Type Result = EAsyncPackageState::Complete;
@@ -882,33 +994,14 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessLoadedPackages(bool bUseTim
 			LoadedPackagesNameLookup.Reset();
 		}
 	}
-#if USE_EVENT_DRIVEN_ASYNC_LOAD_AT_BOOT_TIME
-	if (IsMultithreaded() && GEventDrivenLoaderEnabled &&
-		ENamedThreads::GetRenderThread() == ENamedThreads::GameThread &&
-		!FTaskGraphInterface::Get().IsThreadProcessingTasks(ENamedThreads::GameThread)) // render thread tasks are actually being sent to the game thread.
-	{
-		// The async loading thread might have queued some render thread tasks (we don't have a render thread yet, so these are actually sent to the game thread)
-		// We need to process them now before we do any postloads.
-		FTaskGraphInterface::Get().ProcessThreadUntilIdle(ENamedThreads::GameThread);
-		if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("ProcessRenderThreadCommandsOnGameThread")))
-		{
-			return EAsyncPackageState::TimeOut;
-		}
-	}
-#endif
 
-		
 	bDidSomething = LoadedPackagesToProcess.Num() > 0;
 	for (int32 PackageIndex = 0; PackageIndex < LoadedPackagesToProcess.Num() && !IsAsyncLoadingSuspendedInternal(); ++PackageIndex)
 	{
-		FPlatformMisc::PumpEssentialAppMessages();
-
 		FAsyncPackage* Package = LoadedPackagesToProcess[PackageIndex];
 		if (Package->GetDependencyRefCount() == 0)
 		{
-			SCOPED_LOADTIMER(ProcessLoadedPackagesTime);
-
-			Result = Package->PostLoadDeferredObjects(TickStartTime, bUseTimeLimit, TimeLimit);
+			Result = Package->PostLoadDeferredObjects(TickStartTime, bUseTimeLimit, TimeLimit); // 이 부분이 가장 중요한 부분이다.
 			if (Result == EAsyncPackageState::Complete)
 			{
 				// Remove the package from the list before we trigger the callbacks, 
@@ -928,12 +1021,6 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessLoadedPackages(bool bUseTim
 					}
 					else
 					{
-						if (GIsEditor)
-						{
-							// Flush linker cache for all objects loaded with this package.
-							// This may be slow, hence we only do it in the editor
-							Package->FlushObjectLinkerCache();
-						}
 						// Detach linker in mutex scope to make sure that if something requests this package
 						// before it's been deleted does not try to associate the new async package with the old linker
 						// while this async package is still bound to it.
@@ -954,10 +1041,7 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessLoadedPackages(bool bUseTim
 				const bool bInternalCallbacks = false;
 				const EAsyncLoadingResult::Type LoadingResult = Package->HasLoadFailed() ? EAsyncLoadingResult::Failed : EAsyncLoadingResult::Succeeded;
 				Package->CallCompletionCallbacks(bInternalCallbacks, LoadingResult);
-#if WITH_EDITOR
-				// In the editor we need to find any assets and add them to list for later callback
-				Package->GetLoadedAssets(LoadedAssets);
-#endif
+
 				// We don't need the package anymore
 				PackagesToDelete.AddUnique(Package);
 				Package->MarkRequestIDsAsComplete();
@@ -982,88 +1066,374 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessLoadedPackages(bool bUseTim
 			break;
 		}
 	}
-	bDidSomething = bDidSomething || PackagesToDelete.Num() > 0;
 
-	// Delete packages we're done processing and are no longer dependencies of anything else
-	if (Result != EAsyncPackageState::TimeOut)
+	return Result;
+}
+
+
+EAsyncPackageState::Type FAsyncPackage::PostLoadDeferredObjects(double InTickStartTime, bool bInUseTimeLimit, float& InOutTimeLimit)
+{
+	SCOPE_CYCLE_COUNTER(STAT_FAsyncPackage_PostLoadObjectsGameThread);
+	SCOPED_LOADTIMER(PostLoadDeferredObjectsTime);
+
+	FAsyncPackageScope PackageScope(this);
+
+	EAsyncPackageState::Type Result = EAsyncPackageState::Complete;
+	TGuardValue<bool> GuardIsRoutingPostLoad(PackageScope.ThreadContext.IsRoutingPostLoad, true);
+	FAsyncLoadingTickScope InAsyncLoadingTick(AsyncLoadingThread);
+
+	FUObjectSerializeContext* LoadContext = GetSerializeContext();
+	TArray<UObject*>& ObjLoadedInPostLoad = LoadContext->PRIVATE_GetObjectsLoadedInternalUseOnly();
+	TArray<UObject*> ObjLoadedInPostLoadLocal;
+
+	STAT(double PostLoadStartTime = FPlatformTime::Seconds());
+
+	while (DeferredPostLoadIndex < DeferredPostLoadObjects.Num() && 
+		!AsyncLoadingThread.IsAsyncLoadingSuspendedInternal() &&
+		!::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn))
 	{
-		SCOPE_CYCLE_COUNTER(STAT_FAsyncPackage_CreateClustersGameThread);
+		UObject* Object = DeferredPostLoadObjects[DeferredPostLoadIndex++];
+		check(Object);
 
-		// For performance reasons this set is created here and reset inside of AreAllDependenciesFullyLoaded
-		TSet<UPackage*> VisitedPackages;
-
-		for (int32 PackageIndex = 0; PackageIndex < PackagesToDelete.Num(); ++PackageIndex)
+		if (!Object->IsReadyForAsyncPostLoad())
 		{
-			FAsyncPackage* Package = PackagesToDelete[PackageIndex];
-			if (Package->GetDependencyRefCount() == 0 && !Package->IsBeingProcessedRecursively())
+			--DeferredPostLoadIndex;
+			break;
+		}
+
+		LastObjectWorkWasPerformedOn = Object;
+		LastTypeOfWorkPerformed = TEXT("postloading_gamethread");
+
+		FScopeCycleCounterUObject ConstructorScope(Object, GET_STATID(STAT_FAsyncPackage_PostLoadObjectsGameThread));
+
+		PackageScope.ThreadContext.CurrentlyPostLoadedObjectByALT = Object;
+		{
+			TRACE_LOADTIME_POSTLOAD_EXPORT_SCOPE(Object);
+			Object->ConditionalPostLoad();
+		}
+		PackageScope.ThreadContext.CurrentlyPostLoadedObjectByALT = nullptr;
+
+		if (ObjLoadedInPostLoad.Num())
+		{
+			// If there were any LoadObject calls inside of PostLoad, we need to pre-load those objects here. 
+			// There's no going back to the async tick loop from here.
+			UE_LOG(LogStreaming, Warning, TEXT("Detected %d objects loaded in PostLoad while streaming, this may cause hitches as we're blocking async loading to pre-load them."), ObjLoadedInPostLoad.Num());
+			
+			// Copy to local array because ObjLoadedInPostLoad can change while we're iterating over it
+			ObjLoadedInPostLoadLocal.Append(ObjLoadedInPostLoad);
+			ObjLoadedInPostLoad.Reset();
+
+			while (ObjLoadedInPostLoadLocal.Num())
 			{
-				bool bSafeToDelete = false;
-				if (Package->HasClusterObjects())
+				// Make sure all objects loaded in PostLoad get post-loaded too
+				DeferredPostLoadObjects.Append(ObjLoadedInPostLoadLocal);
+
+				// Preload (aka serialize) the objects loaded in PostLoad.
+				for (UObject* PreLoadObject : ObjLoadedInPostLoadLocal)
 				{
-					// This package will create GC clusters but first check if all dependencies of this package have been fully loaded
-					if (Package->AreAllDependenciesFullyLoaded(VisitedPackages))
+					if (PreLoadObject && PreLoadObject->GetLinker())
 					{
-						if (Package->CreateClusters(TickStartTime, bUseTimeLimit, TimeLimit) == EAsyncPackageState::Complete)
-						{
-							// All clusters created, it's safe to delete the package
-							bSafeToDelete = true;
-						}
-						else
-						{
-							// Cluster creation timed out
-							Result = EAsyncPackageState::TimeOut;
-							break;
-						}
+						PreLoadObject->GetLinker()->Preload(PreLoadObject);
 					}
+				}
+
+				// Other objects could've been loaded while we were preloading, continue until we've processed all of them.
+				ObjLoadedInPostLoadLocal.Reset();
+				ObjLoadedInPostLoadLocal.Append(ObjLoadedInPostLoad);
+				ObjLoadedInPostLoad.Reset();
+			}			
+		}
+
+		LastObjectWorkWasPerformedOn = Object;		
+
+		UpdateLoadPercentage();
+	}
+
+	INC_FLOAT_STAT_BY(STAT_FAsyncPackage_TotalPostLoadGameThread, (float)(FPlatformTime::Seconds() - PostLoadStartTime));
+
+	// New objects might have been loaded during PostLoad.
+	Result = (DeferredPostLoadIndex == DeferredPostLoadObjects.Num()) ? EAsyncPackageState::Complete : EAsyncPackageState::TimeOut;
+	if (Result == EAsyncPackageState::Complete)
+	{
+		LastObjectWorkWasPerformedOn = nullptr;
+		LastTypeOfWorkPerformed = TEXT("DeferredFinalizeObjects");
+		TArray<UObject*> CDODefaultSubobjects;
+		// Clear async loading flags (we still want RF_Async, but EInternalObjectFlags::AsyncLoading can be cleared)
+		while (DeferredFinalizeIndex < DeferredFinalizeObjects.Num() &&
+			(DeferredPostLoadIndex % 100 != 0 || (!AsyncLoadingThread.IsAsyncLoadingSuspendedInternal() && !::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn))))
+		{
+			UObject* Object = DeferredFinalizeObjects[DeferredFinalizeIndex++];
+			if (Object)
+			{
+				Object->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+			}
+
+			// CDO need special handling, no matter if it's listed in DeferredFinalizeObjects or created here for DynamicClass
+			UObject* CDOToHandle = nullptr;
+
+			// Dynamic Class doesn't require/use pre-loading (or post-loading). 
+			// The CDO is created at this point, because now it's safe to solve cyclic dependencies.
+			if (UDynamicClass* DynamicClass = Cast<UDynamicClass>(Object))
+			{
+				check((DynamicClass->ClassFlags & CLASS_Constructed) != 0);
+
+				if (GEventDrivenLoaderEnabled)
+				{
+					//native blueprint 
+
+					check(DynamicClass->HasAnyClassFlags(CLASS_TokenStreamAssembled));
+					// this block should be removed entirely when and if we add the CDO to the fake export table
+					CDOToHandle = DynamicClass->GetDefaultObject(false);
+					UE_CLOG(!CDOToHandle, LogStreaming, Fatal, TEXT("EDL did not create the CDO for %s before it finished loading."), *DynamicClass->GetFullName());
+					CDOToHandle->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
 				}
 				else
 				{
-					// No clusters to create so it's safe to delete
-					bSafeToDelete = true;
-				}
-
-				if (bSafeToDelete)
-				{
-					PackagesToDelete.RemoveAtSwap(PackageIndex--);
-					delete Package;
+					UObject* OldCDO = DynamicClass->GetDefaultObject(false);
+					UObject* NewCDO = DynamicClass->GetDefaultObject(true);
+					const bool bCDOWasJustCreated = (OldCDO != NewCDO);
+					if (bCDOWasJustCreated && (NewCDO != nullptr))
+					{
+						NewCDO->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+						CDOToHandle = NewCDO;
+					}
 				}
 			}
-
-			// push stats so that we don't overflow number of tags per thread during blocking loading
-			LLM_PUSH_STATS_FOR_ASSET_TAGS();
-		}
-	}
-
-	if (Result == EAsyncPackageState::Complete)
-	{
-#if WITH_EDITORONLY_DATA
-		// This needs to happen after loading new blueprints in the editor, and this is handled in EndLoad for synchronous loads
-		FBlueprintSupport::FlushReinstancingQueue();
-#endif
-
-#if WITH_EDITOR
-		// In editor builds, call the asset load callback. This happens in both editor and standalone to match EndLoad
-		TArray<FWeakObjectPtr> TempLoadedAssets = LoadedAssets;
-		LoadedAssets.Reset();
-
-		// Make a copy because LoadedAssets could be modified by one of the OnAssetLoaded callbacks
-		for (const FWeakObjectPtr& WeakAsset : TempLoadedAssets)
-		{
-			// It may have been unloaded/marked pending kill since being added, ignore those cases
-			if (UObject* LoadedAsset = WeakAsset.Get())
+			else
 			{
-				FCoreUObjectDelegates::OnAssetLoaded.Broadcast(LoadedAsset);
+				CDOToHandle = ((Object != nullptr) && Object->HasAnyFlags(RF_ClassDefaultObject)) ? Object : nullptr;
+			}
+
+			// Clear AsyncLoading in CDO's subobjects.
+			if(CDOToHandle != nullptr)
+			{
+				CDOToHandle->GetDefaultSubobjects(CDODefaultSubobjects);
+				for (UObject* SubObject : CDODefaultSubobjects)
+				{
+					if (SubObject && SubObject->HasAnyInternalFlags(EInternalObjectFlags::AsyncLoading))
+					{
+						SubObject->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+					}
+				}
+				CDODefaultSubobjects.Reset();
 			}
 		}
-#endif
+		::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn);
+		if (DeferredFinalizeIndex == DeferredFinalizeObjects.Num())
+		{
+			DeferredFinalizeIndex = 0;
+			DeferredFinalizeObjects.Reset();
+			Result = EAsyncPackageState::Complete;
+		}
+		else
+		{
+			Result = EAsyncPackageState::TimeOut;
+		}
 
-		// We're not done until all packages have been deleted
-		Result = PackagesToDelete.Num() ? EAsyncPackageState::PendingImports : EAsyncPackageState::Complete;
+		// Mark package as having been fully loaded and update load time.
+		if (Result == EAsyncPackageState::Complete && LinkerRoot && !bLoadHasFailed)
+		{
+			LastObjectWorkWasPerformedOn = LinkerRoot;
+			LastTypeOfWorkPerformed = TEXT("CreateClustersFromPackage");
+			LinkerRoot->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+			LinkerRoot->MarkAsFullyLoaded();			
+			LinkerRoot->SetLoadTime(FPlatformTime::Seconds() - LoadStartTime);
+
+			if (Linker)
+			{
+				CreateClustersFromPackage(Linker, DeferredClusterObjects);
+			}
+			::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn);
+		}
+
+		FSoftObjectPath::InvalidateTag();
+		FUniqueObjectGuid::InvalidateTag();
 	}
 
 	return Result;
 }
 
+EAsyncPackageState::Type FAsyncPackage::PostLoadDeferredObjects(double InTickStartTime, bool bInUseTimeLimit, float& InOutTimeLimit)
+{
+	SCOPE_CYCLE_COUNTER(STAT_FAsyncPackage_PostLoadObjectsGameThread);
+	SCOPED_LOADTIMER(PostLoadDeferredObjectsTime);
+
+	FAsyncPackageScope PackageScope(this);
+
+	EAsyncPackageState::Type Result = EAsyncPackageState::Complete;
+	TGuardValue<bool> GuardIsRoutingPostLoad(PackageScope.ThreadContext.IsRoutingPostLoad, true);
+	FAsyncLoadingTickScope InAsyncLoadingTick(AsyncLoadingThread);
+
+	FUObjectSerializeContext* LoadContext = GetSerializeContext();
+	TArray<UObject*>& ObjLoadedInPostLoad = LoadContext->PRIVATE_GetObjectsLoadedInternalUseOnly();
+	TArray<UObject*> ObjLoadedInPostLoadLocal;
+
+	STAT(double PostLoadStartTime = FPlatformTime::Seconds());
+
+	while (DeferredPostLoadIndex < DeferredPostLoadObjects.Num() && 
+		!AsyncLoadingThread.IsAsyncLoadingSuspendedInternal() &&
+		!::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn))
+	{
+		UObject* Object = DeferredPostLoadObjects[DeferredPostLoadIndex++];
+		check(Object);
+
+		if (!Object->IsReadyForAsyncPostLoad())
+		{
+			--DeferredPostLoadIndex;
+			break;
+		}
+
+		LastObjectWorkWasPerformedOn = Object;
+		LastTypeOfWorkPerformed = TEXT("postloading_gamethread");
+
+		FScopeCycleCounterUObject ConstructorScope(Object, GET_STATID(STAT_FAsyncPackage_PostLoadObjectsGameThread));
+
+		PackageScope.ThreadContext.CurrentlyPostLoadedObjectByALT = Object;
+		{
+			TRACE_LOADTIME_POSTLOAD_EXPORT_SCOPE(Object);
+			Object->ConditionalPostLoad(); // 드디어 오브젝트에 대한 PostLoad 호출!
+		}
+		PackageScope.ThreadContext.CurrentlyPostLoadedObjectByALT = nullptr;
+
+		if (ObjLoadedInPostLoad.Num())
+		{
+			// If there were any LoadObject calls inside of PostLoad, we need to pre-load those objects here. 
+			// There's no going back to the async tick loop from here.
+			UE_LOG(LogStreaming, Warning, TEXT("Detected %d objects loaded in PostLoad while streaming, this may cause hitches as we're blocking async loading to pre-load them."), ObjLoadedInPostLoad.Num());
+			
+			// Copy to local array because ObjLoadedInPostLoad can change while we're iterating over it
+			ObjLoadedInPostLoadLocal.Append(ObjLoadedInPostLoad);
+			ObjLoadedInPostLoad.Reset();
+
+			while (ObjLoadedInPostLoadLocal.Num())
+			{
+				// Make sure all objects loaded in PostLoad get post-loaded too
+				DeferredPostLoadObjects.Append(ObjLoadedInPostLoadLocal);
+
+				// Preload (aka serialize) the objects loaded in PostLoad.
+				for (UObject* PreLoadObject : ObjLoadedInPostLoadLocal)
+				{
+					if (PreLoadObject && PreLoadObject->GetLinker())
+					{
+						PreLoadObject->GetLinker()->Preload(PreLoadObject);
+					}
+				}
+
+				// Other objects could've been loaded while we were preloading, continue until we've processed all of them.
+				ObjLoadedInPostLoadLocal.Reset();
+				ObjLoadedInPostLoadLocal.Append(ObjLoadedInPostLoad);
+				ObjLoadedInPostLoad.Reset();
+			}			
+		}
+
+		LastObjectWorkWasPerformedOn = Object;		
+
+		UpdateLoadPercentage();
+	}
+
+	INC_FLOAT_STAT_BY(STAT_FAsyncPackage_TotalPostLoadGameThread, (float)(FPlatformTime::Seconds() - PostLoadStartTime));
+
+	// New objects might have been loaded during PostLoad.
+	Result = (DeferredPostLoadIndex == DeferredPostLoadObjects.Num()) ? EAsyncPackageState::Complete : EAsyncPackageState::TimeOut;
+	if (Result == EAsyncPackageState::Complete)
+	{
+		LastObjectWorkWasPerformedOn = nullptr;
+		LastTypeOfWorkPerformed = TEXT("DeferredFinalizeObjects");
+		TArray<UObject*> CDODefaultSubobjects;
+		// Clear async loading flags (we still want RF_Async, but EInternalObjectFlags::AsyncLoading can be cleared)
+		while (DeferredFinalizeIndex < DeferredFinalizeObjects.Num() &&
+			(DeferredPostLoadIndex % 100 != 0 || (!AsyncLoadingThread.IsAsyncLoadingSuspendedInternal() && !::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn))))
+		{
+			UObject* Object = DeferredFinalizeObjects[DeferredFinalizeIndex++];
+			if (Object)
+			{
+				Object->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+			}
+
+			// CDO need special handling, no matter if it's listed in DeferredFinalizeObjects or created here for DynamicClass
+			UObject* CDOToHandle = nullptr;
+
+			// Dynamic Class doesn't require/use pre-loading (or post-loading). 
+			// The CDO is created at this point, because now it's safe to solve cyclic dependencies.
+			if (UDynamicClass* DynamicClass = Cast<UDynamicClass>(Object))
+			{
+				check((DynamicClass->ClassFlags & CLASS_Constructed) != 0);
+
+				if (GEventDrivenLoaderEnabled)
+				{
+					//native blueprint 
+
+					check(DynamicClass->HasAnyClassFlags(CLASS_TokenStreamAssembled));
+					// this block should be removed entirely when and if we add the CDO to the fake export table
+					CDOToHandle = DynamicClass->GetDefaultObject(false);
+					UE_CLOG(!CDOToHandle, LogStreaming, Fatal, TEXT("EDL did not create the CDO for %s before it finished loading."), *DynamicClass->GetFullName());
+					CDOToHandle->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+				}
+				else
+				{
+					UObject* OldCDO = DynamicClass->GetDefaultObject(false);
+					UObject* NewCDO = DynamicClass->GetDefaultObject(true);
+					const bool bCDOWasJustCreated = (OldCDO != NewCDO);
+					if (bCDOWasJustCreated && (NewCDO != nullptr))
+					{
+						NewCDO->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+						CDOToHandle = NewCDO;
+					}
+				}
+			}
+			else
+			{
+				CDOToHandle = ((Object != nullptr) && Object->HasAnyFlags(RF_ClassDefaultObject)) ? Object : nullptr;
+			}
+
+			// Clear AsyncLoading in CDO's subobjects.
+			if(CDOToHandle != nullptr)
+			{
+				CDOToHandle->GetDefaultSubobjects(CDODefaultSubobjects);
+				for (UObject* SubObject : CDODefaultSubobjects)
+				{
+					if (SubObject && SubObject->HasAnyInternalFlags(EInternalObjectFlags::AsyncLoading))
+					{
+						SubObject->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+					}
+				}
+				CDODefaultSubobjects.Reset();
+			}
+		}
+		::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn);
+		if (DeferredFinalizeIndex == DeferredFinalizeObjects.Num())
+		{
+			DeferredFinalizeIndex = 0;
+			DeferredFinalizeObjects.Reset();
+			Result = EAsyncPackageState::Complete;
+		}
+		else
+		{
+			Result = EAsyncPackageState::TimeOut;
+		}
+
+		// Mark package as having been fully loaded and update load time.
+		if (Result == EAsyncPackageState::Complete && LinkerRoot && !bLoadHasFailed)
+		{
+			LastObjectWorkWasPerformedOn = LinkerRoot;
+			LastTypeOfWorkPerformed = TEXT("CreateClustersFromPackage");
+			LinkerRoot->AtomicallyClearInternalFlags(EInternalObjectFlags::AsyncLoading);
+			LinkerRoot->MarkAsFullyLoaded();			
+			LinkerRoot->SetLoadTime(FPlatformTime::Seconds() - LoadStartTime);
+
+			if (Linker)
+			{
+				CreateClustersFromPackage(Linker, DeferredClusterObjects);
+			}
+			::IsTimeLimitExceeded(InTickStartTime, bInUseTimeLimit, InOutTimeLimit, LastTypeOfWorkPerformed, LastObjectWorkWasPerformedOn);
+		}
+
+		FSoftObjectPath::InvalidateTag();
+		FUniqueObjectGuid::InvalidateTag();
+	}
+
+	return Result;
+}
 ```
 
 references : [https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/Assets/AsyncLoading/](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/Assets/AsyncLoading/)      
