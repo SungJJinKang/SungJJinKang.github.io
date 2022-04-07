@@ -11,7 +11,8 @@ categories: ComputerScience ComputerGraphics
 AoS에서 SoA로 바꾸었다.     
 
 기존의 코드는 아래와 같이 AoS의 형태였다.       
-```      
+
+```c++   
 struct VetexData
 {
     Vector3 mVertex;
@@ -24,7 +25,8 @@ std::vector<VertexData> MeshData;
 ```
 
 아래는 바꾼 SoA 버전의 코드이다.           
-```      
+
+```c++     
 struct MeshData
 {
     Vector3* mVertex; // array
@@ -72,7 +74,8 @@ GPU는 흔히 **SIMT** ( Single Instruction, Multiple Thread )라고 부르는 �
 
 예를 들어보자.        
 아래의 코드는 픽셀 쉐이더의 일부분으로 distance 변수의 값에 따라 FragColor 변수에 다른 색을 저장한다.        
-```
+
+```c++
 layout (location = 0) in float distance; 
 out vec4 FragColor;
 
@@ -96,7 +99,8 @@ void main()
       
 그럼 다시 SoA 얘기로 돌아와보자.    
 아래의 Vertex 쉐이딩의 경우를 보자.        
-```
+
+```c++
 layout (location = 0) in vec3 vertex; 
 void main()
 {
@@ -106,7 +110,8 @@ void main()
              
 
 만약 AoS의 경우 어떠한가.        
-```
+
+```c++
 Vertex(12바이트) mTexCoord(12바이트) mNormal(12바이트) mTangent(12바이트) mBitangent(12바이트) Vertex(12바이트) mTexCoord(12바이트) mNormal(12바이트) mTangent(12바이트) mBitangent(12바이트) 
 ```
 자 32개의 Vertex에 대해 Vertex 쉐이딩을 수행하는 스레드들 32개가 모여 Warp를 이루고있다.        

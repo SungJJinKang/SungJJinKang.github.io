@@ -70,7 +70,8 @@ categories: ComputerScience
 
 Marking 중인 오브젝트 개수와 Marking이 끝난 오브젝트 개수를 카운팅하기 std::atomic을 사용하는데 엔티티 개수가 많아질 수록 카운팅 연산 횟수가 늘어나면서 인접한 atomic 변수들간의 **[false sharing](https://sungjjinkang.github.io/computerscience/2021/05/14/cachecohrencyAndFalsesharing.html)**이 우려되어서 중간에 padding을 넣어주었다.                   
 
-```
+
+```c++
 namespace dooms::gc::garbageCollectorSolver
 {
 	struct GCMultithreadCounter
@@ -95,7 +96,8 @@ namespace dooms::gc::garbageCollectorSolver
 게임 내의 오브젝트들은 파괴를 하여도 즉시 파괴되지 않고 ( PendingKill ) 가비지 컬렉터에 의해 메모리가 회수되기 때문에 포인터 타입의 멤버변수가 유효하지 않은 주소를 들고 있을 가능성은 매우 매우 극히 드물다. ( 프로그래머가 의도적으로 주소에 이상한 값을 넣지 않는 이상말이다. ) 이러한 매우 매우 드문 상황을 대비해서 매번 해시 테이블을 탐색하는건 낭비이다.           
 그냥 참조하고 Exception이 발생하는지 확인해보면 된다.          
 실제 작성한 코드는 아래와 같다.          
-```
+
+```c++
 FORCE_INLINE static bool CheckDObjectIsValid(const dooms::DObject* const dObject)
 {
 	bool isDObjectValid = false;

@@ -61,7 +61,8 @@ clReflect를 이용하면 런타임에 간단히 해결할 수도 있지만 필�
 
 또한 고속 런타임 타입 캐스팅을 위한 기능도 추가했다.
 
-```
+
+```c++
 class DObject
 {
     virtual void Do1(){}

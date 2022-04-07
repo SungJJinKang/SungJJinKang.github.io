@@ -20,7 +20,8 @@ GPU내에는 수백개의 SP ( Scalar Processor )로 구성되어 있다. 이 SP
 
 
 쉬운 예를 들어보자. 16개의 Fragment에 대해 Fragment Shading을 수행한다고 생각해보자.       
-```
+
+```c++
 if( pos.x > 0.5 )
 {
     분기점 A~~

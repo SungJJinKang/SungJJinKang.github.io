@@ -16,8 +16,8 @@ Asynchronous Loading Thread 옵션을 켜서 사용하면 ASync 로드 관련 �
 
 
 FStreamableManager::RequestAsyncLoad 함수를 통해 에셋들에 대한 Async Load를 수행한다. return 되는 TSharedPtr<FStreamableHandle>를 통해 진행 중인 에셋 로딩과 관련된 데이터에 접근할 수 있다.        
-      
-```
+
+```c++
 TSharedPtr<FStreamableHandle> FStreamableManager::RequestAsyncLoad(TArray<FSoftObjectPath> TargetsToStream, FStreamableDelegate DelegateToCall, TAsyncLoadPriority Priority, bool bManageActiveHandle, bool bStartStalled, FString DebugName)
 {
     // FStreamableHandle : 동기적, 비동기적 에셋 로드와 관련된 데이터를 가짐. 로드 후 호출 델리게이트, 로드 우선 순위, 로드 완료 여부, 등등 유저 코드에서 접근할 수 있는 에셋 로딩과 관련된 모든 데이터가 들어 있다.               
@@ -105,7 +105,7 @@ TSharedPtr<FStreamableHandle> FStreamableManager::RequestAsyncLoad(TArray<FSoftO
 ```
 
 
-```
+```c++
 struct FStreamable
 {
 	// 로드된 에셋 ( 로드 후 유효한 에셋이 셋팅된다. )
@@ -246,7 +246,7 @@ AsyncLoader는 버전 1과 버전 2, 두가지 버전이 있다.
 필자의 경우 UE 4.25.4 버전을 기준으로 에디터 상에서 버전 1로 작동되는 것을 확인하였기 때문에, 버전 1을 기준으로 코드를 살펴보겠다.           
 
 
-```
+```c++
 int32 LoadPackageAsync(const FString& InName, const FGuid* InGuid /*= nullptr*/, const TCHAR* InPackageToLoadFrom /*= nullptr*/, FLoadPackageAsyncDelegate InCompletionDelegate /*= FLoadPackageAsyncDelegate()*/, EPackageFlags InPackageFlags /*= PKG_None*/, int32 InPIEInstanceID /*= INDEX_NONE*/, int32 InPackagePriority /*= 0*/, const FLinkerInstancingContext* InstancingContext /*=nullptr*/)
 {
 	LLM_SCOPE(ELLMTag::AsyncLoading);
@@ -255,7 +255,7 @@ int32 LoadPackageAsync(const FString& InName, const FGuid* InGuid /*= nullptr*/,
 }
 ```
 
-```
+```c++
 int32 FAsyncLoadingThread::LoadPackage(const FString& InName, const FGuid* InGuid, const TCHAR* InPackageToLoadFrom, FLoadPackageAsyncDelegate InCompletionDelegate, EPackageFlags InPackageFlags, int32 InPIEInstanceID, int32 InPackagePriority, const FLinkerInstancingContext* InstancingContext)
 {
 	int32 RequestID = INDEX_NONE;
@@ -326,7 +326,7 @@ int32 FAsyncLoadingThread::LoadPackage(const FString& InName, const FGuid* InGui
 }
 ```
 
-```
+```c++
 void FAsyncLoadingThread::QueuePackage(FAsyncPackageDesc& Package)
 {
 	FScopeLock QueueLock(&QueueCritical); // 당연한 이야기지만 게임 스레드 ( 현재 이 함수를 호출하는 스레드 ), ASyncLoad 스레드간의 DataRace를 방지하기 위해 큐에 FAsyncPackageDesc 삽입하기 전 뮤텍스 락을 건다.
@@ -338,7 +338,7 @@ void FAsyncLoadingThread::QueuePackage(FAsyncPackageDesc& Package)
 
 자 여기까지가 게임스레드의 역할이다. 이제 ASync 로드의 운명은 ASync 스레드로 넘어갔다.          
 
-```
+```c++
 /**
  * ASync 로딩 스레드에 대한 추상화 클래스이다. 패키지에 대한 Preloads, Serializes는 ASync 스레드에서 호출되고, 패키지에 대한 PostLoads는 게임 스레드에서 호출된다.
  */
@@ -351,7 +351,7 @@ FAsyncLoadingThread에서는 게임 스레드에서 접근할 수 있는 기능�
 
 언리얼상에서 어떤 특정 스레드에서 동작하기 위해 만들어진 클래스들은 모두 FRunnable을 상속받는다. 해당 특정 스레드는 맡고 있는 FRunnable 오브젝트에 대해 FRunnable::Run 함수를 반복적으로 호출한다.          
 
-```
+```c++
 uint32 FAsyncLoadingThread::Run()
 {
 	// 생략 시킨 코드가 많다....
@@ -371,7 +371,7 @@ uint32 FAsyncLoadingThread::Run()
 }
 ```
 
-```
+```c++
 EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncThread(bool bUseTimeLimit, bool bUseFullTimeLimit, float TimeLimit, bool& bDidSomething, FFlushTree* FlushTree)
 {
 	EAsyncPackageState::Type Result = EAsyncPackageState::Complete;
@@ -452,7 +452,7 @@ EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncThread(bool bUseTimeLimit
 
 위에서 게임스레드에서 FAsyncLoadingThread::QueuedPackages에 추가한 FAsyncPackageDesc를 ASync Load용 큐 ( FAsyncLoadingThread::AsyncPackages )로 옮긴다.       
 
-```
+```c++
 int32 FAsyncLoadingThread::CreateAsyncPackagesFromQueue(bool bUseTimeLimit, bool bUseFullTimeLimit, float TimeLimit, FFlushTree* FlushTree)
 {
 	FAsyncLoadingTickScope InAsyncLoadingTick(*this);
@@ -573,7 +573,7 @@ void FAsyncLoadingThread::ProcessAsyncPackageRequest(FAsyncPackageDesc* InReques
 이 함수 내부에서 프로젝트 셋팅 중 "Event Driven Loader" 셋팅에 따라 분기가 나뉘는데, "Event Driven Loader" 셋팅이 기본적으로 Enabled되어 있으니 Enabled되어 있는 경우를 기준으로 코드를 설명하겠다.        
 사실 "Event Driven Loader" ( EDL )이 무엇인지 모르겠다. ( 나중에 조사를 더 해보겠다. ) ( UE4에서는 대부분의 경우 EDL 옵션을 켜둔 경우)          
 
-```
+```c++
 EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPackagesProcessed, bool bUseTimeLimit /*= false*/, bool bUseFullTimeLimit /*= false*/, float TimeLimit /*= 0.0f*/, FFlushTree* FlushTree)
 {
 	double TickStartTime = FPlatformTime::Seconds();
@@ -747,7 +747,7 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 }
 ```
 
-```
+```c++
 EAsyncPackageState::Type FAsyncPackage::TickAsyncPackage(bool InbUseTimeLimit, bool InbUseFullTimeLimit, float& InOutTimeLimit, FFlushTree* FlushTree)
 {
 	// Whether we should execute the next step.
@@ -850,7 +850,7 @@ EAsyncPackageState::Type FAsyncPackage::TickAsyncPackage(bool InbUseTimeLimit, b
 }
 ```
 
-```
+```c++
 /**
 * [GAME THREAD] Performs game-thread specific operations on loaded packages (not-thread-safe PostLoad, callbacks)
 *
