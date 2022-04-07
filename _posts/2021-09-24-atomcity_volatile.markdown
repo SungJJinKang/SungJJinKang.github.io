@@ -22,7 +22,7 @@ volatile이라는 disk로부터의 메모리 매핑 I/O ( Memory Mapped IO )위�
 여기서 말하는 **"레지스터 할당 최적화"란 연산을 하는 과정에서 해당 변수에 대한 연산 결과를 레지스터에 임시로 저장하지 말고 반드시 메모리 ( 캐시든 DRAM )에 쓰라 ( Write )(!!!!!)는 것을 말한다.**                  
 
 
-```c++
+```cpp
 int result = 0;
 for ( size_t i = 0 ; i < 10000 ; i++ )
 {
@@ -101,7 +101,7 @@ reference : [https://stackoverflow.com/a/51847653](https://stackoverflow.com/a/5
 
 -----------------------------------------------------
 
-```c++
+```cpp
 std::atomic<int> a;
 a++; --> a.fetch_add(1)
 ++a; --> a.fetch_add(1) + 1

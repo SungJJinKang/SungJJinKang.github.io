@@ -9,7 +9,7 @@ categories: C++
 memmove는 똑같은 곳을 참조해서 복사하지 않는 지 체크하고 방지한다.    
 말이 어렵다 memmove의 구현 코드를 보자.    
 
-```c++
+```cpp
 
 #undef	wsize
 #define	wsize	sizeof(word) // 워드의 사이즈는 항상 2의 pow이다
@@ -134,7 +134,7 @@ source의 위치가 destination보다 낮은 경우도 그냥 반대로 생각�
 여담으로 컴파일러 옵션에 따라 컴파일러가 알아서 SIMD 코드 사용하여 최적화를 해준다.      
 아래의 코드를 보면 moveaps 명령어와 xmm0 레지스터가 쓰이는 데 이 것들이 SIMD 함수에서 사용되는 명령어, 레지스터다.         
 
-```c++
+```cpp
 float* a = new float[4]{1.0f, 2.0f, 3.0f, 4.0f};
 float b[4];
 memcpy(b, a, sizeof(int) * 3);

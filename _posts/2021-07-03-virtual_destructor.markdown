@@ -5,7 +5,7 @@ date:   2021-07-03
 categories: C++
 ---
 
-```c++
+```cpp
 class A
 {
 public:

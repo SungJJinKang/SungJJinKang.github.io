@@ -32,7 +32,7 @@ X  O  O  O  O  X  X  X  X  X
 -------------------
 
 그래서 컴파일러는 성능향상을 위해 암묵적으로 중간에 padding를 넣어서 메모리 alignment를 만들어준다.
-```c++
+```cpp
 struct A
 {
     char a; // 1바이트
@@ -51,7 +51,7 @@ struct A
 --------------------------
 
 임의로 프로그래머가 alignment를 설정해줄 수도 있다.    
-```c++
+```cpp
 struct alignas(16) A
 {
     char a; // 1바이트
@@ -77,7 +77,7 @@ https://developer.ibm.com/technologies/systems/articles/pa-dalign/
 
 ----------------------------------------------------------------------
 
-```c++
+```cpp
 struct ReallySlowStruct
 {
     char c : 6 (6byte size);
@@ -116,7 +116,7 @@ In most scenarios, you never have to be concerned with alignment because the def
 
 In terms of memory space, the compiler pads the structure in a way that naturally aligns each element of the structure.      
 
-```c++
+```cpp
 struct x_
 {
    char a;     // 1 byte
@@ -128,7 +128,7 @@ struct x_
 struct x_ is padded by the compiler and thus becomes:
 
 // Shows the actual memory layout
-```c++
+```cpp
 struct x_
 {
    char a;           // 1 byte

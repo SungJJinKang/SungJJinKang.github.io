@@ -22,7 +22,7 @@ mutex가 shared 모드 상태로 lock되어 있는 경우 exclusive 모드 lock�
 반면 **shared_mutex를 사용하면 여러 쓰레드가 동시에 read를 할 수 있다**는 장점이 있다.
 
 사실 예시 경우는 그냥 atomic을 쓰는게 좋다. 그렇지만 shared_mutex를 어떻게 사용하는지를 보여주는 예시이니 그냥 참고만하기 바란다.  
-```c++
+```cpp
 #include <iostream>
 #include <mutex>
 #include <shared_mutex>

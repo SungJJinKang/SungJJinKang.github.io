@@ -19,7 +19,7 @@ callable object의 함수 길이가 짧은 경우에는(3~5 instruction) lamba�
 
 왠만하면 **std::function보다는 template을 통해 lambda를 사용하는 것을 지향**해야한다.      
 아래 코드를 보자.      
-```c++
+```cpp
 #include <functional>
 
 template <typename F>

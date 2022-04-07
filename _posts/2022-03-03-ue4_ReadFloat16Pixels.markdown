@@ -21,7 +21,7 @@ GPU를 사용하기 때문에 매우 빠르게 연산할 수 있다.
 이해가 안가는 코드는 바람 텍스쳐의 디버깅을 위해 텍스쳐 값을 DRAM으로 읽어오는 과정에 있었다.            
          
 
-```c++
+```cpp
 FRenderTarget::ReadFloat16Pixels(TArray<FFloat16Color>& OutputBuffer,ECubeFace CubeFace)
 ```
            
@@ -34,7 +34,7 @@ FRenderTarget::ReadFloat16Pixels(TArray<FFloat16Color>& OutputBuffer,ECubeFace C
 근데 내부 코드를 보자.         
 
 
-```c++
+```cpp
 bool FRenderTarget::ReadFloat16Pixels(TArray<FFloat16Color>& OutputBuffer,ECubeFace CubeFace)
 {
 	// Copy the surface data into the output array.
@@ -64,7 +64,7 @@ FFloat16Color 타입은 그냥 RGBA 값을 가지는 클래스로 따로 소멸�
                
 Raw 포인터를 매개변수로 받는 함수 ( 힙 재할당이 없는 )도 있지만 proteced 함수여서 내가 접근할 수 없었다.          
 
-```c++
+```cpp
 protected : 
 bool FRenderTarget::ReadFloat16Pixels(FFloat16Color* OutImageData,ECubeFace CubeFace)
 ```        
@@ -73,7 +73,7 @@ bool FRenderTarget::ReadFloat16Pixels(FFloat16Color* OutImageData,ECubeFace Cube
           
 바로 옆 "FRenderTarget::ReadPixels" 함수 ( 거의 똑같은 기능을 하는 )에는 "TArray::SetNumUninitialized" 함수를 사용한다.     
 
-```c++
+```cpp
 OutImageData.Reset();
 FReadSurfaceContext Context =
 {

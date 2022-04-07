@@ -124,7 +124,7 @@ Plane5 Dot Object      Plane6 Dot Object      Plane5 Dot Object      Plane6 Dot 
                         Culled!!!!!
 ```
 
-```c++
+```cpp
 inline char CheckInFrustumSIMDWithTwoPoint(math::Vector<4, float>* eightPlanes, const math::Vector<4, float>* twoPoint)
 {
 		//We can't use M256F. because two twoPoint isn't aligned to 32 byte
@@ -190,7 +190,7 @@ inline char CheckInFrustumSIMDWithTwoPoint(math::Vector<4, float>* eightPlanes, 
 구현부분을 살짝보자면 아래와 같다.    
 
 게임 월드 내 모든 Entity의 Position과 Bounding Sphrere의 Radius 정보 이렇게 총 4개의 floating data가 Linear하게 배치되어 한 Block을 구성한다. 중요한건 Cache Hitting률을 높이기 위해 SoA 구조로 데이터를 배치한다는 것이다.     
-```c++
+```cpp
 struct alignas(CACHE_LINE_SIZE) EntityBlock
 	{
 		/// <summary>

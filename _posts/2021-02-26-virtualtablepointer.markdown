@@ -13,7 +13,7 @@ categories: C++ ComputerScience
 
 그래서 이 문제를 해결하기 위해 mAABB3D.mLowerBound의 주소를 destination으로 memmove를 하니 잘되었다.      
 
-```c++
+```cpp
 struct assimpAABB3D
 {
     aVector3 mLowerBound; // 3 float number

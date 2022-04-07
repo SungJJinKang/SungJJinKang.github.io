@@ -8,7 +8,7 @@ categories: DesignPattern
 기본 생성자, 소멸자는 외부로부터 숨기고(private 혹은 protected)             
 복사 생성자, 이동 생성자, 복사 대입 연산자, 이동 대입 연산자들을 모두 삭제해야한다.         
 
-```c++
+```cpp
 class SingleTonClass
 {
 

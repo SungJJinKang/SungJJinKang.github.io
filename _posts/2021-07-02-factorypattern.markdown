@@ -28,7 +28,7 @@ categories: DesignPattern
 이것이 팩토리 패턴이다.        
 이것을 클래스 설계 측면에서 유용성을 말하자면 어떤 오브젝트로부터 그 오브젝트와 관련된 오브젝트를 얻으려고 할 때 얻으려는 오브젝트에 대한 구현, Dependency를 몰라도 해당 오브젝트를 얻을 수 있다.       
 
-```c++
+```cpp
 
 class IBattery{}
 class SamsungBatteryS512 : IBattery {}

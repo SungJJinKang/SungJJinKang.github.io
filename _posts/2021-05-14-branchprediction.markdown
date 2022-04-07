@@ -17,7 +17,7 @@ Branch Prediction은 간단히 설명하면 if 분기점에서 CPU가 하나의 
 
 그럼 Branch Prediction의 좋은 예를 보겠다. 
 
-```c++
+```cpp
 static void Sorted()
 {
     std::vector<int> a(1000000);
@@ -62,7 +62,7 @@ Branch Prediction은 virtual 함수를 호출할 때도 사용한다.
 그럼 벤치마크를 한번 보자.       
 
 
-```c++
+```cpp
 class Animal
 {
 public:

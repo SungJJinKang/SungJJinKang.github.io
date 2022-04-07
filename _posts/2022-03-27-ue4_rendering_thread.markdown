@@ -49,7 +49,7 @@ D3D12, Vulkan에 와서는 RHI 스레드라는 것을 만들어서 렌더 스레
 이 "UActorComponent::CreateRenderState_Concurrent" 함수를 통해 렌더링에 필요한 여러 데이터들을 게임 스레드에서 생성하고 렌더스레드에 넘겨주어서 그 데이터를 렌더스레드의 렌더링에 반영한다.               
 렌더링 관련 데이터가 변경된 경우에도 RenderState를 파괴한 후 "UActorComponent::CreateRenderState_Concurrent" 함수를 다시 호출해서 RenderState를 재생성해준다.       
 
-```c++
+```cpp
 void UPrimitiveComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context) // UPrimitiveComponent는 UStaticMeshComponent의 Base 클래스이다.
 {
 	Super::CreateRenderState_Concurrent(Context);
@@ -76,7 +76,7 @@ void UPrimitiveComponent::CreateRenderState_Concurrent(FRegisterComponentContext
 절대로 "FScene"의 데이터를 게임스레드에서 Write해서는 안된다.            
 
 Fscene에 렌더링할 Primitive를 추가하게 되면
-```c++
+```cpp
 void FScene::AddPrimitive(UPrimitiveComponent* Primitive)
 {
 	// Create the primitive's scene proxy.
@@ -141,7 +141,7 @@ void FScene::AddPrimitive(UPrimitiveComponent* Primitive)
 ```
 
 UPrimitiveComponent의 렌더 스레드 버전인 FPrimitiveSceneProxy를 생성한다.     
-```c++
+```cpp
 /**
  * Encapsulates the data which is mirrored to render a UPrimitiveComponent parallel to the game thread.
  * This is intended to be subclassed to support different primitive types.  
@@ -153,7 +153,7 @@ class FPrimitiveSceneProxy
 "UPrimitiveComponent"의 경우 "FPrimitiveSceneProxy"를 상속받은 "FStaticMeshSceneProxy" 클래스를 렌더스레드에 넘겨준다.          
 "FStaticMeshSceneProxy" 클래스에는 렌더링할 메쉬와 관련된 각종 데이터들(버텍스...)이 들어 있다.              
      
-```c++           
+```cpp           
 /**
  * The renderer's internal state for a single UPrimitiveComponent.  This has a one to one mapping with FPrimitiveSceneProxy, which is in the engine module.
  */
@@ -168,7 +168,7 @@ class FPrimitiveSceneInfo : public FDeferredCleanupInterface
 여기서부터는 렌더스레드의 동작이다.           
              
 
-```c++
+```cpp
 void FScene::AddPrimitiveSceneInfo_RenderThread(FPrimitiveSceneInfo* PrimitiveSceneInfo, const TOptional<FTransform>& PreviousTransform)
 {
 	AddedPrimitiveSceneInfos.Add(PrimitiveSceneInfo);
@@ -185,7 +185,7 @@ FSceneRenderer에 대해서는 [이 글](https://sungjjinkang.github.io/unrealen
 
 
 비슷하게 SceneComponent의 Transform 데이터 ( 위치, 회전, 스케일 )가 변경되었을 때도 이를 렌더스레드에 반영한다.         
-```c++
+```cpp
 void FScene::UpdatePrimitiveTransform(UPrimitiveComponent* Primitive)
 {
 	if(Primitive->SceneProxy)
@@ -251,7 +251,7 @@ void FScene::UpdatePrimitiveTransform(UPrimitiveComponent* Primitive)
 위에서 보았듯이 언리얼 엔진4에서는 기본적으로 렌더스레드에서 수행되어야할 동작은 "ENQUEUE_RENDER_COMMAND"라는 매크로를 호출하여 안전하게 렌더스레드로 렌더링 관련 동작을 전송한다.         
 게임 스레드에서 이 매크로를 통해 렌더링 관련 명령어를 호출하게 되면 뒤따라 오는 렌더스레드가 데이터 레이스 없이 그 동작을 받아 수행한다.                             
 
-```c++
+```cpp
 template<typename TSTR, typename LAMBDA>
 class TEnqueueUniqueRenderCommandType : public FRenderCommand
 {
@@ -313,7 +313,7 @@ ENQUEUE_RENDER_COMMAND(UpdateAllPrimitiveSceneInfosCmd)([Scene](FRHICommandListI
 게임 스레드에서 이 매크로를 호출한 경우      
             
 
-```c++
+```cpp
 if (ShouldExecuteOnRenderThread())
 {
 	CheckNotBlockedOnRenderThread();
@@ -322,7 +322,7 @@ if (ShouldExecuteOnRenderThread())
 ```
 이 부분을 통해 렌더 스레드에서 생성할 Task를 만들고, ( 중간에 많은 부분이 생략되었다.. )            
 
-```c++
+```cpp
 void FBaseGraphTask::QueueTask(ENamedThreads::Type CurrentThreadIfKnown)
 {
 	checkThreadGraph(LifeStage.Increment() == int32(LS_Queued));
@@ -331,7 +331,7 @@ void FBaseGraphTask::QueueTask(ENamedThreads::Type CurrentThreadIfKnown)
 ```
 최종적으로 언리얼의 Task Graph System의 Queue에 Task를 넣게된다. ( TaskGraph쪽도 대걔 볼 내용이 많다..... )                              
 
-```c++
+```cpp
 void FTaskGraphImplementation::QueueTask(FBaseGraphTask* Task, ENamedThreads::Type ThreadToExecuteOn, ENamedThreads::Type InCurrentThreadIfKnown = ENamedThreads::AnyThread)
 ```
 
@@ -343,7 +343,7 @@ void FTaskGraphImplementation::QueueTask(FBaseGraphTask* Task, ENamedThreads::Ty
 언리얼 엔진4에서는 게임 스레드쪽 컴포넌트에서 렌더링 관련 변수 값을 수정하는 경우 그 값이 수정되었음을 3가지 변수로 판단을 한다.               
 
 
-```c++
+```cpp
 /** Is this component in need of its whole state being sent to the renderer? */
 uint8 UActorComponent::bRenderStateDirty:1;
 
@@ -372,7 +372,7 @@ void UActorComponent::MarkRenderStateDirty()
 언리얼 엔진의 경우 게임 스레드에서 렌더링 관련 변수를 수정하면 해당 프레임의 마지막(EndOfFrame)에 이 값을 렌더스레드로 전송한다. ( "MarkForNeededEndOfFrameRecreate" 함수 호출 시점이 아닌 프레임의 마지막에 해당 프레임 동안 업데이트가 필요한 컴포넌트들을 한꺼번에 렌더스레드로 업데이트한다. )                              
 "MarkForNeededEndOfFrameRecreate" 함수를 따라 가보면          
 
-```c++
+```cpp
 UWorld::MarkActorComponentForNeededEndOfFrameUpdate(UActorComponent* Component, bool bForceGameThread) 
 ```
 "UWorld::MarkActorComponentForNeededEndOfFrameUpdate" 함수를 통해 World에 EndOfFrame에 이 컴포넌트를 Update를 할 필요가 있다고 알린다.            
@@ -382,7 +382,7 @@ UWorld::MarkActorComponentForNeededEndOfFrameUpdate(UActorComponent* Component, 
           
 그럼 Scene 클래스에서 프레임의 마지막에 "UWorld::SendAllEndOfFrameUpdates()" 함수를 호출하여 렌더링 관련 업데이트된 데이터를 렌더스레드에 전송한다.           
 
-```c++
+```cpp
 void UWorld::SendAllEndOfFrameUpdates()
 {
 	static TArray<UActorComponent*> LocalComponentsThatNeedEndOfFrameUpdate; 
@@ -435,7 +435,7 @@ void UWorld::SendAllEndOfFrameUpdates()
 "UActorComponent::DoDeferredRenderUpdates_Concurrent"함수를 통해 게임 스레드에서 Dirty한 데이터가 렌더스레드에 반영이 되는데, 이 "UActorComponent::DoDeferredRenderUpdates_Concurrent"함수는 위에서 본 RenderState를 재생성하거나, 변경된 Transform Data를 렌더스레드에 반영하는 동작을 수행한다. ( "UActorComponent::CreateRenderState_Concurrent" 함수를 호출한다. )         
 
 
-```c++
+```cpp
 void UActorComponent::RecreateRenderState_Concurrent()
 {
 	if(bRenderStateCreated)

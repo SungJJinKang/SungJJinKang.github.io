@@ -6,7 +6,7 @@ categories: ComputerScience C++
 ---
 
 
-```c++
+```cpp
 namespace __fast_runtime_type_casting_details
 {
 	//!!!!!!!!!!!!
@@ -97,7 +97,7 @@ namespace __fast_runtime_type_casting_details
 클래스마다 상속하는 클래스 타입을 적어주면 된다.      
 
 
-```c++
+```cpp
 class Collider3DComponent : public FAST_RUNTIME_TYPE_CASTING_ROOT_CLASS
 {
 	FAST_RUNTIME_TYPE_CASTING_DOBJECT_CLASS_BODY(Collider3DComponent, FAST_RUNTIME_TYPE_CASTING_ROOT_CLASS) <- Pass Current Class Name, Base Class Name
@@ -149,7 +149,7 @@ if(object->IsChildOf<MeshCollider>() == true)
 
 이 코드는 해당 오브젝트가 특정 클래스의 자녀 타입의 오브젝트인지 확인하는 함수이다.         
 
-```c++
+```cpp
 template <typename BASE_TYPE>
 D_FORCE_INLINE bool IsChildOf() const
 {
@@ -187,7 +187,7 @@ D_FORCE_INLINE bool IsChildOf() const
 대강의 알고리즘은 아래와 같다.     
 
 
-```c++
+```cpp
 #if _WIN64
   #define DCAST_NO_OFFSET 0x7FFFFFFFFFFFFFFFLL
 #else 

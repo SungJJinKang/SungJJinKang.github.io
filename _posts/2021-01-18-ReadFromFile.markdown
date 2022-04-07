@@ -8,7 +8,7 @@ categories: C++
 C++ filsesystem을 사용하다 보면 파일 전체를 한꺼번에 긁어와야하는 일이 생긴다.
 이때 흔히하는 실수가 있다. 우선 그 사례를 보여주겠다.
 
-```c++
+```cpp
 1.
 std::ifstream inputFileStream{path};
 if (inputFileStream.is_open())
@@ -50,7 +50,7 @@ std::string에는 small buffer optimization을 위한 버퍼 크기가 초과하
 그럼 이 size_t를 file stream에서 알아내야한다.
 밑의 코드에 그 방법이 나와있다.
 
-```c++
+```cpp
 std::ifstream inputFileStream(path, std::ios::in | std::ios::binary | std::ios::ate); // std::ios::ate로 stream의 read position을 맨 마지막으로 설정해준다. ( 이 동작은 immediatly하게 작동한다 )
 
 if (inputFileStream.is_open())

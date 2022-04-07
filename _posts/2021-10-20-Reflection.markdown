@@ -49,7 +49,7 @@ categories: ComputerScience C++
 클래스들간의 상속관계 같은 경우 각 클래스마다 매크로로 해당 클래스의 부모 클래스 타입명을 넘겨주어야한다.      
 
 
-```c++
+```cpp
 class DOOM_API MeshCollider : public Collider3DComponent
 {
 	DOBJECT_CLASS_BODY(MeshCollider)
@@ -64,7 +64,7 @@ class DOOM_API MeshCollider : public Collider3DComponent
 우선 클래스 타입들을 구분해주기 위해 각 클래스들을 구분해줄 유니크한 ID가 필요했다.       
 어떻게 이를 얻을 수 있을까?    
 
-```c++
+```cpp
 const std::type_info& ti1 = typeid(A);
 const std::type_info& ti2 = typeid(A);
  
@@ -80,7 +80,7 @@ C++에서는 std::type_info의 hash_code()와 std::type_index를 통해 클래�
 위의 리플랙션 매크로에서 넘겼던 **클래스명을 문자열화해서 해당 Literal 문자열 ( 상수 문자열 )의 시작 주소를 유니크 ID로 사용**하면 될 것 같다.    
 같은 클래스명을 가진 클래스는 존재할 수 없으니 당연히도 유니크함이 보장된다.         
 
-```c++
+```cpp
 #define TYPE_ID_IMP(CLASS_TYPE)																							\
 		public:																											\
 		FORCE_INLINE static constexpr const char* CLASS_TYPE_ID_STATIC() {												\
@@ -94,7 +94,7 @@ C++에서는 std::type_info의 hash_code()와 std::type_index를 통해 클래�
 
 GodBolt를 통해 어셈블리어를 확인해보면 유니크 ID를 얻을 시 아래와 같이 프로그램내의 문자열의 위치를 데이터 심볼로 가져오는 것을 알 수 있다.       
 
-```c++
+```cpp
 class A
 {
     TYPE_ID_IMP(A)
@@ -122,7 +122,7 @@ int main()
 ```
 -->
 
-```c++
+```cpp
 $SG23072 DB     'A', 00H  <--- !!!!!!!!!!
         ORG $+2
 $SG23073 DB     'B', 00H  <--- !!!!!!!!!!

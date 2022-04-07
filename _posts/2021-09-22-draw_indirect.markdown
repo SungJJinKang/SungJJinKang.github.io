@@ -10,7 +10,7 @@ Draw Indirect는 쉽게 말하면 그릴 Mesh들의 버텍스, 쉐이더, 텍스
 생각을 해보자. 동일한 Shader로 만들어진 10개의 Material와 10개의 Mesh를 가지고 각 Material, Mesh 당 100개의 오브젝트를 그린다고 가정해보자.       
 **일반적으로 렌더링**을 하게되면 어떤 특정 Material, Mesh의 하나의 Instance를 그리는데 한번의 Uniform Data ( Model Matrix... )를 GPU에 전송해야하고, 한번의 Draw 커맨드 전송이 필요하다.        
 
-```c++
+```cpp
 for(material)
 {
     for(mesh)
@@ -29,7 +29,7 @@ for(material)
 여기서 조금 발전하면 **GPU Instancing 기법**이 있다.             
 이 기법은 똑같은 Matrial, 똑같은 Mesh를 사용할 때는 한번의 Draw Call 커맨드로 여러 Instance를 그리는 것이다.    
 
-```c++
+```cpp
 for(material)
 {
     for(mesh)
@@ -44,7 +44,7 @@ GPU Instancing 방법을 사용하여도 몇개의 Instance를 그릴지는 CPU�
 
 다음으로 이 글에서 말할 **Draw Indirect**은 어떨까??         
 
-```c++
+```cpp
 for(shader))
 {
     if(Uniform Buffer를 업데이트 할 필요가 있을 때만)
@@ -65,7 +65,7 @@ CPU에서 GPU로 가는 데이터, 커맨드의 수가 줄었다는 것은 DRAM 
 
 간단히 코드를 살펴보면 이렇다.
 
-```c++
+```cpp
 typedef  struct {
    GLuint  count;
    GLuint  instanceCount;

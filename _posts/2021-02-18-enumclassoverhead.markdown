@@ -14,7 +14,7 @@ categories: C++
 실험을 해보니 enum과 enumclass의 성능저하는 없었고 어셈블리 코드에서도 똑같은 코드를 보여 주었다.   
 컴파일러가 알아서 enum, enum class 값에 맞는 상수 값을 전달해준다. 즉 명령어 코드 상에는 차이가 없다.   
 
-```c++
+```cpp
 
 enum ENUM_TEST : unsigned int
 {
@@ -73,7 +73,7 @@ main:
 번외로 여러 컴파일러로 컴파일을 해보면서 재밌는 사실도 발견하였다.   
 X64 GCC와 ARM CLANG 컴파일러가 매개 변수를 전달하는 과정에서 약간은 다른 방식으로 매개 변수를 전달하는 것을 알 수 있었다.   
 
-```c++
+```cpp
 function(ENUM_TEST::A); // 2
 function(static_cast<unsigned int>(ENUM_CLASS_TEST::A)); // 2
 ```   
@@ -124,7 +124,7 @@ main:
 이게 그냥 컴파일러의 차이인지 아니면 X64, ARM의 아키텍쳐의 차이 때문인지는 솔직히 잘 모르겠다.   
 
 매개변수로 두 함수에 다른 값을 전달해주니 ARM CLANG도 GCC와 같이 매번 r0 레지스터에 상수값을 넣어주는 것을 볼 수 있다.   
-```c++
+```cpp
 function(ENUM_TEST::A); // 2
 function(static_cast<unsigned int>(ENUM_CLASS_TEST::B)); // 3
 ```   

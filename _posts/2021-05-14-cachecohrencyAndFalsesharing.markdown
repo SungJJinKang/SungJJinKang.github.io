@@ -11,7 +11,7 @@ categories: ComputerScience
  
 - Cache Coherency -            
 
-```c++
+```cpp
 static void atomicVersion()
 {
     std::atomic<int> a;
@@ -128,7 +128,7 @@ MESI 프로토콜 ( 뭔지 모르면 [이 글](https://sungjjinkang.github.io/co
 
 자 이번에는 False sharing에 대한 예를 들어보겠다.       
 
-```c++
+```cpp
 static void ThreadCount1(benchmark::State& state)
 {
     std::atomic<int> a;
@@ -262,7 +262,7 @@ False sharing에 대해 자세히 알고 싶다면 [이 글](https://sungjjinkan
 
 그럼 이 코드들을 개선해보자.        
 
-```c++
+```cpp
 struct alignas(64) aligned_atomic_int
 {
     std::atomic<int> atomic_value;

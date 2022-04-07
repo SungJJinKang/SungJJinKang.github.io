@@ -8,7 +8,7 @@ categories: C++ EASTL
 우선 EASTL의 Allocator에 알기 위해서는 STL 표준 Allocator의 Design과 장단점에 대해 알아야 한다고 생각한다. 왜냐하면 EASTL의 Allocator은 STL Allocator의 문제점을 보완하는 방식으로 디자인 되었기 때문이다.          
 
 STL Allocator은 무엇이 문제일까?         
-```c++
+```cpp
 template <class T>
 class allocator
 {
@@ -61,7 +61,7 @@ public:
 위의 코드는 STL Allocator 클래스의 선언 부분인다.      
 Container의 Item Type T를 템플릿 매개변수로 전달받는다.        
 이것의 문제점은 Container의 Item 타입에 따라 또 다른 Allocator 클래스를 만든다는 것이다. Code bloat( 코드의 양이 부풀어짐 )를 유발한다.         
-```c++
+```cpp
 int main()
 {
     std::list<int> list1;
@@ -74,14 +74,14 @@ int main()
 또 다른 문제는 std::allocator의 rebind 구조체 문제이다. 이 allocator\<T\>::rebind\<U\>는 컨테이너 내에서 저장하는 item의 타입이 아닌 다른 타입이 필요할 때 Allocator로 사용된다. 예를 들면 std::list를 생각해보면 std::list는 양방향 링크드 리스트이기 떄문에 각 item과 다른 노드에 대한 포인터를 가지는 node 타입이 필요하다. 그런데 이 포인터의 타입은 allocator\<T\>로 할당하지 못한다. 그래서 allocator\<T\> 타입 내에 rebind\<U\>라는 구조체를 통해 할당하는 것이다.         
 바로 이 rebind\<U\> 코드가 std::allocator가 욕을 먹는 원흉이라 할 수 있다!!!!          
 std::list의 경우에는 내부적으로 node를 할당하기 위해 item 타입에 따라 std::allocator\<T\>rebind\<U\> 타입을 하나 더 만드는 것이다.     
-```c++
+```cpp
 allocator<int>::rebind<_Alnode>
 allocator<float>::rebind<_Alnode>
 ```
 이렇게 말이다. 코드 사이즈가 수도 없이 커지는 것이다.            
 
 그래서 EASTL은 위의 문제들을 해결하기 위해서 모든 Container의 Allocator를 하나로 통일하였다. 그리고 할당을 할때 할당할 메모리 사이즈를 전달받는 방식으로 디자인하여서 타입에 따라 또 다른 Allocator 타입이 만들어지지 않는다.         
-```c++
+```cpp
 class EASTL_API allocator
 {
 public:
@@ -108,7 +108,7 @@ protected:
 모든 Conatainer가 이 allocator 클래스 하나에서 할당을 받는다. item 타입에 따라 allocator 타입이 달라지는 문제도 없고 내부적으로 rebind 구조체도 필요없다. 하나의 allocator 클래스 타입을 사용하기 때문에 메모리를 추적하기도 매우 편리하다. 위의 클래스에서 set_name을 통해서 allocator의 이름을 설정하면 디버깅을 할 때 이 allocator을 통해 할당되는 메모리들을 추적할 수 있다.      
 물론 자신이 직접 필요한 allocator을 만들어 사용해도 된다.      
 
-```c++
+```cpp
 EASTLAllocatorType allocator1("allocator1");
 EASTLAllocatorType allocator2("allocator2");
 eastl::vector<int> vector1(allocator1);

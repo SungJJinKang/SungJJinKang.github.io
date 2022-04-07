@@ -18,7 +18,7 @@ Predicate에 성공하면 획득했던 **lock을 유지한채로 wait문을 빠�
 **중요한 것은 wake up된 후 lock을 다시 획득한 후에 Predicate를 검사한다는 것이다.**      
 
 wait문의 내부 구현은 아주 간단하다.     
-```c++
+```cpp
 template< class Predicate >
 void wait( std::unique_lock<std::mutex>& lock, Predicate pred )
 {
@@ -49,7 +49,7 @@ condition_variable을 사용하면서 주의해야할 것이 있다.
   
 condition_variable의 사용 방법은 아래와 같다.     
 
-```c++
+```cpp
 #include <iostream>
 #include <string>
 #include <thread>
@@ -109,7 +109,7 @@ int main()
 
 **"Hurry up ans Wait"** 문제는 위의 코드에서 바로 확인할 수 있다.  
 
-```c++
+```cpp
 void worker_thread()
 {
     // Wait until main() sends data
@@ -134,7 +134,7 @@ void worker_thread()
 만약 lk.unlock이 없다면 위의 코드는 어떻게 작동할까 생각해보자.     
 우선 메인쓰레드는 processed 조건변수에 대한 Predicate로 wait 중에 있다.
 
-```c++
+```cpp
 {
         std::unique_lock<std::mutex> lk(m);
         cv.wait(lk, []{return processed;});
@@ -163,7 +163,7 @@ void worker_thread()
 그리고 print_thread는 wait함수에서 queue에 interger 값이 1개 이상인지를 검사하고 그럴 경우 wait문을 빠져나가 lock을 획득한 채로 deque 후 출력을 한다. 이 과정을 무한으로 반복한다.      
 대강 아래와 같은 함수일 것이다. 
 
-```c++
+```cpp
 queue<int> printed_queue;
 void worker_thread1()
 {

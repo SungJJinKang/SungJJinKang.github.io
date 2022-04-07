@@ -31,7 +31,7 @@ SIMD             1626 ns         1611 ns       407273
 보통 character을 교체하는 코드를 짠다고 하면 이 방법을 사용할 것이다.        
 아주 일반적인 방법이고 아마 대부분의 library에서는 이 방법으로 구현을 하였을 것이다.         
 
-```c++
+```cpp
 void NAIVE()
 {
     for (auto i = 0; i < strSize; ++i) 
@@ -51,7 +51,7 @@ void NAIVE()
 괜히 생각을 복잡하게 해서 매우 멍청한 방법으로 답을 냈다.......        
 그때 내가 생각하기에는 character을 하나씩 비교하기 보다는 WORD 단위로(64bit CPU에서는 8개의 character) 한꺼번에 비교를 하고자 했는 데 이 방법은 "FFFFFFFFZ" 이렇게 교체할 character 8개가 연속적으로 이어져있는 경우에만 더 빠른데 대부분의 string은 그렇지 않다. 쓸 때 없는 연산만 더 추가된 것이다.     
 
-```c++
+```cpp
 void MY_WAY()
 {
     size_t mask = 0;
@@ -86,7 +86,7 @@ void MY_WAY()
       
 **strchr함수를 사용하는 방법이다.**       
 
-```c++
+```cpp
 #include <cstring>
 
 void STRCHR()
@@ -100,7 +100,7 @@ void STRCHR()
 
 strchr의 내부 구현은 이러하다.         
 
-```c++
+```cpp
 char * strchr (register const char *s, int c)
 {
   do {
@@ -127,7 +127,7 @@ char * strchr (register const char *s, int c)
 256bit 즉 32개의 character을 한꺼번에 비교 후 blend로 대입하는 방법이다.          
 당연히 가장 빠른 방법이다.   
 
-```c++
+```cpp
 #include <immintrin.h>
 
 void SIMD()

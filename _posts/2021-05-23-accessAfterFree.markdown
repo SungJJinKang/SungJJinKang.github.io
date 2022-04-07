@@ -5,7 +5,7 @@ date:   2021-05-23
 categories: C++ ComputerScience
 ---
 
-```c++
+```cpp
 int main()
 {
 	int* a = new int;
@@ -38,7 +38,7 @@ b는 a와 같은 주소를 가지고 있고 delete a를 해서 a 주소에 위�
 
 
 
-```c++
+```cpp
 int main()
 {
     int* a = new int;

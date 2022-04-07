@@ -71,7 +71,7 @@ categories: ComputerScience
 Marking 중인 오브젝트 개수와 Marking이 끝난 오브젝트 개수를 카운팅하기 std::atomic을 사용하는데 엔티티 개수가 많아질 수록 카운팅 연산 횟수가 늘어나면서 인접한 atomic 변수들간의 **[false sharing](https://sungjjinkang.github.io/computerscience/2021/05/14/cachecohrencyAndFalsesharing.html)**이 우려되어서 중간에 padding을 넣어주었다.                   
 
 
-```c++
+```cpp
 namespace dooms::gc::garbageCollectorSolver
 {
 	struct GCMultithreadCounter
@@ -97,7 +97,7 @@ namespace dooms::gc::garbageCollectorSolver
 그냥 참조하고 Exception이 발생하는지 확인해보면 된다.          
 실제 작성한 코드는 아래와 같다.          
 
-```c++
+```cpp
 FORCE_INLINE static bool CheckDObjectIsValid(const dooms::DObject* const dObject)
 {
 	bool isDObjectValid = false;

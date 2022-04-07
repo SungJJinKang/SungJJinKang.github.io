@@ -19,7 +19,7 @@ Cache Prefetcher는 어떠한 데이터가 필요하기 전 미리 메인 메모
 
 그럼 벤치마크를 통해 Cache Prefetch가 어떠한 성능 향상을 가져다 주는지 보자.     
 
-```c++
+```cpp
 static void RowFirst() 
 {
     int a[100][100];

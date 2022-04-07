@@ -7,7 +7,7 @@ categories: C++
 
 
 
-```c++
+```cpp
 void foo(unsigned int i) { std::cout << "unsigned " << i << "\n"; }
 
 
@@ -24,7 +24,7 @@ foo(42)를 호출 했을 때 위의 함수가 호출될 까? 아래의 함수가
 
 **SFINAE** : Substitution Failure is not an error. 치환 실패는 오류가 아니다. = **템플릿 인자 치환에 실패할 경우 컴파일러는 이 오류를 무시하고, 그냥 오버로딩 후보에서 제외하면 된다.**     
 
-```c++
+```cpp
 int negate(int i) { return -i; }
 
 template <typename T>
@@ -40,7 +40,7 @@ typename T::value_type negate(const T& t)
 그러므로 밑의 함수에 대한 코드도 생성해본다.          
 
 
-```c++
+```cpp
 int::value_type negate(const int& t) {
   /* ... */
 }
@@ -55,7 +55,7 @@ int::value_type negate(const int& t) {
 
 번외로 
 
-```c++
+```cpp
 template <typename T>
 void negate(const T& t) 
 {
@@ -73,7 +73,7 @@ void negate(const T& t)
 이 SFINAE를 잘 활용하는 stl 기능이 std::enable_if이다.       
 std::enable_if<bool B, class T>는 B가 true인 경우에는 내부에 type이라는 type alis를 가진 struct enable_if로 치환되고 B가 false인 경우에는 내부에 type이라는 typealis를 가지지 않는 struct enable_if로 치환된다.          
 
-```c++
+```cpp
 template <class T, typename std::enable_if<std::is_integral<T>::value, T>::type* = nullptr>
 void do_stuff(T& t) 
 {
@@ -94,7 +94,7 @@ void do_stuff(T& t)
 이렇게 std::enable_if는 SFINAE라는 원칙을 적절히 활용하여 오버로딩 된 함수들 중 하나를 선택할 때 컴파일 오류 없이 적절한 함수를 선택하게 해준다.                  
 
 자 그럼 이 경우는 한번 보자
-```c++
+```cpp
 template <typename T>
 class vector 
 {
@@ -114,7 +114,7 @@ vector a{4,8} 을 호출한 경우 어떤 함수가 호출 될까?
 그럼 이러한 일을 막을려면 어떻게 해야할까?        
 std::enable_if를 사용하면 된다.      
 
-```c++
+```cpp
 template <class _InputIterator>
 vector(_InputIterator __first, typename enable_if<__is_input_iterator<_InputIterator>::value && !__is_forward_iterator<_InputIterator>::value && /* ... more conditions... */ _InputIterator>::type __last);
 ```
@@ -122,7 +122,7 @@ vector(_InputIterator __first, typename enable_if<__is_input_iterator<_InputIter
 이렇게 되면 enable_if 부분에서 '8' 같은 int 타입은 iterator가 아니므로 type치환 실패해서 오버로딩 함수 선택 후보에서 탈락하고 위의 함수가 선택되게된다.      
 물론 SFINAE 원칙에 따라 밑의 함수 경우에도 컴파일에러는 안뜨고 조용히 오버로딩 함수 선택 후보에서만 탈락한다.     
 
-```c++
+```cpp
 template <class T> typename std::enable_if<std::is_arithmetic<T>, bool>::type signbit(T x) {
   // implementation
 }

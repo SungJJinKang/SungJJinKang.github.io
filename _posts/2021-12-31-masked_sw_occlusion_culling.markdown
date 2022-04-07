@@ -71,7 +71,7 @@ Bin한다는 것은 Occluder의 각각의 삼각형이 그려질 32x8 ( 8x4 타�
 
 32x8 타일은 아래와 같은 데이터 구조를 가지고 있다. 타일간의 Cache Coherency를 방지하기 위해 캐시라인에 Align되게 옵션을 추가하였다.          
 
-```c++
+```cpp
 struct HizData
 {
     float L0MaxDepthValue // 32x8 타일의 최대 Depth 값
