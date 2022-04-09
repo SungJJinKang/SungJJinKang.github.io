@@ -565,6 +565,41 @@ void FAsyncLoadingThread::ProcessAsyncPackageRequest(FAsyncPackageDesc* InReques
 	}
 }
 ```
+
+```cpp
+void FAsyncLoadingThread::InsertPackage(FAsyncPackage* Package, bool bReinsert, EAsyncPackageInsertMode InsertMode)
+{
+	{
+#if THREADSAFE_UOBJECTS
+		FScopeLock LockAsyncPackages(&AsyncPackagesCritical);
+#endif
+		if (bReinsert)
+		{
+			AsyncPackages.RemoveSingle(Package);
+		}
+
+		if (GEventDrivenLoaderEnabled)
+		{
+			AsyncPackages.Add(Package);
+		}
+		else
+		{
+			...
+		}
+
+		if (!bReinsert)
+		{
+			AsyncPackageNameLookup.Add(Package->GetPackageName(), Package);
+			if (GEventDrivenLoaderEnabled)
+			{
+				// @todo If this is a reinsert for some priority thing, well we don't go back and retract the stuff in flight to adjust the priority of events
+				QueueEvent_CreateLinker(Package, FAsyncLoadEvent::EventSystemPriority_MAX); // 이 부분이 중요하다!
+			}
+		}
+	}
+	check(!GEventDrivenLoaderEnabled || GetPackage(WeakPtr) == Package);
+}
+```
              
 이 함수 내부에서 프로젝트 셋팅 중 "Event Driven Loader" 셋팅에 따라 분기가 나뉘는데, "Event Driven Loader" 셋팅이 기본적으로 Enabled되어 있으니 Enabled되어 있는 경우를 기준으로 코드를 설명하겠다.        
 사실 "Event Driven Loader" ( EDL )이 무엇인지 모르겠다. ( 나중에 조사를 더 해보겠다. ) ( UE4에서는 대부분의 경우 EDL 옵션을 켜둔 경우)          
