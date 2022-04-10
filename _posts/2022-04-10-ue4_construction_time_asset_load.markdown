@@ -34,7 +34,7 @@ ADefaultPawn::ADefaultPawn(const FObjectInitializer& ObjectInitializer)
 			: SphereMesh(TEXT("/Engine/EngineMeshes/Sphere")) {}
 	};
 
-	static FConstructorStatics ConstructorStatics; // <code>**CDO의 생성자에서 딱 한번 이 클래스가 Initialized 된다.**</code>     
+	static FConstructorStatics ConstructorStatics; // **'CDO의 생성자에서 딱 한번 이 클래스가 Initialized 된다.'**     
 
     ...
     ...
