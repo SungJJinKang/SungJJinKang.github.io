@@ -8,3 +8,4 @@ categories: UE4 UnrealEngine4 ComputerScience
 <img width="532" alt="1" src="https://user-images.githubusercontent.com/33873804/162600451-5242b8f0-068f-4228-bc47-2ad3bd8dae63.png">              
 <img width="532" alt="2" src="https://user-images.githubusercontent.com/33873804/162600453-15267f17-ffca-4b22-9a80-d6ff913f0731.png">           
 
+Frame 시간이랑 비슷한 시간을 보여주는 스레드가 병목지점이다.           
