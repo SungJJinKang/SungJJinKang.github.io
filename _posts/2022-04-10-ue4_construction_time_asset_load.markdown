@@ -66,9 +66,8 @@ struct COREUOBJECT_API ConstructorHelpers
 public:
 	template<class T>
 	struct FObjectFinder : public FGCObject 
-	<pre>
-    // <b>FObjectFinder 구조체는 UObject의 리플랙션 시스템의 지원을 받지 못하다 보니 로드한 오브젝트가 GC에 의해 회수될 수 있다.<b>       
-    // <b>그렇기 때문에 FGCObject 상속받아서 아래 AddReferencedObjects 함수에서 로드한 오브젝트를 GC 레퍼런스 오브젝트 목록에 추가해준다. ( 참고 자료 : https://ikrima.dev/ue4guide/engine-programming/memory/tracking-references/ )<b>     
+    // **FObjectFinder 구조체는 UObject의 리플랙션 시스템의 지원을 받지 못하다 보니 로드한 오브젝트가 GC에 의해 회수될 수 있다.**       
+    // **그렇기 때문에 FGCObject 상속받아서 아래 AddReferencedObjects 함수에서 로드한 오브젝트를 GC 레퍼런스 오브젝트 목록에 추가해준다. ( 참고 자료 : https://ikrima.dev/ue4guide/engine-programming/memory/tracking-references/ )**    
 	</pre>
 	{
 		T* Object; // !!
