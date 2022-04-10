@@ -5,6 +5,19 @@ date:   2022-04-10
 categories: UE4 UnrealEngine4 ComputerScience
 ---
 
+
+중요도가 떨어지는 코드는        
+```
+
+...
+...
+...
+
+```
+으로 처리해두었으니 확인하고 싶은 경우에는 UE4 소스코드를 확인해주세요.           
+
+------------------------              
+
 아래 코드는 UE4 ADefaultPawn 클래스의 생성자 코드이다.     
 
 ```cpp
@@ -21,13 +34,8 @@ ADefaultPawn::ADefaultPawn(const FObjectInitializer& ObjectInitializer)
 			: SphereMesh(TEXT("/Engine/EngineMeshes/Sphere")) {}
 	};
 
-	static FConstructorStatics ConstructorStatics;
+	static FConstructorStatics ConstructorStatics; // CDO의 생성자에서 딱 한번 이 클래스가 Initialized 된다.     
 
-	MeshComponent = CreateOptionalDefaultSubobject<UStaticMeshComponent>(ADefaultPawn::MeshComponentName);
-	if (MeshComponent)
-	{
-		MeshComponent->SetStaticMesh(ConstructorStatics.SphereMesh.Object);
-	
     ...
     ...
     ...
@@ -71,20 +79,20 @@ public:
 			Object = ConstructorHelpersInternal::FindOrLoadObject<T>(PathName, InLoadFlags); // 아래 참조.
 			ValidateObject( Object, PathName, ObjectToFind ); 
 		}
-		bool Succeeded() const
-		{
-			return !!Object;
-		}
+
+		...
+		...
+		...
 
 		virtual void AddReferencedObjects( FReferenceCollector& Collector ) override
 		{
 			Collector.AddReferencedObject(Object); // GC가 로드한 오브젝트를 회수하지 못하도록 레퍼런스된 오브젝트 목록에 로드한 오브젝트를 추가한다.
 		}
 
-		virtual FString GetReferencerName() const override
-		{
-			return TEXT("FObjectFinder");
-		}
+		...
+		...
+		...
+
 	};
 
     ...
@@ -103,11 +111,11 @@ public:
 			Class = ConstructorHelpersInternal::FindOrLoadClass(PathName, T::StaticClass());
 			ValidateObject(*Class, PathName, *PathName);
 		}
-		bool Succeeded()
-		{
-			return !!*Class;
-		}
 		
+		...
+		...
+		...
+
 		virtual void AddReferencedObjects( FReferenceCollector& Collector ) override
 		{
 			UClass* ReferencedClass = Class.Get();
@@ -115,10 +123,10 @@ public:
 			Class = ReferencedClass;
 		}
 
-		virtual FString GetReferencerName() const override
-		{
-			return TEXT("FClassFinder");
-		}
+		...
+		...
+		...
+
 	};
 
     ...
@@ -131,20 +139,9 @@ namespace ConstructorHelpersInternal
 	template<typename T>
 	inline T* FindOrLoadObject( FString& PathName, uint32 LoadFlags ) // 오브젝트를 로드하는 함수.
 	{
-		// If there is no dot, add a dot and repeat the object name.
-		int32 PackageDelimPos = INDEX_NONE;
-		PathName.FindChar( TCHAR('.'), PackageDelimPos );
-		if( PackageDelimPos == INDEX_NONE )
-		{
-			int32 ObjectNameStart = INDEX_NONE;
-			PathName.FindLastChar( TCHAR('/'), ObjectNameStart );
-			if( ObjectNameStart != INDEX_NONE )
-			{
-				const FString ObjectName = PathName.Mid( ObjectNameStart+1 );
-				PathName += TCHAR('.');
-				PathName += ObjectName;
-			}
-		}
+		... ( 올바른 경로 찾기 코드들... )
+		...
+		...
 
 		UClass* Class = T::StaticClass();
 		Class->GetDefaultObject(); // 오브젝트를 로드하기 전 해당 클래스의 CDO가 생성되었는지 확인하고 생성되어 있지 않다면 CDO를 생성한다. CDO가 생성되어 있어야지만, CDO로부터 필요한 프로퍼티들에 대한 데이터를 복사해 올 수 있다 아래 참고.
@@ -158,4 +155,4 @@ namespace ConstructorHelpersInternal
 }
 ```
 
-CDO를 생성하는 코드는 [이 글]()을 참고하라.
+CDO를 생성하는 코드는 [이 글](https://sungjjinkang.github.io/ue4/unrealengine4/computerscience/2022/04/10/ue4_cdo_construction_load.html)을 참고하라.

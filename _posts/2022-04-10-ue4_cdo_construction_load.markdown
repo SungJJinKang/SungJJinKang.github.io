@@ -260,30 +260,6 @@ UObject* StaticAllocateObject
 	...
 	...
 	...
-
-	if (IsInAsyncLoadingThread())
-	{
-		// 이 오브젝트가 현재 Async 로드 스레드에서 로드된 경우. ( ASync Loader Thread 옵션이 켜진 경우 )
-		NotifyConstructedDuringAsyncLoading(Obj, bSubObject);
-	}
-	else
-	{
-		// Sanity checks for async flags.
-		// It's possible to duplicate an object on the game thread that is still being referenced 
-		// by async loading code or has been created on a different thread than the main thread.
-		Obj->ClearInternalFlags(EInternalObjectFlags::AsyncLoading);
-		if (Obj->HasAnyInternalFlags(EInternalObjectFlags::Async) && IsInGameThread())
-		{
-			Obj->ClearInternalFlags(EInternalObjectFlags::Async);
-		}
-	}
-
-
-	// Let the caller know if a subobject has just been recycled.
-	if (bOutRecycledSubobject)
-	{
-		*bOutRecycledSubobject = bSubObject;
-	}
 	
 	return Obj;
 }
@@ -305,7 +281,7 @@ UObjectBase::UObjectBase(UClass* InClass, EObjectFlags InFlags, EInternalObjectF
 {
 	check(ClassPrivate);
 	// Add to global table.
-	AddObject(InName, InInternalFlags); // Add a newly created object to the name hash tables and the object array
+	AddObject(InName, InInternalFlags); // 오브젝트의 이름을 FName 테이블에 추가하고, UObject들을 모두 모아둔 Array에 이 오브젝트를 추가한다.
 }
 
 ```
