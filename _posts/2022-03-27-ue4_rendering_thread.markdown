@@ -230,7 +230,7 @@ void FScene::UpdatePrimitiveTransform(UPrimitiveComponent* Primitive)
 			ENQUEUE_RENDER_COMMAND(UpdateTransformCommand)( // !!!!!!!!!!!
 				[UpdateParams](FRHICommandListImmediate& RHICmdList)
 				{ 
-					// ⭐ 이 람다 코드는 렌더스레드에서만 호출된다. ㅍ
+					// ⭐ 이 람다 코드는 렌더스레드에서만 호출된다. ⭐
 					FScopeCycleCounter Context(UpdateParams.PrimitiveSceneProxy->GetStatId());
 					UpdateParams.Scene->UpdatePrimitiveTransform_RenderThread(UpdateParams.PrimitiveSceneProxy, UpdateParams.WorldBounds, UpdateParams.LocalBounds, UpdateParams.LocalToWorld, UpdateParams.AttachmentRootPosition, UpdateParams.PreviousTransform);
 				});
@@ -476,22 +476,24 @@ void UActorComponent::DoDeferredRenderUpdates_Concurrent()
 ```
 
 -----------------------------------------------------
-
+             
 이렇게 이 글에서는 게임 스레드가 렌더 스레드로 렌더링과 관련된 데이터를 어떻게 문제 없이 전송하는지에 대해 알아보았다.       
 언리얼 엔진4는 앞에서 보았듯이 게임 스레드에서 사용하는 데이터와, 렌더 스레드에서 사용하는 데이터를 완전히 분리하여서 Data Race를 막고 서로간의 Dependency를 분리하여 두 스레드가 각자 독립적으로 돌아가도록 구현을 하였다.          
-
+              
 -------------------------------------------------------
-
-조금 더 디테일하게 들어가면 "게임 스레드가 액터를 파괴하였을 때 이 파괴 동작이 곧바로 반영되어 렌더 스레드에 영향을 주는 것( 렌더 스레드는 항상 게임 스레드보다 1, 2 프레임 뒤쳐져서 렌더링을 하기 떄문 )을 막기 위한 동작 등등 여러 추가적인 동작들이 더 있지만 이 글에서는 다루지 못하였다.        
-
+          
+조금 더 디테일하게 들어가면 "게임 스레드가 액터를 파괴하였을 때 이 파괴 동작이 곧바로 반영되어 렌더 스레드에 영향을 주는 것( 렌더 스레드는 항상 게임 스레드보다 1, 2 프레임 뒤쳐져서 렌더링을 하기 떄문 )을 막기 위한 동작 등등 여러 추가적인 동작들이 더 있지만 이 글에서는 다루지 못하였다.         
+            
 ------------------------------------------------------
-
-이 글에서는 언리얼 엔진4가 렌더링과 관련된 데이터를 어떻게 게임스레드에서 렌더스레드로 안전하게, 성능을 해치지 않고 전달하는지에 대해 알아보았다.                 
+           
+이 글에서는 언리얼 엔진4가 렌더링과 관련된 데이터를 어떻게 게임스레드에서 렌더스레드로 안전하게, 성능을 해치지 않고 전달하는지에 대해 알아보았다.                          
 그럼 다음에는 게임 스레드로부터 전송된 데이터들을 가지고 렌더스레드가 어떻게 렌더링을 수행하는지에 대해 [이 글](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/FMobileSceneRenderer.html)에서 알아보겠다.           
 여러 SceneRenderer 중에서 모바일 플랫폼에서 사용되는 "FMobileSceneRenderer"에 대해 집중적으로 탐구를 해볼 예정이다.            
-
+               
 -------------------------------------------------------          
-
-            
+                   
+추가 참고 자료 : [[UE5] MeshDrawCommand (1/2)](https://scahp.tistory.com/74?category=848072), [[UE5] MeshDrawCommand (2/2)](https://scahp.tistory.com/75?category=848072)        
+              
+--------------------                  
               
 references : [https://ikrima.dev/ue4guide/graphics-development/render-architecture/render-thread-code-flow/](https://ikrima.dev/ue4guide/graphics-development/render-architecture/render-thread-code-flow/), [https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/ThreadedRendering/](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/ThreadedRendering/), [https://twitter.com/sebaaltonen/status/1102783202891104256](https://twitter.com/sebaaltonen/status/1102783202891104256), [https://twitter.com/timsweeneyepic/status/1084336154772680705](https://twitter.com/timsweeneyepic/status/1084336154772680705), [https://twitter.com/benjinsmith/status/1387446710289457157](https://twitter.com/benjinsmith/status/1387446710289457157)                    
