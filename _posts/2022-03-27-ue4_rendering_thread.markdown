@@ -230,7 +230,7 @@ void FScene::UpdatePrimitiveTransform(UPrimitiveComponent* Primitive)
 			ENQUEUE_RENDER_COMMAND(UpdateTransformCommand)( // !!!!!!!!!!!
 				[UpdateParams](FRHICommandListImmediate& RHICmdList)
 				{ 
-					// 이 람다 코드는 렌더스레드에서만 호출된다.
+					// ⭐ 이 람다 코드는 렌더스레드에서만 호출된다. ㅍ
 					FScopeCycleCounter Context(UpdateParams.PrimitiveSceneProxy->GetStatId());
 					UpdateParams.Scene->UpdatePrimitiveTransform_RenderThread(UpdateParams.PrimitiveSceneProxy, UpdateParams.WorldBounds, UpdateParams.LocalBounds, UpdateParams.LocalToWorld, UpdateParams.AttachmentRootPosition, UpdateParams.PreviousTransform);
 				});
@@ -238,7 +238,7 @@ void FScene::UpdatePrimitiveTransform(UPrimitiveComponent* Primitive)
 	}
 	else
 	{
-		// 아직 Primitive가 SceneProxy를 가지고 있지 않은 경우, 생성해줌. 
+		// ⭐ 아직 Primitive가 SceneProxy를 가지고 있지 않은 경우, 생성해줌. ⭐
 		AddPrimitive(Primitive);
 	}
 }
@@ -272,7 +272,7 @@ FORCEINLINE_DEBUGGABLE void EnqueueUniqueRenderCommand(LAMBDA&& Lambda)
 
 	if (IsInRenderingThread())
 	{
-		// 렌더스레드에서 호출한 경우 즉시 실행.
+		// ⭐ 렌더스레드에서 호출한 경우 즉시 실행. ⭐
 		FRHICommandListImmediate& RHICmdList = GetImmediateCommandList_ForRenderCommand();
 		Lambda(RHICmdList);
 	}
@@ -281,7 +281,7 @@ FORCEINLINE_DEBUGGABLE void EnqueueUniqueRenderCommand(LAMBDA&& Lambda)
 		if (LIKELY(GIsThreadedRendering || !IsInGameThread())) // !!
 		{
 			CheckNotBlockedOnRenderThread();
-			TGraphTask<EURCType>::CreateTask().ConstructAndDispatchWhenReady(Forward<LAMBDA>(Lambda)); // Graph Task System을 통해 렌더스레드의 큐에 삽입
+			TGraphTask<EURCType>::CreateTask().ConstructAndDispatchWhenReady(Forward<LAMBDA>(Lambda)); // ⭐ Graph Task System을 통해 렌더스레드의 큐에 삽입 ⭐
 		}
 		else
 		{
@@ -298,13 +298,13 @@ FORCEINLINE_DEBUGGABLE void EnqueueUniqueRenderCommand(LAMBDA&& Lambda)
 		static const char* CStr() { return #Type; } \
 		static const TCHAR* TStr() { return TEXT(#Type); } \
 	}; \
-	EnqueueUniqueRenderCommand<Type##Name> // EnqueueUniqueRenderCommand 함수 호출.
+	EnqueueUniqueRenderCommand<Type##Name> // ⭐ EnqueueUniqueRenderCommand 함수 호출. ⭐
 
 
 ENQUEUE_RENDER_COMMAND 사용 예)            
 
 ENQUEUE_RENDER_COMMAND(UpdateAllPrimitiveSceneInfosCmd)([Scene](FRHICommandListImmediate& RHICmdList) {
-				// 이 람다 코드는 렌더스레드에서만 호출된다.
+				// ⭐ 이 람다 코드는 렌더스레드에서만 호출된다. ⭐
 				Scene->UpdateAllPrimitiveSceneInfos(RHICmdList);
 			});
 
@@ -326,7 +326,7 @@ if (ShouldExecuteOnRenderThread())
 void FBaseGraphTask::QueueTask(ENamedThreads::Type CurrentThreadIfKnown)
 {
 	checkThreadGraph(LifeStage.Increment() == int32(LS_Queued));
-	FTaskGraphInterface::Get().QueueTask(this, ThreadToExecuteOn /* ENamedThreads::GetRenderThread()이 들어간다. */, CurrentThreadIfKnown);
+	FTaskGraphInterface::Get().QueueTask(this, ThreadToExecuteOn /* ⭐ ENamedThreads::GetRenderThread()이 들어간다. ⭐ */, CurrentThreadIfKnown);
 }
 ```
 최종적으로 언리얼의 Task Graph System의 Queue에 Task를 넣게된다. ( TaskGraph쪽도 대걔 볼 내용이 많다..... )                              
@@ -360,9 +360,9 @@ void UActorComponent::MarkRenderStateDirty()
 	{
 		// Flag as dirty
 		bRenderStateDirty = true; // !!
-		MarkForNeededEndOfFrameRecreate(); // EndOfFrame에 이 컴포넌트를 업데이트해야 한다는 것을 UWorld에 알려줌.         
+		MarkForNeededEndOfFrameRecreate(); // ⭐ EndOfFrame에 이 컴포넌트를 업데이트해야 한다는 것을 UWorld에 알려줌. ⭐         
 
-		MarkRenderStateDirtyEvent.Broadcast(*this); // 쓰이지 않으니 무시해도 좋다.     
+		MarkRenderStateDirtyEvent.Broadcast(*this); // ⭐ 쓰이지 않으니 무시해도 좋다. ⭐     
 	}
 }
 ```
@@ -390,7 +390,7 @@ void UWorld::SendAllEndOfFrameUpdates()
 		LocalComponentsThatNeedEndOfFrameUpdate.Append(ComponentsThatNeedEndOfFrameUpdate);
 	}
 
-	auto ParallelWork =  // 병렬 처리할 작업.
+	auto ParallelWork =  // ⭐ 병렬 처리할 작업. ⭐
 		[](int32 Index) 
 		{
 			UActorComponent* NextComponent = LocalComponentsThatNeedEndOfFrameUpdate[Index];
@@ -401,7 +401,7 @@ void UWorld::SendAllEndOfFrameUpdates()
 					NextComponent->DoDeferredRenderUpdates_Concurrent(); // !!
 				}
 				
-				FMarkComponentEndOfFrameUpdateState::Set(NextComponent, INDEX_NONE, EComponentMarkedForEndOfFrameUpdateState::Unmarked); // 컴포넌트에서 EndOfFrame Update Flag를 제거함.
+				FMarkComponentEndOfFrameUpdateState::Set(NextComponent, INDEX_NONE, EComponentMarkedForEndOfFrameUpdateState::Unmarked); // ⭐ 컴포넌트에서 EndOfFrame Update Flag를 제거함. ⭐
 			}
 		};
 
@@ -425,7 +425,11 @@ void UWorld::SendAllEndOfFrameUpdates()
 			ComponentsThatNeedEndOfFrameUpdate.Reset();
 	};
 
-	ParallelForWithPreWork(LocalComponentsThatNeedEndOfFrameUpdate.Num(), ParallelWork, GTWork); // ParallelWork 함수가 여러 스레드에서 병렬로 처리된다. 메인 스레드 ( 게임 스레드 )는 다른 스레드와 함께 ParallelWork를 수행하기 전 GTWork 함수를 먼저 처리한다. 그 후 ParallelWork 처리를 돕는다.                       
+	ParallelForWithPreWork(LocalComponentsThatNeedEndOfFrameUpdate.Num(), ParallelWork, GTWork); 
+	// ⭐ 
+	// ParallelWork 함수가 여러 스레드에서 병렬로 처리된다. 메인 스레드 ( 게임 스레드 )는 다른 스레드와 함께 ParallelWork를 수행하기 전 GTWork 함수를 먼저 처리한다. 
+	// 그 후 ParallelWork 처리를 돕는다. 
+	// ⭐                       
 	
 	LocalComponentsThatNeedEndOfFrameUpdate.Reset();
 }
