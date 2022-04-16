@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Writeback Caching, Write Combining"
-date:   2022-04-17
+date:   2022-04-16
 categories: ComputerScience ComputerGraphics
 ---
            
