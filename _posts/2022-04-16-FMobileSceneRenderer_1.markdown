@@ -176,7 +176,7 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 						// 삭제하려는 SceneInfo과 같은 TypeHash를 가진 SceneInfo들에 대한 렌더링 Data들을 리스트의 마지막으로 모두 밀어넣는다.
 						// 
 						// ⭐ 이는 렌더링 관련 데이터의 리스트에서 같은 SceneInfo Type Hash를 가진 데이터들은 리스트 내에 연속되게 존재함을 유지하기 위함이다. ⭐
-						// ⭐ 나중에 드로우콜 Batch를 위해 쓰인다 ( ? ) ⭐ 
+						// ⭐ 나중에 드로우콜 Batch를 위해 쓰인다 ( ?, 확인 필요 ) ⭐ 
 						//
 						// 밑에서 Pop하기 위함.
 						// 

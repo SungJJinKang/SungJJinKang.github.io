@@ -1,15 +1,30 @@
 ---
 layout: post
-title:  "Unreal Engine4 FMobileSceneRenderer 분석"
+title:  "Unreal Engine4 FMobileSceneRenderer 분석 - 1"
 date:   2022-04-14
 categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
 ---
 
 **FMobileSceneRenderer**는 언리얼 엔진4의 모바일용 그래픽스 파이프라인이다.                
-이 글은 FMobileSceneRenderer::Render 함수를 위주로 FMobileSceneRenderer의 소스 코드를 분석할 것이다.        
-언리얼 엔진 정책상 아마 모든 소스 코드를 담지는 못할 것 같다.              
+이 글은 **FMobileSceneRenderer::Render** 함수를 위주로 FMobileSceneRenderer의 소스 코드를 분석할 것이다.      
+          
+UE4 4.27 버전을 기준으로 작성하였다.      
+4.27 버전이 언리얼 엔진 4세대의 마지막 Release 버전이다.             
+          
+------------------------------        
 
-------------------------------         
+**FMobileSceneRenderer::Render** 함수는 렌더 스레드에서 매틱마다 도는 함수로 렌더링에 필요한 여러 동작을 수행한다.         
+FMobileSceneRenderer는 모바일에서만 사용되는 렌더러로 ( 아마 안드로이드와 일부 IOS기기에서 사용되는 것으로 보임 ), 기존의 다른 플랫폼에서 사용되는 렌더러와는 달리 모바일 플랫폼의 특수성으로 인해 Forward 렌더링으로 렌더링을 수행한다. 이는 모바일 환경에서 Deffered 렌더링 수행에 필요한 G버퍼의를 가지고 있기에는 모바일 GPU 메모리의 제약이 많기 때문이다.      
+
+FMobileSceneRenderer::Render 함수의 호출 경로를 보고 싶다면        
+UGameViewportClient::Draw -> FRendererModule::BeginRenderingViewFamily -> RenderViewFamily_RenderThread -> FMobileSceneRenderer::Render 순으로 따라 가면 된다.     
+
+----------------------------------------------
+
+주요 코드들 위주로 챕터를 나누어서 소개할 것이다.         
+
+- 1. [FScene::UpdateAllPrimitiveSceneInfos](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)               
+
 
 ```cpp
 void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
@@ -19,9 +34,11 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	SCOPED_DRAW_EVENT(RHICmdList, MobileSceneRender);
 	SCOPED_GPU_STAT(RHICmdList, MobileSceneRender);
 
+    // ⭐⭐⭐⭐⭐⭐⭐
 	Scene->UpdateAllPrimitiveSceneInfos(RHICmdList);
-
-	PrepareViewRectsForRendering();
+	// ⭐⭐⭐⭐⭐⭐⭐
+	
+	PrepareViewRectsForRendering(RHICmdList);
 
 	if (ShouldRenderSkyAtmosphere(Scene, ViewFamily.EngineShowFlags))
 	{
@@ -76,6 +93,11 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 
 	RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_SceneSim));
 
+	if (ViewFamily.bLateLatchingEnabled)
+	{
+		BeginLateLatching(RHICmdList);
+	}
+
 	FSceneRenderTargets& SceneContext = FSceneRenderTargets::Get(RHICmdList);
 
 	if (bUseVirtualTexturing)
@@ -87,6 +109,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 		RHICmdList.Transition(FRHITransitionInfo(FeedbackUAV, ERHIAccess::SRVMask, ERHIAccess::UAVMask));
 		RHICmdList.ClearUAVUint(FeedbackUAV, FUintVector4(~0u, ~0u, ~0u, ~0u));
 		RHICmdList.Transition(FRHITransitionInfo(FeedbackUAV, ERHIAccess::UAVMask, ERHIAccess::UAVMask));
+		RHICmdList.BeginUAVOverlap(FeedbackUAV);
 	}
 	
 	FSortedLightSetSceneInfo SortedLightSet;
@@ -139,10 +162,51 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	if (bShouldRenderCustomDepth)
 	{
 		FRDGBuilder GraphBuilder(RHICmdList);
-		RenderCustomDepthPass(GraphBuilder);
+		FSceneTextureShaderParameters SceneTextures = CreateSceneTextureShaderParameters(GraphBuilder, Views[0].GetFeatureLevel(), ESceneTextureSetupMode::None);
+		RenderCustomDepthPass(GraphBuilder, SceneTextures);
 		GraphBuilder.Execute();
 	}
-	
+
+	if (bIsFullPrepassEnabled)
+	{
+		//SDF and AO require full depth prepass
+
+		FRHIRenderPassInfo DepthPrePassRenderPassInfo(
+			SceneContext.GetSceneDepthSurface(),
+			EDepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil);
+
+		DepthPrePassRenderPassInfo.NumOcclusionQueries = ComputeNumOcclusionQueriesToBatch();
+		DepthPrePassRenderPassInfo.bOcclusionQueries = DepthPrePassRenderPassInfo.NumOcclusionQueries != 0;
+
+		RHICmdList.BeginRenderPass(DepthPrePassRenderPassInfo, TEXT("DepthPrepass"));
+
+		RHICmdList.SetCurrentStat(GET_STATID(STAT_CLM_MobilePrePass));
+		// Full Depth pre-pass
+		RenderPrePass(RHICmdList);
+
+		// Issue occlusion queries
+		RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_Occlusion));
+		RenderOcclusion(RHICmdList);
+
+		RHICmdList.EndRenderPass();
+
+		if (bRequiresDistanceFieldShadowingPass)
+		{
+			CSV_SCOPED_TIMING_STAT_EXCLUSIVE(RenderSDFShadowing);
+			RenderSDFShadowing(RHICmdList);
+		}
+
+		if (bShouldRenderHZB)
+		{
+			RenderHZB(RHICmdList, SceneContext.SceneDepthZ);
+		}
+
+		if (bRequiresAmbientOcclusionPass)
+		{
+			RenderAmbientOcclusion(RHICmdList, SceneContext.SceneDepthZ);
+		}
+	}
+
 	FRHITexture* SceneColor = nullptr;
 	if (bDeferredShading)
 	{
@@ -152,23 +216,56 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	{
 		SceneColor = RenderForward(RHICmdList, ViewList);
 	}
-		
-	if (FXSystem && Views.IsValidIndex(0))
-	{
-		check(RHICmdList.IsOutsideRenderPass());
+	
 
-		FXSystem->PostRenderOpaque(
-			RHICmdList,
-			Views[0].ViewUniformBuffer,
-			nullptr,
-			nullptr,
-			Views[0].AllowGPUParticleUpdate()
-		);
-		if (FGPUSortManager* GPUSortManager = FXSystem->GetGPUSortManager())
+	if (bShouldRenderVelocities)
+	{
+		FRDGBuilder GraphBuilder(RHICmdList);
+
+		FRDGTextureMSAA SceneDepthTexture = RegisterExternalTextureMSAA(GraphBuilder, SceneContext.SceneDepthZ);
+		FRDGTextureRef VelocityTexture = TryRegisterExternalTexture(GraphBuilder, SceneContext.SceneVelocity);
+
+		if (VelocityTexture != nullptr)
 		{
-			GPUSortManager->OnPostRenderOpaque(RHICmdList);
+			AddClearRenderTargetPass(GraphBuilder, VelocityTexture);
 		}
-		RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+
+		// Render the velocities of movable objects
+		AddSetCurrentStatPass(GraphBuilder, GET_STATID(STAT_CLMM_Velocity));
+		RenderVelocities(GraphBuilder, SceneDepthTexture.Resolve, VelocityTexture, FSceneTextureShaderParameters(), EVelocityPass::Opaque, false);
+		AddSetCurrentStatPass(GraphBuilder, GET_STATID(STAT_CLMM_AfterVelocity));
+
+		AddSetCurrentStatPass(GraphBuilder, GET_STATID(STAT_CLMM_TranslucentVelocity));
+		RenderVelocities(GraphBuilder, SceneDepthTexture.Resolve, VelocityTexture, GetSceneTextureShaderParameters(CreateMobileSceneTextureUniformBuffer(GraphBuilder, EMobileSceneTextureSetupMode::SceneColor)), EVelocityPass::Translucent, false);
+
+		GraphBuilder.Execute();
+	}
+
+	{
+		FRendererModule& RendererModule = static_cast<FRendererModule&>(GetRendererModule());
+		FRDGBuilder GraphBuilder(RHICmdList);
+		RendererModule.RenderPostOpaqueExtensions(GraphBuilder, Views, SceneContext);
+
+		if (FXSystem && Views.IsValidIndex(0))
+		{
+			AddUntrackedAccessPass(GraphBuilder, [this](FRHICommandListImmediate& RHICmdList)
+			{
+				check(RHICmdList.IsOutsideRenderPass());
+
+				FXSystem->PostRenderOpaque(
+					RHICmdList,
+					Views[0].ViewUniformBuffer,
+					nullptr,
+					nullptr,
+					Views[0].AllowGPUParticleUpdate()
+				);
+				if (FGPUSortManager* GPUSortManager = FXSystem->GetGPUSortManager())
+				{
+					GPUSortManager->OnPostRenderOpaque(RHICmdList);
+				}
+			});
+		}
+		GraphBuilder.Execute();
 	}
 
 	// Flush / submit cmdbuffer
@@ -181,11 +278,6 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	if (!bGammaSpace || bRenderToSceneColor)
 	{
 		RHICmdList.Transition(FRHITransitionInfo(SceneColor, ERHIAccess::Unknown, ERHIAccess::SRVMask));
-	}
-
-	if (bRequriesAmbientOcclusionPass)
-	{
-		RenderAmbientOcclusion(RHICmdList, SceneContext.SceneDepthZ);
 	}
 
 	if (bDeferredShading)
@@ -201,6 +293,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 		SCOPED_GPU_STAT(RHICmdList, VirtualTextureUpdate);
 
 		// No pass after this should make VT page requests
+		RHICmdList.EndUAVOverlap(SceneContext.VirtualTextureFeedbackUAV);
 		RHICmdList.Transition(FRHITransitionInfo(SceneContext.VirtualTextureFeedbackUAV, ERHIAccess::UAVMask, ERHIAccess::SRVMask));
 
 		TArray<FIntRect, TInlineAllocator<4>> ViewRects;
@@ -245,6 +338,11 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 							SetupMode |= EMobileSceneTextureSetupMode::CustomDepth;
 						}
 
+						if (bShouldRenderVelocities)
+						{
+							SetupMode |= EMobileSceneTextureSetupMode::SceneVelocity;
+						}
+
 						MobileSceneTexturesPerView[ViewIndex] = CreateMobileSceneTextureUniformBuffer(GraphBuilder, SetupMode);
 					}
 				};
@@ -258,7 +356,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 				{
 					RDG_EVENT_SCOPE_CONDITIONAL(GraphBuilder, Views.Num() > 1, "View%d", ViewIndex);
 					PostProcessingInputs.SceneTextures = MobileSceneTexturesPerView[ViewIndex];
-					AddMobilePostProcessingPasses(GraphBuilder, Views[ViewIndex], PostProcessingInputs);
+					AddMobilePostProcessingPasses(GraphBuilder, Views[ViewIndex], PostProcessingInputs, NumMSAASamples > 1);
 				}
 			}
 		}
@@ -267,7 +365,18 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	GEngine->GetPostRenderDelegate().Broadcast();
 
 	RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_SceneEnd));
+
+	if (bShouldRenderVelocities)
+	{
+		SceneContext.SceneVelocity.SafeRelease();
+	}
 	
+	if (ViewFamily.bLateLatchingEnabled)
+	{
+		// LateLatching is only enabled with multiview
+		EndLateLatching(RHICmdList, Views[0]);
+	}
+
 	RenderFinish(GraphBuilder, ViewFamilyTexture);
 	GraphBuilder.Execute();
 
