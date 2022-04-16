@@ -35,9 +35,10 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	SCOPED_GPU_STAT(RHICmdList, MobileSceneRender);
 
     // ⭐⭐⭐⭐⭐⭐⭐
+	// 1.
 	Scene->UpdateAllPrimitiveSceneInfos(RHICmdList);
 	// ⭐⭐⭐⭐⭐⭐⭐
-	
+
 	PrepareViewRectsForRendering(RHICmdList);
 
 	if (ShouldRenderSkyAtmosphere(Scene, ViewFamily.EngineShowFlags))
