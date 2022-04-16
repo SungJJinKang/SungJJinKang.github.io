@@ -26,7 +26,10 @@ FStreamableManager::RequestAsyncLoad 함수를 통해 에셋들에 대한 Async 
 ```cpp
 TSharedPtr<FStreamableHandle> FStreamableManager::RequestAsyncLoad(TArray<FSoftObjectPath> TargetsToStream, FStreamableDelegate DelegateToCall, TAsyncLoadPriority Priority, bool bManageActiveHandle, bool bStartStalled, FString DebugName)
 {
-    // ⭐ FStreamableHandle : 동기적, 비동기적 에셋 로드와 관련된 데이터를 가짐. 로드 후 호출 델리게이트, 로드 우선 순위, 로드 완료 여부, 등등 유저 코드에서 접근할 수 있는 에셋 로딩과 관련된 모든 데이터가 들어 있다. ⭐               
+    // ⭐ 
+	// FStreamableHandle : 동기적, 비동기적 에셋 로드와 관련된 데이터를 가짐. 
+	// 로드 후 호출 델리게이트, 로드 우선 순위, 로드 완료 여부, 등등 유저 코드에서 접근할 수 있는 에셋 로딩과 관련된 모든 데이터가 들어 있다.
+	// ⭐               
 	TSharedRef<FStreamableHandle> NewRequest = MakeShareable(new FStreamableHandle());
 	NewRequest->CompleteDelegate = DelegateToCall;
 	NewRequest->OwningManager = this;
@@ -93,13 +96,19 @@ TSharedPtr<FStreamableHandle> FStreamableManager::RequestAsyncLoad(TArray<FSoftO
 
 	if (bManageActiveHandle)
 	{
-		// ⭐ 에셋이 로드 된 후에도 에셋 로드 Handle ( FStreamableHandle ) 에 대한 강참조를 가지고 있게 하여, FStreamableHandle가 RefCount이 되어 파괴되지 않도록 만듬. ⭐
+		// ⭐ 
+		// 에셋이 로드 된 후에도 에셋 로드 Handle ( FStreamableHandle ) 에 대한 강참조를 가지고 있게 하여, 
+		// FStreamableHandle가 RefCount이 되어 파괴되지 않도록 만듬. 
+		// ⭐
 		ManagedActiveHandles.Add(NewRequest);
 	}
 
 	if (bStartStalled)
 	{
-		NewRequest->bStalled = true; // ⭐ bStartStalled true일시 ASyncLoad를 즉시 시작 안함. ⭐
+		// ⭐ 
+		// bStartStalled true일시 ASyncLoad를 즉시 시작 안함. 
+		// ⭐
+		NewRequest->bStalled = true; 
 	}
 	else
 	{
@@ -137,7 +146,10 @@ void FStreamableManager::StartHandleRequests(TSharedRef<FStreamableHandle> Handl
 
 	for (int32 i = 0; i < Handle->RequestedAssets.Num(); i++)
 	{
-		FStreamable* Existing = StreamInternal(Handle->RequestedAssets[i], Handle->Priority, Handle); // ⭐ FStreamableHandle 내의 에셋 로드 요청들에 대해 ASyncLoad를 요청함. ⭐
+		// ⭐ 
+		// FStreamableHandle 내의 에셋 로드 요청들에 대해 ASyncLoad를 요청함. 
+		// ⭐
+		FStreamable* Existing = StreamInternal(Handle->RequestedAssets[i], Handle->Priority, Handle); 
 
 		ExistingStreamables.Add(Existing);
 		Existing->AddLoadingRequest(Handle); ASyncLoad 요청에 FStreamableHandle을 추가함.
@@ -152,7 +164,12 @@ void FStreamableManager::StartHandleRequests(TSharedRef<FStreamableHandle> Handl
 			// ⭐ 이미 에셋이 로드된 경우 ⭐
 			Existing->bAsyncLoadRequestOutstanding = false;
 
-			CheckCompletedRequests(Handle->RequestedAssets[i], Existing); // ⭐ 매개변수로 전달된 Hand이 참조 중인 에셋 로드 요청들 중 이미 로드된 에셋에 대해서는 해당 에셋의 로드를 기다리고 있던 다른 Handle들까지 포함하여 에셋 로드 콜백을 날려줌. ⭐
+			// ⭐ 
+			// 매개변수로 전달된 Hand이 참조 중인 에셋 로드 요청들 중 
+			// 이미 로드된 에셋에 대해서는 해당 에셋의 로드를 기다리고 있던 
+			// 다른 Handle들까지 포함하여 에셋 로드 콜백을 날려줌. 
+			// ⭐
+			CheckCompletedRequests(Handle->RequestedAssets[i], Existing); 
 		}
 	}
 }
@@ -161,8 +178,15 @@ FStreamable* FStreamableManager::StreamInternal(const FSoftObjectPath& InTargetN
 {
 	check(IsInGameThread());
 
-	FSoftObjectPath TargetName = ResolveRedirects(InTargetName); // ⭐ 리다이렉트된 경우를 대비하여 원래 경로를 찾아감. ⭐
-	FStreamable* Existing = StreamableItems.FindRef(TargetName); // ⭐ FStreamableManager에서 해당 에셋을 이미 로드 중인지를 확인 혹은 로드 되기 중인지를 확인. ⭐
+	// ⭐ 
+	// 리다이렉트된 경우를 대비하여 원래 경로를 찾아감. 
+	// ⭐
+	FSoftObjectPath TargetName = ResolveRedirects(InTargetName); 
+
+	// ⭐ 
+	// FStreamableManager에서 해당 에셋을 이미 로드 중인지를 확인 혹은 로드 되기 중인지를 확인. 
+	// ⭐
+	FStreamable* Existing = StreamableItems.FindRef(TargetName); 
 	if (Existing)
 	{
 		// ⭐ 이미 에셋을 로드 중 ( 혹은 로드가 끝난 경우 )인 경우. ⭐
@@ -204,11 +228,16 @@ FStreamable* FStreamableManager::StreamInternal(const FSoftObjectPath& InTargetN
 		// If async loading isn't safe or it's forced on, we have to do a sync load which will flush all async loading
 		if (GIsInitialLoad || ThreadContext.IsInConstructor > 0 || bForceSynchronousLoads)
 		{
-			// ⭐ ASync 에셋 로딩이 위험한 경우 혹은 현재 함수가 클래스 생성자에서 호출된 경우, 혹은 Sync 로드가 강제된 경우. ⭐ 
+			// ⭐ 
+			// ASync 에셋 로딩이 위험한 경우 혹은 현재 함수가 클래스 생성자에서 호출된 경우, 혹은 Sync 로드가 강제된 경우. 
+			// ⭐ 
 
 			FRedirectedPath RedirectedPath;
 			UE_LOG(LogStreamableManager, Verbose, TEXT("     Static loading %s"), *TargetName.ToString());
-			Existing->Target = StaticLoadObject(UObject::StaticClass(), nullptr, *TargetName.ToString()); // ⭐ Sync 로드를 수행 ⭐
+			// ⭐ 
+			// Sync 로드를 수행 
+			// ⭐
+			Existing->Target = StaticLoadObject(UObject::StaticClass(), nullptr, *TargetName.ToString()); 
 
 			// Need to manually detect redirectors because the above call only expects to load a UObject::StaticClass() type
 			UObjectRedirector* Redir = Cast<UObjectRedirector>(Existing->Target);
@@ -240,7 +269,12 @@ FStreamable* FStreamableManager::StreamInternal(const FSoftObjectPath& InTargetN
 
 			Existing->bAsyncLoadRequestOutstanding = true;
 			Existing->bLoadFailed = false;
-			int32 RequestId = LoadPackageAsync(Package, FLoadPackageAsyncDelegate::CreateSP(Handle, &FStreamableHandle::AsyncLoadCallbackWrapper, TargetName), Priority); // ⭐ LoadPackageAsync로 패키지명, 로드 우선순위. 그리고 로드 완료시 호출될 멤버 함수 ( 위에서 본 CheckCompletedRequests 함수를 호출한다. )를 그 Handle 인스턴스와 함께 전달한다. ⭐
+
+			// ⭐ 
+			// LoadPackageAsync로 패키지명, 로드 우선순위. 
+			// 그리고 로드 완료시 호출될 멤버 함수 ( 위에서 본 CheckCompletedRequests 함수를 호출한다. )를 그 Handle 인스턴스와 함께 전달한다. 
+			// ⭐
+			int32 RequestId = LoadPackageAsync(Package, FLoadPackageAsyncDelegate::CreateSP(Handle, &FStreamableHandle::AsyncLoadCallbackWrapper, TargetName), Priority); 
 		}
 	}
 	return Existing;
@@ -257,7 +291,10 @@ int32 LoadPackageAsync(const FString& InName, const FGuid* InGuid /*= nullptr*/,
 {
 	LLM_SCOPE(ELLMTag::AsyncLoading);
 	UE_CLOG(!GAsyncLoadingAllowed && !IsInAsyncLoadingThread(), LogStreaming, Fatal, TEXT("Requesting async load of \"%s\" when async loading is not allowed (after shutdown). Please fix higher level code."), *InName);
-	return GetAsyncPackageLoader().LoadPackage(InName, InGuid, InPackageToLoadFrom, InCompletionDelegate, InPackageFlags, InPIEInstanceID, InPackagePriority, InstancingContext); // ⭐ AsyncPackageLoader에 패키지 로드를 요청, FAsyncLoadingThread::LoadPackage 호출 ⭐
+	// ⭐ 
+	// AsyncPackageLoader에 패키지 로드를 요청, FAsyncLoadingThread::LoadPackage 호출 
+	// ⭐
+	return GetAsyncPackageLoader().LoadPackage(InName, InGuid, InPackageToLoadFrom, InCompletionDelegate, InPackageFlags, InPIEInstanceID, InPackagePriority, InstancingContext); 
 }
 ```
 
@@ -266,7 +303,10 @@ int32 FAsyncLoadingThread::LoadPackage(const FString& InName, const FGuid* InGui
 {
 	int32 RequestID = INDEX_NONE;
 
-	// ⭐ 매개변수로 패키지명이 전달되는 것이 정상이지만, 파일명이 전달되었을 경우도 패키지명을 자동으로 찾아준다. ⭐
+	// ⭐ 
+	// 매개변수로 패키지명이 전달되는 것이 정상이지만, 
+	// 파일명이 전달되었을 경우도 패키지명을 자동으로 찾아준다. 
+	// ⭐
 	FString PackageName;
 	bool bValidPackageName = true;
 
@@ -286,7 +326,10 @@ int32 FAsyncLoadingThread::LoadPackage(const FString& InName, const FGuid* InGui
 		}
 	}
 
-	FString PackageNameToLoad(InPackageToLoadFrom); // ⭐ 로드할 패키지 명 ⭐
+	// ⭐ 
+	// 로드할 패키지 명 
+	// ⭐
+	FString PackageNameToLoad(InPackageToLoadFrom); 
 
 	if (bValidPackageName)
 	{
@@ -308,17 +351,27 @@ int32 FAsyncLoadingThread::LoadPackage(const FString& InName, const FGuid* InGui
 	{
 		// Generate new request ID and add it immediately to the global request list (it needs to be there before we exit
 		// this function, otherwise it would be added when the packages are being processed on the async thread).
-		RequestID = IAsyncPackageLoader::GetNextRequestId(); // ⭐ 패키지 로더로부터 새로운 로드 요청 ID를 발급받는다. 에셋 로드 시작 전 로드 요청 ID를 미리 발급받아두어야한다. ⭐        
+		// ⭐ 
+		// 패키지 로더로부터 새로운 로드 요청 ID를 발급받는다. 에셋 로드 시작 전 로드 요청 ID를 미리 발급받아두어야한다. 
+		// ⭐        
+		RequestID = IAsyncPackageLoader::GetNextRequestId(); 
 		AddPendingRequest(RequestID);
 
 		// Allocate delegate on Game Thread, it is not safe to copy delegates by value on other threads
 		TUniquePtr<FLoadPackageAsyncDelegate> CompletionDelegatePtr;
 		if (InCompletionDelegate.IsBound())
 		{
-			CompletionDelegatePtr = MakeUnique<FLoadPackageAsyncDelegate>(MoveTemp(InCompletionDelegate)); // ⭐ 게임 스레드에서 로드 완료시 호출될 델리게이트를 생성한다. ⭐
+			// ⭐ 
+			// 게임 스레드에서 로드 완료시 호출될 델리게이트를 생성한다. 
+			// ⭐
+			CompletionDelegatePtr = MakeUnique<FLoadPackageAsyncDelegate>(MoveTemp(InCompletionDelegate)); 
 		}
 
-		// ⭐ ASync 패키지 로드에 대한 정보를 담은 FAsyncPackageDesc 생성. 로드 요청 ID, 패키지명, 패키지 로드 완료시 호출될 델리게이트, 로드 우선 순위 등등 ASync 스레드가 패키지를 ASync하게 로드하기 위한 각종 데이터가 담겨있다. ⭐         
+		// ⭐ 
+		// ASync 패키지 로드에 대한 정보를 담은 FAsyncPackageDesc 생성. 
+		// 로드 요청 ID, 패키지명, 패키지 로드 완료시 호출될 델리게이트, 로드 우선 순위 등등 
+		// ASync 스레드가 패키지를 ASync하게 로드하기 위한 각종 데이터가 담겨있다. 
+		// ⭐         
 		FAsyncPackageDesc PackageDesc(RequestID, *PackageName, *PackageNameToLoad, InGuid ? *InGuid : FGuid(), MoveTemp(CompletionDelegatePtr), InPackageFlags, InPIEInstanceID, InPackagePriority);
 		QueuePackage(PackageDesc); // 패키지를 로드 큐에 넣는다.      
 	}
@@ -335,7 +388,11 @@ int32 FAsyncLoadingThread::LoadPackage(const FString& InName, const FGuid* InGui
 ```cpp
 void FAsyncLoadingThread::QueuePackage(FAsyncPackageDesc& Package)
 {
-	FScopeLock QueueLock(&QueueCritical); // ⭐ 당연한 이야기지만 게임 스레드 ( 현재 이 함수를 호출하는 스레드 ), ASyncLoad 스레드간의 DataRace를 방지하기 위해 큐에 FAsyncPackageDesc 삽입하기 전 뮤텍스 락을 건다. ⭐
+	// ⭐ 
+	// 당연한 이야기지만 게임 스레드 ( 현재 이 함수를 호출하는 스레드 ), ASyncLoad 스레드간의 DataRace를 방지하기 위해 
+	// 큐에 FAsyncPackageDesc 삽입하기 전 뮤텍스 락을 건다. 
+	// ⭐
+	FScopeLock QueueLock(&QueueCritical); 
 	QueuedPackagesCounter.Increment();
 	QueuedPackages.Add(new FAsyncPackageDesc(Package, MoveTemp(Package.PackageLoadedDelegate)));
 	QueuedRequestsEvent->Trigger();
@@ -346,7 +403,10 @@ void FAsyncLoadingThread::QueuePackage(FAsyncPackageDesc& Package)
 
 ```cpp
 /**
- * ⭐ ASync 로딩 스레드에 대한 추상화 클래스이다. 패키지에 대한 Preloads, Serializes는 ASync 스레드에서 호출되고, 패키지에 대한 PostLoads는 게임 스레드에서 호출된다. ⭐
+ * // ⭐ 
+   // ASync 로딩 스레드에 대한 추상화 클래스이다. 
+   // 패키지에 대한 Preloads, Serializes는 ASync 스레드에서 호출되고, 패키지에 대한 PostLoads는 게임 스레드에서 호출된다. 
+   // ⭐
  */
 class FAsyncLoadingThread final : public FRunnable, public IAsyncPackageLoader
 ```
@@ -369,7 +429,9 @@ uint32 FAsyncLoadingThread::Run()
 	}
 	if (!IsGarbageCollectionWaiting())
 	{
-		// ⭐ 가비지 컬렉터가 돌고 있지 않은 경우, TickAsyncThread를 호출한다. ⭐
+		// ⭐ 
+		// 가비지 컬렉터가 돌고 있지 않은 경우, TickAsyncThread를 호출한다. 
+		// ⭐
 		bool bDidSomething = false;
 		TickAsyncThread(true, false, 0.033f, bDidSomething);
 	}
@@ -392,7 +454,8 @@ EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncThread(bool bUseTimeLimit
 				
 				// ⭐
 				// 밑에 코드를 참고하라. 
-				// 위에서 게임스레드에서 FAsyncLoadingThread::QueuedPackages에 추가한 FAsyncPackageDesc를 ASync Load용 큐 ( FAsyncLoadingThread::AsyncPackages )로 옮긴다.
+				// 위에서 게임스레드에서 FAsyncLoadingThread::QueuedPackages에 
+				// 추가한 FAsyncPackageDesc를 ASync Load용 큐 ( FAsyncLoadingThread::AsyncPackages )로 옮긴다.
 				// 이 함수는 동작 제한 시간이 있기 때문에 제한된 시간 이상으로 실행 시간을 잡아먹으면 반환된다.
 				// ⭐
 				CreateAsyncPackagesFromQueue(bUseTimeLimit, bUseFullTimeLimit, TimeLimit, FlushTree); 
@@ -402,7 +465,11 @@ EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncThread(bool bUseTimeLimit
 			const float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - TimeUsed);
 			if (IsGarbageCollectionWaiting() || (RemainingTimeLimit <= 0.0f && bUseTimeLimit && !IsMultithreaded()))
 			{
-				Result = EAsyncPackageState::TimeOut; // ⭐ 가비지 컬렉팅 중이거나, CreateAsyncPackagesFromQueue 함수가 너무 오랫동안 돈 경우 이번 틱에서는 ASync 처리를 하지 못한다. ⭐
+				// ⭐ 
+				// 가비지 컬렉팅 중이거나, CreateAsyncPackagesFromQueue 함수가 너무 오랫동안 돈 경우,
+				// 이번 틱에서는 ASync 처리를 하지 못한다. 
+				// ⭐
+				Result = EAsyncPackageState::TimeOut; 
 			}
 			else
 			{
@@ -479,7 +546,10 @@ int32 FAsyncLoadingThread::CreateAsyncPackagesFromQueue(bool bUseTimeLimit, bool
 				if (NumCopied < TimeSliceGranularity)
 				{
 					NumCopied++;
-					QueueCopy.Add(PackageRequest); // ⭐ 한 루프마다 한 FAsyncPackageDesc씩 ASync Load용 큐로 옮기는 것을 시도한다. ⭐
+					// ⭐ 
+					// 한 루프마다 한 FAsyncPackageDesc씩 ASync Load용 큐로 옮기는 것을 시도한다. 
+					// ⭐
+					QueueCopy.Add(PackageRequest); 
 				}
 				else
 				{
@@ -521,11 +591,17 @@ int32 FAsyncLoadingThread::CreateAsyncPackagesFromQueue(bool bUseTimeLimit, bool
 
 void FAsyncLoadingThread::ProcessAsyncPackageRequest(FAsyncPackageDesc* InRequest, FAsyncPackage* InRootPackage, FFlushTree* FlushTree)
 {
-	FAsyncPackage* Package = FindExistingPackageAndAddCompletionCallback(InRequest, AsyncPackageNameLookup, FlushTree); // ⭐ 혹시 로드하려는 패키지가 이미 로드 중인 경우 전달된 로드 완료 콜백을 기존 로드에 추가한다. ⭐
+	// ⭐ 
+	// 혹시 로드하려는 패키지가 이미 로드 중인 경우 전달된 로드 완료 콜백을 기존 로드에 추가한다. 
+	// ⭐
+	FAsyncPackage* Package = FindExistingPackageAndAddCompletionCallback(InRequest, AsyncPackageNameLookup, FlushTree); 
 
 	if (Package)
 	{
-		// ⭐ 로드하려는 패키지를 이미 로드 중인 경우, 기존 로드 요청의 Priority와 로드하려고 전달된 FAsyncPackageDesc의 Priority를 비교하여 더 높은 Priority를 전달한다. ⭐
+		// ⭐ 
+		// 로드하려는 패키지를 이미 로드 중인 경우, 
+		// 기존 로드 요청의 Priority와 로드하려고 전달된 FAsyncPackageDesc의 Priority를 비교하여 더 높은 Priority를 전달한다. 
+		// ⭐
 		UpdateExistingPackagePriorities(Package, InRequest->Priority);
 	}
 	else
@@ -548,21 +624,31 @@ void FAsyncLoadingThread::ProcessAsyncPackageRequest(FAsyncPackageDesc* InReques
 		{
 			// GC can't run in here
 			FGCScopeGuard GCGuard;
-			Package = new FAsyncPackage(*this, *InRequest, EDLBootNotificationManager); // ⭐ 로드를 위한 FAsyncPackage를 생성한다. ⭐
+			// ⭐ 
+			// 로드를 위한 FAsyncPackage를 생성한다. 
+			// ⭐
+			Package = new FAsyncPackage(*this, *InRequest, EDLBootNotificationManager); 
 		}
 		if (InRequest->PackageLoadedDelegate.IsValid())
 		{
 			const bool bInternalCallback = false;
 			Package->AddCompletionCallback(MoveTemp(InRequest->PackageLoadedDelegate), bInternalCallback);
 		}
-		Package->SetDependencyRootPackage(InRootPackage); // ⭐ FAsyncPackage의 Root FAsyncPackage를 셋팅한다. 로드하려는 패키지가 다른 패키지에 Dependency를 가진 경우 해당 Dependency FAsyncPackage를 셋팅한다. ⭐
+
+		// ⭐ 
+		// FAsyncPackage의 Root FAsyncPackage를 셋팅한다. 
+		// 로드하려는 패키지가 다른 패키지에 Dependency를 가진 경우 해당 Dependency FAsyncPackage를 셋팅한다. 
+		// ⭐
+		Package->SetDependencyRootPackage(InRootPackage);
+
 		if (FlushTree)
 		{
 			Package->PopulateFlushTree(FlushTree);
 		}
 
 		// Add to queue according to priority.
-		InsertPackage(Package, false, EAsyncPackageInsertMode::InsertAfterMatchingPriorities); // ⭐ FAsyncPackage를 ASync 로드될 FAsyncLoadingThread::AsyncPackages 리스트 변수에 넣는다. ⭐
+		// ⭐ FAsyncPackage를 ASync 로드될 FAsyncLoadingThread::AsyncPackages 리스트 변수에 넣는다. ⭐
+		InsertPackage(Package, false, EAsyncPackageInsertMode::InsertAfterMatchingPriorities); 
 
 		// For all other cases this is handled in FindExistingPackageAndAddCompletionCallback
 		const int32 QueuedPackagesCount = QueuedPackagesCounter.Decrement();
@@ -599,7 +685,10 @@ void FAsyncLoadingThread::InsertPackage(FAsyncPackage* Package, bool bReinsert, 
 			if (GEventDrivenLoaderEnabled)
 			{
 				// @todo If this is a reinsert for some priority thing, well we don't go back and retract the stuff in flight to adjust the priority of events
-				QueueEvent_CreateLinker(Package, FAsyncLoadEvent::EventSystemPriority_MAX); // ⭐ 이 부분이 중요하다! ⭐
+				// ⭐ 
+				// 이 부분이 중요하다! 
+				// ⭐
+				QueueEvent_CreateLinker(Package, FAsyncLoadEvent::EventSystemPriority_MAX); 
 			}
 		}
 	}
@@ -624,7 +713,10 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 		{
 			{
 				const float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
-				int32 NumCreated = CreateAsyncPackagesFromQueue(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit); // ⭐ 위에서 본 함수이다. 여기서도 다시 한번 호출해준다. ⭐
+				// ⭐ 
+				// 위에서 본 함수이다. 여기서도 다시 한번 호출해준다. 
+				// ⭐
+				int32 NumCreated = CreateAsyncPackagesFromQueue(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit); 
 				OutPackagesProcessed += NumCreated;
 				bDidSomething = NumCreated > 0 || bDidSomething;
 				if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("CreateAsyncPackagesFromQueue")))
@@ -645,7 +737,10 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 
 				Args.OutLastTypeOfWorkPerformed = nullptr;
 				Args.OutLastObjectWorkWasPerformedOn = nullptr;
-				if (EventQueue.PopAndExecute(Args)) // ⭐ EDL 기반 이벤트를 처리해준다. ⭐
+				 // ⭐ 
+				 // EDL 기반 이벤트를 처리해준다. 
+				 // ⭐
+				if (EventQueue.PopAndExecute(Args))
 				{
 					OutPackagesProcessed++;
 					if (IsTimeLimitExceeded(Args.TickStartTime, Args.bUseTimeLimit, Args.TimeLimit, Args.OutLastTypeOfWorkPerformed, Args.OutLastObjectWorkWasPerformedOn))
@@ -673,7 +768,12 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 				if (Package->HasFinishedLoading() == false)
 				{
 					float RemainingTimeLimit = FMath::Max(0.0f, TimeLimit - (float)(FPlatformTime::Seconds() - TickStartTime));
-					LocalLoadingState = Package->TickAsyncPackage(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit, FlushTree); // ⭐ !!!!! ASync 로드할 패키지에 대한 TickAsyncPackage를 호출해준다. ⭐      
+
+					// ⭐⭐⭐⭐⭐⭐⭐ 
+					// ASync 로드할 패키지에 대한 TickAsyncPackage를 호출해준다.
+					// ⭐⭐⭐⭐⭐⭐⭐    
+					LocalLoadingState = Package->TickAsyncPackage(bUseTimeLimit, bUseFullTimeLimit, RemainingTimeLimit, FlushTree); 
+
 					if (LocalLoadingState == EAsyncPackageState::TimeOut)
 					{
 						if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("TickAsyncPackage")))
@@ -702,7 +802,10 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 					}
 
 					// We're done, at least on this thread, so we can remove the package now.
-					// ⭐ 로드 된 패키지에 대해서는 게임 스레드에서 PostLoad를 수행해야하기 때문에 우선 로드된 패키지를 LoadedPackages로 옮김. ⭐
+					// ⭐ 
+					// 로드 된 패키지에 대해서는 게임 스레드에서 PostLoad를 수행해야하기 때문에 
+					// 우선 로드된 패키지를 LoadedPackages로 옮김. 
+					// ⭐
 					AddToLoadedPackages(Package); 
 				}
 				if (IsTimeLimitExceeded(TickStartTime, bUseTimeLimit, TimeLimit, TEXT("TickAsyncPackage")))
@@ -765,7 +868,9 @@ EAsyncPackageState::Type FAsyncLoadingThread::ProcessAsyncLoading(int32& OutPack
 ```
 
 ```cpp
+// ⭐⭐⭐⭐⭐⭐⭐ 
 EAsyncPackageState::Type FAsyncPackage::TickAsyncPackage(bool InbUseTimeLimit, bool InbUseFullTimeLimit, float& InOutTimeLimit, FFlushTree* FlushTree)
+// ⭐⭐⭐⭐⭐⭐⭐ 
 {
 	// Whether we should execute the next step.
 	EAsyncPackageState::Type LoadingState = EAsyncPackageState::Complete;
@@ -1000,6 +1105,7 @@ EAsyncPackageState::Type FAsyncLoadingThread::TickAsyncLoading(bool bUseTimeLimi
 
 		bool bDidSomething = false;
 		{
+			// ⭐
 			Result = ProcessLoadedPackages(bUseTimeLimit, bUseFullTimeLimit, TimeLimit, bDidSomething, FlushTree);
 			TimeLimitUsedForProcessLoaded = FPlatformTime::Seconds() - TickStartTime;
 			UE_CLOG(!GIsEditor && bUseTimeLimit && TimeLimitUsedForProcessLoaded > .1f, LogStreaming, Warning, TEXT("Took %6.2fms to ProcessLoadedPackages"), float(TimeLimitUsedForProcessLoaded) * 1000.0f);
@@ -1332,7 +1438,10 @@ EAsyncPackageState::Type FAsyncPackage::PostLoadDeferredObjects(double InTickSta
 		PackageScope.ThreadContext.CurrentlyPostLoadedObjectByALT = Object;
 		{
 			TRACE_LOADTIME_POSTLOAD_EXPORT_SCOPE(Object);
-			Object->ConditionalPostLoad(); // ⭐ 드디어 오브젝트에 대한 PostLoad 호출! ⭐
+			// ⭐⭐⭐⭐⭐⭐⭐
+			// 드디어 오브젝트에 대한 PostLoad 호출!
+			Object->ConditionalPostLoad();
+			// ⭐⭐⭐⭐⭐⭐⭐
 		}
 		PackageScope.ThreadContext.CurrentlyPostLoadedObjectByALT = nullptr;
 
