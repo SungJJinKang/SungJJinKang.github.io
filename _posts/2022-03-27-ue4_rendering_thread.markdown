@@ -139,7 +139,8 @@ void FScene::AddPrimitive(UPrimitiveComponent* Primitive)
 		});
 }
 ```
-
+여기까지도 아직 게임 스레드에서 동작하는 영역이다.                 
+          
 UPrimitiveComponent의 렌더 스레드 버전인 FPrimitiveSceneProxy를 생성한다.     
 ```cpp
 /**
@@ -181,7 +182,7 @@ void FScene::AddPrimitiveSceneInfo_RenderThread(FPrimitiveSceneInfo* PrimitiveSc
 이후 렌더 스레드는 게임 스레드에서 전송된 Task(람다)를 처리하며 "Scene::AddPrimitiveSceneInfo_RenderThread" 함수를 호출하여 게임 스레드의 "UPrimitiveComponent"와 관련된 데이터를 반영한다.             
 "FPrimitiveSceneInfo" 데이터는 임시로 "FScene::AddedPrimitiveSceneInfos"에 저장이 되었다가, 다음 프레임에 "FScene::UpdateAllPrimitiveSceneInfos" 함수가 호출되며 렌더링에 반영된다.               
 "FSceneRenderer::Render" 함수에서 "FScene::UpdateAllPrimitiveSceneInfos"를 호출한다.         
-FSceneRenderer에 대해서는 [이 글](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/FMobileSceneRenderer.html)에서 자세히 다룰 것이다.                            
+FScene::UpdateAllPrimitiveSceneInfos의 코드에 대한 분석은 [이 글](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)에서 자세히 다루었다.                                       
 
 
 비슷하게 SceneComponent의 Transform 데이터 ( 위치, 회전, 스케일 )가 변경되었을 때도 이를 렌더스레드에 반영한다.         
