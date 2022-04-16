@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "OpenGL, D3D11 Portable한 게임 엔진 만들기 ( 작성 중 )"
+title:  "OpenGL, D3D11 Portable한 게임 엔진 만들기"
 date:   2022-02-02
 categories: ComputerScience ComputerGraphics
 ---
@@ -78,3 +78,15 @@ Matrix 곱셈 연산의 경우 기존의 코드가 아무런 문제가 안되었
 또한 OPENGL의 경우 NDC의 Z값이 -1 ~ 1까지의 범위를 가지지만, D3D의 경우 0 ~ 1까지의 범위를 가지기 때문에 Projection matrix에도 추가적인 연산이 필요하다. 기존의 OPENGL로 짜여진 Projection Matrix 연산의 결과에 Translate( 0, 0, 1.0f ), Scale ( 1.0f, 1.0f, 0.5f )을 차례대로 곱해준다.             
 
 또 문제가 생겼다. OpenGL의 경우 Screen Space의 Origin 좌표가 "왼쪽 아래"이지만, D3D의 경우 "왼쪽 위"이다. 현재 엔진에서 Deferred rendering을 사용 중인데 어쩐지 화면이 뒤집혀서 렌더링이 됬는데 Renderdoc으로 확인해보니 1 pass에서는 렌더링이 제대로 됬는데 2 pass 단계에서 화면을 렌더링 할 때 Screen space가 바뀐 것을 고려하지 않아 생긴 문제였다. ( 나는 그런지도 모르고 수학쪽 라이브러리를 한참 봤다. ) 이를 해결하기 위해서는 쉐이더에서 UV를 뒤집거나 ( OPENGL쪽 Extension이 있다 )하여야 하는데 내 엔진에서는 쉐이더를 glsl로 작성하면 자동으로 hlsl로 변환하여 사용하기 때문에 이러한 extension을 사용할 수 없었다. 그래서 일단은 임시 방편으로 Deferred Rendering 2Pass와 같은 용도로 사용하는 메쉬에서는 UV를 Flip할 수 있는 옵션을 주어서 if, else문으로 사용 중인 Graphics API에 따라 다르게 처리하였다.              
+
+-------------------------------------------------
+
+우선 돌아는 가는 정도 수준의 코드는 작성을 끝냈다.      
+[https://github.com/SungJJinKang/DoomsEngine/releases](https://github.com/SungJJinKang/DoomsEngine/releases)       
+위의 링크로 들어가 DoomsEngine을 실행해보면 OpenGL, D3D11 모두 잘 동작하는 것을 알 수 있다.          
+             
+아래의 링크에서 OPENGL, D3D11 코드도 볼 수 있다.      
+[OPENGL](https://github.com/SungJJinKang/DoomsEngine/tree/main/OpenGLGraphicsAPI), [D3D11](https://github.com/SungJJinKang/DoomsEngine/tree/main/DX11GraphicsAPI)         
+            
+솔직히 말하면 허접하다.        
+일단 현재 엔진에서 사용 중인 기능들에 대해서만 작업을 해두었기 때문에 아직 사용 중이지 않은 기능을 사용하려면 그때 그때 작업을 할 예정이다.          
