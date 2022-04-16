@@ -34,7 +34,10 @@ ADefaultPawn::ADefaultPawn(const FObjectInitializer& ObjectInitializer)
 			: SphereMesh(TEXT("/Engine/EngineMeshes/Sphere")) {}
 	};
 	
-	static FConstructorStatics ConstructorStatics; // ⭐ CDO의 생성자에서 딱 한번 이 클래스가 Initialized 된다. ⭐
+	// ⭐ 
+	// CDO의 생성자에서 딱 한번 이 클래스가 Initialized 된다. 
+	// ⭐
+	static FConstructorStatics ConstructorStatics; 
 
     ...
     ...
@@ -66,8 +69,11 @@ struct COREUOBJECT_API ConstructorHelpers
 public:
 	template<class T>
 	struct FObjectFinder : public FGCObject 
-    // ⭐ FObjectFinder 구조체는 UObject의 리플랙션 시스템의 지원을 받지 못하다 보니 로드한 오브젝트가 GC에 의해 회수될 수 있다. ⭐
-    // ⭐ 그렇기 때문에 FGCObject 상속받아서 아래 AddReferencedObjects 함수에서 로드한 오브젝트를 GC 레퍼런스 오브젝트 목록에 추가해준다. ( 참고 자료 : https://ikrima.dev/ue4guide/engine-programming/memory/tracking-references/ ) ⭐
+    // ⭐ 
+	// FObjectFinder 구조체는 UObject의 리플랙션 시스템의 지원을 받지 못하다 보니 로드한 오브젝트가 GC에 의해 회수될 수 있다. 
+	// 그렇기 때문에 FGCObject 상속받아서 아래 AddReferencedObjects 함수에서 로드한 오브젝트를 GC 레퍼런스 오브젝트 목록에 추가해준다. 
+	// ( 참고 자료 : https://ikrima.dev/ue4guide/engine-programming/memory/tracking-references/ ) 
+	// ⭐
 	</pre>
 	{
 		T* Object; // !!
@@ -77,7 +83,10 @@ public:
 			FString PathName(ObjectToFind);
 			StripObjectClass(PathName,true);
 
-			Object = ConstructorHelpersInternal::FindOrLoadObject<T>(PathName, InLoadFlags); // ⭐ 아래 참조 ⭐
+			// ⭐ 
+			// 아래 참조 
+			// ⭐
+			Object = ConstructorHelpersInternal::FindOrLoadObject<T>(PathName, InLoadFlags); 
 			ValidateObject( Object, PathName, ObjectToFind ); 
 		}
 
@@ -87,7 +96,10 @@ public:
 
 		virtual void AddReferencedObjects( FReferenceCollector& Collector ) override
 		{
-			Collector.AddReferencedObject(Object); // ⭐ GC가 로드한 오브젝트를 회수하지 못하도록 레퍼런스된 오브젝트 목록에 로드한 오브젝트를 추가한다. ⭐
+			// ⭐ 
+			// GC가 로드한 오브젝트를 회수하지 못하도록 레퍼런스된 오브젝트 목록에 로드한 오브젝트를 추가한다. 
+			// ⭐
+			Collector.AddReferencedObject(Object); 
 		}
 
 		...
@@ -100,8 +112,11 @@ public:
     ...
     ...
 
+ 	// ⭐ 
+	// FObjectFinder의 클래스 버전 ( TSubClassOf ) 
+	// ⭐
 	template<class T>
-	struct FClassFinder : public FGCObject // ⭐ FObjectFinder의 클래스 버전 ( TSubClassOf ) ⭐
+	struct FClassFinder : public FGCObject
 	{
 		TSubclassOf<T> Class; // !!
 		FClassFinder(const TCHAR* ClassToFind)
@@ -145,7 +160,14 @@ namespace ConstructorHelpersInternal
 		...
 
 		UClass* Class = T::StaticClass();
-		Class->GetDefaultObject(); // ⭐ 오브젝트를 로드하기 전 해당 클래스의 CDO가 생성되었는지 확인하고 생성되어 있지 않다면 CDO를 생성한다. CDO가 생성되어 있어야지만, CDO로부터 필요한 프로퍼티들에 대한 데이터를 복사해 올 수 있다. 아래 참고. ⭐
+
+		// ⭐ 
+		// 오브젝트를 로드하기 전 해당 클래스의 CDO가 생성되었는지 확인하고 생성되어 있지 않다면 CDO를 생성한다. 
+		// CDO가 생성되어 있어야지만, 
+		// CDO로부터 필요한 프로퍼티들에 대한 데이터를 복사해 올 수 있다. 
+		// 아래 참고. 
+		// ⭐
+		Class->GetDefaultObject(); 
 		T* ObjectPtr = LoadObject<T>(NULL, *PathName, nullptr, LoadFlags);
 		if (ObjectPtr)
 		{

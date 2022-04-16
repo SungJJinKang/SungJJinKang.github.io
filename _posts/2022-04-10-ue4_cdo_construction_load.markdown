@@ -24,7 +24,10 @@ UObject* UClass::GetDefaultObject(bool bCreateIfNeeded = true) const
 {
     if (ClassDefaultObject == nullptr && bCreateIfNeeded)
     {
-        const_cast<UClass*>(this)->CreateDefaultObject(); // ⭐ CDO가 생성되지 않았다면 CDO를 생성한다. ⭐
+		// ⭐ 
+		// CDO가 생성되지 않았다면 CDO를 생성한다. 
+		// ⭐
+        const_cast<UClass*>(this)->CreateDefaultObject(); 
     }
 
     return ClassDefaultObject;
@@ -41,7 +44,10 @@ UObject* UClass::CreateDefaultObject()
 		if ( ParentClass != NULL )
 		{
 			UObjectForceRegistration(ParentClass);
-			ParentDefaultObject = ParentClass->GetDefaultObject(); // ⭐ 생성하려는 CDO 오브젝트의 클래스의 부모 클래스의 CDO를 가져온다. 생성되어 있지 않으면 생성한다. ⭐
+			// ⭐ 
+			// 생성하려는 CDO 오브젝트의 클래스의 부모 클래스의 CDO를 가져온다. 생성되어 있지 않으면 생성한다.
+			// ⭐
+			ParentDefaultObject = ParentClass->GetDefaultObject(); 
 			check(GConfig);
 			if (GEventDrivenLoaderEnabled && EVENT_DRIVEN_ASYNC_LOAD_ACTIVE_AT_RUNTIME)
 			{ 
@@ -54,12 +60,24 @@ UObject* UClass::CreateDefaultObject()
 			// If this is a class that can be regenerated, it is potentially not completely loaded.  Preload and Link here to ensure we properly zero memory and read in properties for the CDO
 			if
 			( 
-				HasAnyClassFlags(CLASS_CompiledFromBlueprint /** Indicates that the class was created from blueprint source material */ ) /* ⭐ this 클래스가 BP 기반 클래스인 경우 ⭐ */ && 
-				(PropertyLink /** In memory only: Linked list of properties from most-derived to base */  == NULL) /* ⭐ 이 클래스의 프로퍼티 리스트가 비어 있는 경우 ⭐ */ &&
-				!(GIsDuplicatingClassForReinstancing /* Indicates that we're currently processing the first frame of intra-frame debugging */)
+				// ⭐ 
+				// this 클래스가 BP 기반 클래스인 경우 
+				// Indicates that the class was created from blueprint source material
+				// ⭐
+				HasAnyClassFlags(CLASS_CompiledFromBlueprint ) &&
+
+				// ⭐ 
+				// 이 클래스의 프로퍼티 리스트가 비어 있는 경우 
+				// ⭐
+				(PropertyLink /** In memory only: Linked list of properties from most-derived to base */  == NULL) &&            
+
+				// Indicates that we're currently processing the first frame of intra-frame debugging
+				!(GIsDuplicatingClassForReinstancing)
 			)
 			{
-				// ⭐ 프로퍼티들을 초기화(0으로 초기화, UPROPERTY 옵션이 붙은 프로터피들은 기본적으로 0으로 초기화된 후 읽어온다.)하고, 읽어온다. ⭐        
+				// ⭐ 
+				// 프로퍼티들을 초기화(0으로 초기화, UPROPERTY 옵션이 붙은 프로터피들은 기본적으로 0으로 초기화된 후 읽어온다.)하고, 읽어온다.
+				// ⭐        
 				auto ClassLinker = GetLinker();
 				if (ClassLinker && !ClassLinker->bDynamicClassLinker)
 				{
@@ -172,7 +190,11 @@ UObject* UClass::CreateDefaultObject()
 				{
 					NotifyRegistrationEvent(*PackageName, *CDOName, ENotifyRegistrationType::NRT_ClassCDO, ENotifyRegistrationPhase::NRP_Finished);
 				}
-				ClassDefaultObject->PostCDOContruct(); // ⭐ CDO 생성 후 호출되는 경우. 일반적으로는 아무 동작을 하지 않지만 일부 클래스들 ( ex. UMaterialInterface, UTexture .... )은 상속받아 필요한 동작을 수행합니다. ⭐
+				// ⭐ 
+				// CDO 생성 후 호출되는 경우. 
+				// 일반적으로는 아무 동작을 하지 않지만 일부 클래스들 ( ex. UMaterialInterface, UTexture .... )은 상속받아 필요한 동작을 수행합니다. 
+				// ⭐
+				ClassDefaultObject->PostCDOContruct(); 
 			}
 		}
 	}
@@ -195,7 +217,10 @@ UObject* StaticAllocateObject
 	...
 	...
 
-	bool bCreatingCDO = (InFlags & RF_ClassDefaultObject) != 0; // ⭐ 위의 UClass::CreateDefaultObject 함수에서 호출되었으니 true를 가짐. ⭐
+	// ⭐ 
+	// 위의 UClass::CreateDefaultObject 함수에서 호출되었으니 true를 가짐. 
+	// ⭐
+	bool bCreatingCDO = (InFlags & RF_ClassDefaultObject) != 0; 
 
 	...
 	...
@@ -211,14 +236,18 @@ UObject* StaticAllocateObject
 	else
 	{
 		// See if object already exists. 
-		// ⭐ 혹시 CDO가 이미 메모리에 로드되어 있는지 확인한다. ⭐
+		// ⭐ 
+		// 혹시 CDO가 이미 메모리에 로드되어 있는지 확인한다. 
+		// ⭐
 		Obj = StaticFindObjectFastInternal( /*Class=*/ NULL, InOuter, InName, true );
 
 		// Temporary: If the object we found is of a different class, allow the object to be allocated.
 		// This breaks new UObject assumptions and these need to be fixed.
 		if (Obj && !Obj->GetClass()->IsChildOf(InClass))
 		{
-			// ⭐ 각종 예외 처리 코드 ⭐
+			// ⭐ 
+			// 각종 예외 처리 코드 
+			// ⭐
 			...
 			...
 			...
@@ -233,13 +262,17 @@ UObject* StaticAllocateObject
 	int32 TotalSize = InClass->GetPropertiesSize();
 	checkSlow(TotalSize);
 
+	// ⭐ 
+	// 이 글에서는 일단 CDO가 이미 생성되어 있지 않은 경우를 가정하고 분석하겠다. \
+	// ⭐  
 	if( Obj == NULL )
 	{	
-		// ⭐ 이 글에서는 일단 CDO가 이미 생성되어 있지 않은 경우를 가정하고 분석하겠다. ⭐      
-
+		// ⭐ 
+		// CDO의 메모리를 할당한다. 
+		// 메모리 Alignment를 준수하여 CDO 사이즈 만큼의 메모리를 할당한다. 
+		// ⭐
 		int32 Alignment	= FMath::Max( 4, InClass->GetMinAlignment() );
 		Obj = (UObject *)GUObjectAllocator.AllocateUObject(TotalSize,Alignment,GIsInitialLoad);
-		// ⭐ CDO의 메모리를 할당한다. 메모리 Alignment를 준수하여 CDO 사이즈 만큼의 메모리를 할당한다. ⭐
 	}
 	else
 	{
@@ -254,10 +287,17 @@ UObject* StaticAllocateObject
 
 	if (!bSubObject)
 	{
-		// ⭐ 위에서 할당한 메모리 공간을 0으로 초기화한다. ⭐
+		// ⭐ 
+		// 위에서 할당한 메모리 공간을 0으로 초기화한다. 
+		// ⭐
 		FMemory::Memzero((void *)Obj, TotalSize);
 
-		// ⭐ 그 후 생성자를 호출한다. 특별한 동작이 있는 것은 아니고 CDO 오브젝트의 기본적인 셋팅들을 한다. 그리고 UObject Array에 이 CDO를 추가한다. 아래 참고. ⭐ 
+		// ⭐ 
+		// 그 후 생성자를 호출한다. 
+		// 특별한 동작이 있는 것은 아니고 CDO 오브젝트의 기본적인 셋팅들을 한다. 
+		// 그리고 UObject Array에 이 CDO를 추가한다. 
+		// 아래 참고. 
+		// ⭐ 
 		new ((void *)Obj) UObjectBase(const_cast<UClass*>(InClass), InFlags|RF_NeedInitialization, InternalSetFlags, InOuter, InName);
 	}
 	else
@@ -291,7 +331,10 @@ UObjectBase::UObjectBase(UClass* InClass, EObjectFlags InFlags, EInternalObjectF
 {
 	check(ClassPrivate);
 	// Add to global table.
-	AddObject(InName, InInternalFlags); // ⭐ 오브젝트의 이름을 FName 테이블에 추가하고, UObject들을 모두 모아둔 Array에 이 오브젝트를 추가한다. ⭐
+	// ⭐ 
+	// 오브젝트의 이름을 FName 테이블에 추가하고, UObject들을 모두 모아둔 Array에 이 오브젝트를 추가한다. 
+	// ⭐
+	AddObject(InName, InInternalFlags); 
 }
 
 ```

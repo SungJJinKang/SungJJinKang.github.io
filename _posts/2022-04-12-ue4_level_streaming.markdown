@@ -19,14 +19,28 @@ categories: UE4 UnrealEngine4 ComputerScience
 ------------------------         
 
 ```cpp
-void UGameplayStatics::LoadStreamLevel(const UObject* WorldContextObject, FName LevelName, bool bMakeVisibleAfterLoad /* ⭐ 스트리밍 레벨이 로드된 후 바로 Visible하게 만들지 ⭐ */, bool bShouldBlockOnLoad /* ⭐ 스트리밍 레벨 패키지 로드시 게임 스레드를 블록할지 ⭐ */, FLatentActionInfo LatentInfo)
+void UGameplayStatics::LoadStreamLevel
+(
+	const UObject* WorldContextObject, 
+	FName LevelName, 
+	bool bMakeVisibleAfterLoad /* ⭐ 스트리밍 레벨이 로드된 후 바로 Visible하게 만들지 ⭐ */, 
+	bool bShouldBlockOnLoad /* ⭐ 스트리밍 레벨 패키지 로드시 게임 스레드를 블록할지 ⭐ */, 
+	FLatentActionInfo LatentInfo
+)
 {
 	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		FLatentActionManager& LatentManager = World->GetLatentActionManager();
 		if (LatentManager.FindExistingAction<FStreamLevelAction>(LatentInfo.CallbackTarget, LatentInfo.UUID) == nullptr)
 		{
-			FStreamLevelAction* NewAction = new FStreamLevelAction(true, LevelName, bMakeVisibleAfterLoad, bShouldBlockOnLoad /* ⭐ */, LatentInfo, World); // ⭐
+			FStreamLevelAction* NewAction = new FStreamLevelAction
+				(
+					true, 
+					LevelName, 
+					bMakeVisibleAfterLoad, 
+					bShouldBlockOnLoad /* ⭐ */, 
+					LatentInfo, World
+				); // ⭐
 			LatentManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID, NewAction);
 		}
 	}
@@ -101,7 +115,7 @@ void UWorld::UpdateLevelStreaming()
 				bool bRedetermineTarget = false;
 
                 // ⭐⭐⭐⭐⭐⭐⭐
-				FStreamingLevelPrivateAccessor::UpdateStreamingState(StreamingLevel, bUpdateAgain, bRedetermineTarget); // ⭐
+				FStreamingLevelPrivateAccessor::UpdateStreamingState(StreamingLevel, bUpdateAgain, bRedetermineTarget); 
                 // ⭐⭐⭐⭐⭐⭐⭐
 
 				if (bRedetermineTarget)
@@ -138,7 +152,9 @@ void ULevelStreaming::UpdateStreamingState(bool& bOutUpdateAgain, bool& bOutRede
         ...
         ...
 
-        // ⭐ 위에서 호출한 UGameplayStatics::LoadStreamLevel 함수에 매개변수로 전달하였던 bShouldBlockOnLoad이 false인 경우, ASync로 처리 ⭐
+        // ⭐ 
+		// 위에서 호출한 UGameplayStatics::LoadStreamLevel 함수에 매개변수로 전달하였던 bShouldBlockOnLoad이 false인 경우, ASync로 처리 
+		// ⭐
 		bool bBlockOnLoad = (bShouldBlockOnLoad || ShouldBeAlwaysLoaded()); 
 
 		const bool bAllowLevelLoadRequests = (bBlockOnLoad || World->AllowLevelLoadRequests());
@@ -147,7 +163,8 @@ void ULevelStreaming::UpdateStreamingState(bool& bOutUpdateAgain, bool& bOutRede
 		const ECurrentState PreviousState = CurrentState;
 
         // ⭐⭐⭐⭐⭐⭐⭐
-		RequestLevel(World, bAllowLevelLoadRequests, (bBlockOnLoad ? ULevelStreaming::AlwaysBlock : ULevelStreaming::BlockAlwaysLoadedLevelsOnly)); // ⭐ 레벨을 요청.⭐
+		// ⭐ 레벨을 요청
+		RequestLevel(World, bAllowLevelLoadRequests, (bBlockOnLoad ? ULevelStreaming::AlwaysBlock : ULevelStreaming::BlockAlwaysLoadedLevelsOnly)); 
         // ⭐⭐⭐⭐⭐⭐⭐
 
 		...
@@ -220,11 +237,22 @@ bool ULevelStreaming::RequestLevel(UWorld* PersistentWorld, bool bAllowLevelLoad
 
             // Level already exists but may have the wrong type due to being inactive before, so copy data over
             World->WorldType = PersistentWorld->WorldType;
-            World->PersistentLevel->OwningWorld = PersistentWorld; // ⭐ 로드 된 스트리밍 레벨의 부모 레벨을 현재의 Persistent Level로 셋팅 ⭐
 
-            SetLoadedLevel(World->PersistentLevel); // ⭐ 레벨 로드 완료! ⭐
+			// ⭐ 
+			// 로드 된 스트리밍 레벨의 부모 레벨을 현재의 Persistent Level로 셋팅 
+			// ⭐
+            World->PersistentLevel->OwningWorld = PersistentWorld; 
+
+			// ⭐ 
+			// 레벨 로드 완료! 
+			// ⭐
+            SetLoadedLevel(World->PersistentLevel); 
+
             // Broadcast level loaded event to blueprints
-            OnLevelLoaded.Broadcast(); // ⭐ 레벨 로드 완료 콜백 호출 ⭐
+			// ⭐ 
+			// 레벨 로드 완료 콜백 호출 
+			// ⭐
+            OnLevelLoaded.Broadcast(); 
 			
 			
 			return true;
@@ -254,7 +282,8 @@ bool ULevelStreaming::RequestLevel(UWorld* PersistentWorld, bool bAllowLevelLoad
 			TRACE_BOOKMARK(TEXT("RequestLevel - %s"), *DesiredPackageName.ToString());
 
             // ⭐⭐⭐⭐⭐⭐⭐
-            // ⭐ ASync로 패키지를 로드! [참고 자료](https://sungjjinkang.github.io/ue4/unrealengine4/computerscience/2022/04/06/ue4_async_load.html) ⭐
+            // ASync로 패키지를 로드! 
+			// [참고 자료](https://sungjjinkang.github.io/ue4/unrealengine4/computerscience/2022/04/06/ue4_async_load.html)
 			LoadPackageAsync
             (
                 DesiredPackageName.ToString(), 
@@ -274,7 +303,10 @@ bool ULevelStreaming::RequestLevel(UWorld* PersistentWorld, bool bAllowLevelLoad
 			// Editor immediately blocks on load and we also block if background level streaming is disabled.
 			if (BlockPolicy == AlwaysBlock || (ShouldBeAlwaysLoaded() && BlockPolicy != NeverBlock))
 			{
-                // ⭐ 위에서 호출한 UGameplayStatics::LoadStreamLevel 함수에 매개변수로 전달하였던 bShouldBlockOnLoad에 true를 전달한 경우 ⭐ 
+                // ⭐ 
+				// 위에서 호출한 UGameplayStatics::LoadStreamLevel 함수에 
+				// 매개변수로 전달하였던 bShouldBlockOnLoad에 true를 전달한 경우 
+				// ⭐ 
 				if (IsAsyncLoading())
 				{
 					UE_LOG(LogStreaming, Display, TEXT("ULevelStreaming::RequestLevel(%s) is flushing async loading"), *DesiredPackageName.ToString());
@@ -313,7 +345,10 @@ void ULevelStreaming::AsyncLevelLoadComplete(const FName& InPackageName, UPackag
 	{
 		if (World->GetStreamingLevels().Contains(this))
 		{
-			FWorldNotifyStreamingLevelLoading::Finished(World); // ⭐ 스트리밍 레벨 로드가 끝났음을 알림 ⭐
+			// ⭐ 
+			// 스트리밍 레벨 로드가 끝났음을 알림 
+			// ⭐
+			FWorldNotifyStreamingLevelLoading::Finished(World); 
 		}
 	}
 
@@ -336,8 +371,10 @@ void ULevelStreaming::AsyncLevelLoadComplete(const FName& InPackageName, UPackag
 					if (PendingLevelVisOrInvis && PendingLevelVisOrInvis == LoadedLevel)
 					{
 						...
-                        ... // ⭐ 스트리밍 레벨이 가시성 처리 ( 레벨의 오브젝트들을 화면에 보이게 만드는 작업 )를 수행 중인 경우 ⭐
-                        ...
+                        ... // ⭐ 
+                        ... // 스트리밍 레벨이 가시성 처리 ( 레벨의 오브젝트들을 화면에 보이게 만드는 작업 )를 수행 중인 경우
+						... // ⭐ 
+						...
 					}
 					else
 					{
@@ -354,8 +391,8 @@ void ULevelStreaming::AsyncLevelLoadComplete(const FName& InPackageName, UPackag
 				// Notify the streamer to start building incrementally the level streaming data.
 
                 // ⭐⭐⭐⭐⭐⭐⭐
-                // ⭐ 문제의 코드!!!! ⭐
-                // ⭐ StreamingManager에 이 스트리밍 레벨에 속한 여러 리소스들을 스트리밍 해줄 것을 요청 ⭐
+                // 문제의 코드!!!!
+                // StreamingManager에 이 스트리밍 레벨에 속한 여러 리소스들을 스트리밍 해줄 것을 요청
 				IStreamingManager::Get().AddLevel(Level); 
                 // ⭐⭐⭐⭐⭐⭐⭐
 
@@ -606,9 +643,15 @@ void FRenderAssetStreamingManager::UpdateResourceStreaming( float DeltaTime, boo
 
 ```cpp
 // ⭐⭐⭐⭐⭐⭐⭐
-// ⭐ 텍스쳐, 메쉬들을 스트리밍 해옴. ⭐
-// ⭐ 위에서 ASync로 처리해둔 스트리밍 우선 순위에 따라 스트리밍을 수행. ⭐
-void FRenderAssetStreamingManager::StreamRenderAssets( bool bProcessEverything /* 모든 텍스쳐를 한번에 처리할지, 여기서는 false */ )
+// 텍스쳐, 메쉬들을 스트리밍 해옴.
+// 위에서 ASync로 처리해둔 스트리밍 우선 순위에 따라 스트리밍을 수행.
+void FRenderAssetStreamingManager::StreamRenderAssets
+( 
+	// ⭐
+	// 모든 텍스쳐를 한번에 처리할지, 여기서는 false
+	// ⭐
+	bool bProcessEverything 
+)
 // ⭐⭐⭐⭐⭐⭐⭐
 {
 	const FRenderAssetStreamingMipCalcTask& AsyncTask = AsyncWork->GetTask();
@@ -619,7 +662,9 @@ void FRenderAssetStreamingManager::StreamRenderAssets( bool bProcessEverything /
 		{
 			if (StreamingRenderAssets.IsValidIndex(AssetIndex) && !VisibleFastResponseRenderAssetIndices.Contains(AssetIndex))
 			{
-                // ⭐ 스트리밍 와중에도 스트리밍이 ( 당장 ) 필요없는 경우 경우, 요청을 취소함. ⭐
+                // ⭐ 
+				// 스트리밍 와중에도 스트리밍이 ( 당장 ) 필요없는 경우 경우, 요청을 취소함. 
+				// ⭐
 				StreamingRenderAssets[AssetIndex].CancelStreamingRequest();
 			}
 		}
@@ -637,7 +682,7 @@ void FRenderAssetStreamingManager::StreamRenderAssets( bool bProcessEverything /
 				if (StreamingRenderAssets.IsValidIndex(AssetIndex) && !VisibleFastResponseRenderAssetIndices.Contains(AssetIndex))
 				{
                     // ⭐⭐⭐⭐⭐⭐⭐
-                    // ⭐ 리소스들을 스트리밍함 ⭐
+                    // 리소스들을 스트리밍함
 					StreamingRenderAssets[AssetIndex].StreamWantedMips(*this);
                     // ⭐⭐⭐⭐⭐⭐⭐
 				}
