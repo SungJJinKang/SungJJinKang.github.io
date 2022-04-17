@@ -540,9 +540,52 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 						// 추가된 FPrimitiveSceneInfo를 한꺼번에 Scene에 추가해줌.
 						//
 						// FPrimitiveSceneInfo::AddToScene 매우 중요한 함수이다.
-						// FMeshBathch, FMeshDrawCommand가 생성되고 FScene에 캐싱되는 함수이다.
-						// FMeshBathch와 FMeshDrawCommand는 실제 렌더링 API에 넘겨질 모든 데이터를 가지고 있다.
+						// FMeshBatch, FMeshDrawCommand가 생성되고 FScene에 캐싱되는 함수이다.
+						// FMeshBatch, FMeshDrawCommand는 실제 렌더링 API에 넘겨질 모든 데이터를 가지고 있다.
 						// 이 두 데이터만 가지고 있으면 렌더링 API를 호출해서 렌더링을 수행할 수 있다. 다른건 필요없다.       
+						//
+						// ---------------------------
+						//
+						//
+						//
+						// /* 
+						// A batch of mesh elements, all with the same material and vertex buffer 
+						// */
+						// struct FMeshBatch
+						// {
+						//
+						// ...
+						// ...
+						// ...
+						//
+						// };
+						//
+						// ---------------------------
+						//
+						// /*
+						// FMeshDrawCommand fully describes a mesh pass draw call, captured just above the RHI.  
+						// FMeshDrawCommand should contain only data needed to draw.  
+						// For InitViews payloads, use / FVisibleMeshDrawCommand.
+						// FMeshDrawCommands are cached at Primitive AddToScene time for vertex factories that support it 
+						// (no per-frame or per-view shader binding changes).
+						// Dynamic Instancing operates at the FMeshDrawCommand level for robustness.
+						// Adding per-command shader bindings will reduce the efficiency of Dynamic Instancing, 
+						// but rendering will always be correct.
+						// Any resources referenced by a command must be kept alive for the lifetime of the command.  
+						// FMeshDrawCommand is not responsible for lifetime management of resources.
+						// For uniform buffers referenced by cached FMeshDrawCommand's, 
+						// RHIUpdateUniformBuffer makes it possible to access per-frame data in the shader without changing bindings.
+						// */
+						// class FMeshDrawCommand
+						// {
+						//
+						// ...
+						// ...
+						// ...
+						// 
+						// };
+						//
+						// ---------------------------
 						//
 						// 아주 아주 중요하다.
 						//
