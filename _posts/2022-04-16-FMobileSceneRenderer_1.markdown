@@ -50,6 +50,7 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 	// 이 두 데이터가 생성되는 것은 FScene::AddPrimitive 함수 ( 게임 스레드에서 수행됨 )에서 볼 수 있다.
 	// 더 자세한 분석은 아래 링크를 타고 들어가면 볼 수 있다.
 	// https://scahp.tistory.com/74?category=848072
+	// https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/MeshDrawingPipeline/
 	// ⭐⭐⭐⭐⭐⭐⭐
 
 
@@ -229,6 +230,9 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 							// ⭐⭐⭐⭐⭐⭐⭐
 							// Swap을 할 때마다 위치가 바뀐 데이터들은 GPUScene에서 업데이트 해주어야한다.
 							// GPUScene에 대해서는 더 조사가 필요..
+							// UpdateGPUScene ( GPUScene.cpp ) 함수를 참고하세요.
+							// ( 나중에 분석 필요 )
+							// https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/MeshDrawingPipeline/
 							AddPrimitiveToUpdateGPU(*this, SourceIndex);
 							AddPrimitiveToUpdateGPU(*this, DestIndex);
 							// ⭐⭐⭐⭐⭐⭐⭐
@@ -324,11 +328,6 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 				// ⭐
 				PrimitiveSceneInfo->RemoveFromScene(true);
 
-				// ⭐
-				// Update the primitive that was swapped to this index
-				//
-				// 삭제한 PrimitiveSceneInfo의 기존 Index에 Swap되어 바뀌어있을 SceneInfo를 Update한다.
-				// ⭐
 				AddPrimitiveToUpdateGPU(*this, PrimitiveIndex);
 
 				DistanceFieldSceneData.RemovePrimitive(PrimitiveSceneInfo);
@@ -550,6 +549,7 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 						// 아래의 링크를 타고 들어가면 자세한 분석을 볼 수 있다.
 						// 반드시 읽기를 강추드립니다. 
 						// https://scahp.tistory.com/74?category=848072
+						// https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/MeshDrawingPipeline/
 						FPrimitiveSceneInfo::AddToScene(RHICmdList, this, TArrayView<FPrimitiveSceneInfo*>(&AddedLocalPrimitiveSceneInfos[StartIndex], AddedLocalPrimitiveSceneInfos.Num() - StartIndex), true, true, bAsyncCreateLPIs);
 						// ⭐⭐⭐⭐⭐⭐⭐
 					}
