@@ -24,9 +24,11 @@ UE4 4.27 버전을 기준으로 작성하였다.
 4.27 버전이 언리얼 엔진 4세대의 마지막 Release 버전이다.             
           
 ----------------------------              
-
+             
 이번 챕터에는 FMobileSceneRenderer::Render 함수의 첫번째 중요 함수인 **FScene::UpdateAllPrimitiveSceneInfos**에 대해 분석해볼 것이다.        
-
+              
+함께 보면 좋은 참고 자료 : [UE5 MeshDrawCommand (1/2)](https://scahp.tistory.com/74?category=848072), [UE5 MeshDrawCommand (2/2)](https://scahp.tistory.com/75?category=848)             
+                   
 ------------------------------         
 
 ```cpp
@@ -35,12 +37,21 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 	SCOPED_NAMED_EVENT(FScene_UpdateAllPrimitiveSceneInfos, FColor::Orange);
 	SCOPE_CYCLE_COUNTER(STAT_UpdateScenePrimitiveRenderThreadTime);
 
-	check(IsInRenderingThread()); // ⭐ 이 함수는 렌더 스레드에서 도는 함수이다. ⭐
-
+	// ⭐ 
+	// 이 함수는 렌더 스레드에서 도는 함수이다. 
+	check(IsInRenderingThread()); 
 	// ⭐
+
+
+	// ⭐⭐⭐⭐⭐⭐⭐
 	// FPrimitiveSceneInfo는 하나의 UPrimitiveComponent에 대한 내부 상대 정보를 담은 클래스이다.
 	// 이는 엔진 모듈 내에서 FPrimitiveSceneProxy와 1대 1로 매칭된다.	
-	// ⭐
+	// FPrimitiveSceneInfo와 FPrimitiveSceneProxy는 게임 스레드에서 생성되어 렌더스레드에서 제거된다.
+	// 이 두 데이터가 생성되는 것은 FScene::AddPrimitive 함수 ( 게임 스레드에서 수행됨 )에서 볼 수 있다.
+	// 더 자세한 분석은 아래 링크를 타고 들어가면 볼 수 있다.
+	// https://scahp.tistory.com/74?category=848072
+	// ⭐⭐⭐⭐⭐⭐⭐
+
 
 	// ⭐
 	// 삭제할 Privmitive Scene Info 리스트를 로컬 변수에 저장한다. 
@@ -53,24 +64,28 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 	//
 	// UActorComponent::ExecuteUnregisterEvents ( 게임 스레드 )  -> UPrimitiveComponent::DestroyRenderState_Concurrent ( 게임 스레드 ) -> FScene::RemovePrimitive ( 게임 스레드 ) -> 
 	// RemovePrimitiveSceneInfo_RenderThread ( 렌더 스레드 )를 통해 제거된 Primitive가 RemovedPrimitiveSceneInfos에 추가된다. 
+	TArray<FPrimitiveSceneInfo*> RemovedLocalPrimitiveSceneInfos(RemovedPrimitiveSceneInfos.Array());
 	// ⭐
-	TArray<FPrimitiveSceneInfo*> RemovedLocalPrimitiveSceneInfos(RemovedPrimitiveSceneInfos.Array()); 
-	RemovedLocalPrimitiveSceneInfos.Sort(FPrimitiveArraySortKey()); // ⭐ FPrimitiveArraySortKey : return A.Proxy->GetTypeHash() < B.Proxy->GetTypeHash(); ⭐
+
+	// ⭐ 
+	// FPrimitiveArraySortKey : return A.Proxy->GetTypeHash() < B.Proxy->GetTypeHash(); 
+	RemovedLocalPrimitiveSceneInfos.Sort(FPrimitiveArraySortKey()); 
+	// ⭐
 
 	// ⭐ 
 	// 새로 추가된 Primitive Scene Info 
 	// Primtive를 삭제할때도 마찬가지이다.
 	// 게임 스레드에서 Primitive를 추가했더라도 곧바로 렌더스레드에 반영되는 것이 아니라, 게임 스레드가 Primitive를 추가한 프레임에 맞추어서 렌더스레드에서 추가된다.
-	// ⭐
 	TArray<FPrimitiveSceneInfo*> AddedLocalPrimitiveSceneInfos(AddedPrimitiveSceneInfos.Array());
 	AddedLocalPrimitiveSceneInfos.Sort(FPrimitiveArraySortKey());
+	// ⭐
 	
 	// ⭐ 
 	// 삭제된 SceneInfo를 저장한다.
 	// 밑에서 Transform 데이터를 업데이트하거나 할 때 이미 삭제된 SceneInfo와 연관된 ( 불필요한 ) 데이터를 업데이트하는 것을 방지하기 위함이다.
-	// ⭐
 	TSet<FPrimitiveSceneInfo*> DeletedSceneInfos;
 	DeletedSceneInfos.Reserve(RemovedLocalPrimitiveSceneInfos.Num());
+	// ⭐
 
 	if (!!GAsyncCreateLightPrimitiveInteractions && !AsyncCreateLightPrimitiveInteractionsTask)
 	{
@@ -78,8 +93,8 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 		// Primtive에 영향을 주는 Light를 찾아서 Interaction(FLightPrimitiveInteraction)을 만드는 동작을 ASync로 처리한다.
 		// 자세히는 모르겠다.
 		// FLightPrimitiveInteraction를 확인해보면 자세한 기능을 알 수 있을 것 같다.
-		// ⭐
 		AsyncCreateLightPrimitiveInteractionsTask = new FAsyncTask<FAsyncCreateLightPrimitiveInteractionsTask>();
+		// ⭐
 	}
 
 	if (AsyncCreateLightPrimitiveInteractionsTask)
@@ -144,9 +159,9 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 						// ⭐
 						// 아래의 코드는 RemovedLocalPrimitiveSceneInfos에서 각 Type ID의 Element들의 SceneInfo::PrimitiveIndex가 TypeOffsetTable에 올바르게 들어있는지 확인(assert)하는 코드이다.
 						// ex) 위의 예제에서 Type ID 6을 가진 Proxy들의 PrimitiveSceneProxies에서의 Index는 TypeOffsetTable의 Element들 중 3보다 크거나 같고, 8보다는 작아야한다. 
-						// ⭐
 						int32 PrimitiveIndex = RemovedLocalPrimitiveSceneInfos[CheckIndex]->PackedIndex;
 						checkfSlow(PrimitiveIndex >= PrevOffset && PrimitiveIndex < InsertionOffset, TEXT("PrimitiveIndex %d not in Bucket Range [%d, %d]"), PrimitiveIndex, PrevOffset, InsertionOffset);
+						// ⭐
 					}
 					break;
 				}
@@ -158,9 +173,8 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 				for (int CheckIndex = StartIndex; CheckIndex < RemovedLocalPrimitiveSceneInfos.Num(); CheckIndex++)
 				{
 					// ⭐
-					// 
-					// ⭐
 					int SourceIndex = RemovedLocalPrimitiveSceneInfos[CheckIndex]->PackedIndex;
+					// ⭐
 
 					for (int TypeIndex = BroadIndex; TypeIndex < TypeOffsetTable.Num(); TypeIndex++)
 					{
@@ -168,15 +182,15 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 
 						// ⭐
 						// Swap하려는 SceneInfo의 Type Hash를 가진 연속된 Element들 중 마지막 Element의 Index를 DestIndex에 저장한다.
-						// ⭐
 						int DestIndex = --NextEntry.Offset; //decrement and prepare swap 
+						// ⭐
 
-						// ⭐⭐⭐⭐⭐⭐⭐
+						// ⭐
 						// TypeOffsetTable를 통해 널뛰면서 현재 삭제하려는 Index를 동일한  SceneInfo Type Hash 중 가장 마지막에 있는 Index와 Swap하면서
 						// 삭제하려는 SceneInfo과 같은 TypeHash를 가진 SceneInfo들에 대한 렌더링 Data들을 리스트의 마지막으로 모두 밀어넣는다.
 						// 
-						// ⭐ 이는 렌더링 관련 데이터의 리스트에서 같은 SceneInfo Type Hash를 가진 데이터들은 리스트 내에 연속되게 존재함을 유지하기 위함이다. ⭐
-						// ⭐ 나중에 드로우콜 Batch를 위해 쓰인다 ( ?, 확인 필요 ) ⭐ 
+						// 이는 렌더링 관련 데이터의 리스트에서 같은 SceneInfo Type Hash를 가진 데이터들은 리스트 내에 연속되게 존재함을 유지하기 위함이다.
+						// 나중에 드로우콜 Batch를 위해 쓰인다 ( ?, 확인 필요 )
 						//
 						// 밑에서 Pop하기 위함.
 						// 
@@ -187,7 +201,7 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 						// PrimitiveSceneProxies[0,0,0,6,6,6,6,6,2,2,2,1,1,1,7,X( StartIndex, 삭제하려는 Rendering 데이터의 현재 위치 ),4( DestIndex ),8]
 						// PrimitiveSceneProxies[0,0,0,6,6,6,6,6,2,2,2,1,1,1,7,4,X( StartIndex, 삭제하려는 Rendering 데이터의 현재 위치 ),8( DestIndex )]
 						// PrimitiveSceneProxies[0,0,0,6,6,6,6,6,2,2,2,1,1,1,7,4,8, X( StartIndex, 삭제하려는 Rendering 데이터의 현재 위치 )]
-						// ⭐⭐⭐⭐⭐⭐⭐
+						// ⭐
 
 						if (DestIndex != SourceIndex)
 						{
@@ -212,12 +226,12 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 							TArraySwapElements(PrimitiveOcclusionBounds, DestIndex, SourceIndex);
 							TBitArraySwapElements(PrimitivesNeedingStaticMeshUpdate, DestIndex, SourceIndex);
 
-							// ⭐
+							// ⭐⭐⭐⭐⭐⭐⭐
 							// Swap을 할 때마다 위치가 바뀐 데이터들은 GPUScene에서 업데이트 해주어야한다.
 							// GPUScene에 대해서는 더 조사가 필요..
-							// ⭐
 							AddPrimitiveToUpdateGPU(*this, SourceIndex);
 							AddPrimitiveToUpdateGPU(*this, DestIndex);
+							// ⭐⭐⭐⭐⭐⭐⭐
 
 							SourceIndex = DestIndex;
 						}
@@ -319,7 +333,11 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 
 				DistanceFieldSceneData.RemovePrimitive(PrimitiveSceneInfo);
 
+				// ⭐
+				// 삭제된 Primitive에 대한 FPrimitiveSceneInfo는 임시로 저장해둔다.
+				// 여기서 임시로 저장을 해두었다가 맨 마지막에 가서 관련 데이터들을 삭제해줄 것이다.
 				DeletedSceneInfos.Add(PrimitiveSceneInfo);
+				// ⭐
 			}
 			RemovedLocalPrimitiveSceneInfos.RemoveAt(StartIndex, RemovedLocalPrimitiveSceneInfos.Num() - StartIndex);
 		}
@@ -519,10 +537,21 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 					// ⭐
 					if (bAddToDrawLists)
 					{
-						// ⭐
+						// ⭐⭐⭐⭐⭐⭐⭐
 						// 추가된 FPrimitiveSceneInfo를 한꺼번에 Scene에 추가해줌.
-						// ⭐
+						//
+						// FPrimitiveSceneInfo::AddToScene 매우 중요한 함수이다.
+						// FMeshBathch, FMeshDrawCommand가 생성되고 FScene에 캐싱되는 함수이다.
+						// FMeshBathch와 FMeshDrawCommand는 실제 렌더링 API에 넘겨질 모든 데이터를 가지고 있다.
+						// 이 두 데이터만 가지고 있으면 렌더링 API를 호출해서 렌더링을 수행할 수 있다. 다른건 필요없다.       
+						//
+						// 아주 아주 중요하다.
+						//
+						// 아래의 링크를 타고 들어가면 자세한 분석을 볼 수 있다.
+						// 반드시 읽기를 강추드립니다. 
+						// https://scahp.tistory.com/74?category=848072
 						FPrimitiveSceneInfo::AddToScene(RHICmdList, this, TArrayView<FPrimitiveSceneInfo*>(&AddedLocalPrimitiveSceneInfos[StartIndex], AddedLocalPrimitiveSceneInfos.Num() - StartIndex), true, true, bAsyncCreateLPIs);
+						// ⭐⭐⭐⭐⭐⭐⭐
 					}
 					else
 					{
@@ -589,6 +618,7 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 		UpdatedSceneInfosWithStaticDrawListUpdate.Reserve(UpdatedTransforms.Num());
 		UpdatedSceneInfosWithoutStaticDrawListUpdate.Reserve(UpdatedTransforms.Num());
 
+		// ⭐⭐⭐⭐⭐⭐⭐
 		for (const auto& Transform : UpdatedTransforms)
 		{
 			// ⭐
@@ -631,13 +661,13 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 
 			PrimitiveSceneInfo->FlushRuntimeVirtualTexture();
 
-			// ⭐
+			// ⭐⭐⭐⭐⭐⭐⭐
 			// Remove the primitive from the scene at its old location
 			// (note that the octree update relies on the bounds not being modified yet).
 			//
 			// Transform 위치가 변경되기 전에 Scene에 추가했던 Primitive를 Scene에서 제거해줌.
-			// ⭐
 			PrimitiveSceneInfo->RemoveFromScene(bUpdateStaticDrawLists);
+			// ⭐⭐⭐⭐⭐⭐⭐
 
 			if (ShouldPrimitiveOutputVelocity(PrimitiveSceneInfo->Proxy, GetShaderPlatform()))
 			{
@@ -658,16 +688,17 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 				PrimitiveSceneInfo->MarkIndirectLightingCacheBufferDirty();
 			}
 
-			// ⭐
+			// ⭐⭐⭐⭐⭐⭐⭐
 			// 위에서 Scene에서 Primitive를 다시 Scene에 추가해줌
-			// ⭐
 			AddPrimitiveToUpdateGPU(*this, PrimitiveSceneInfo->PackedIndex);
+			// ⭐⭐⭐⭐⭐⭐⭐
 
 			DistanceFieldSceneData.UpdatePrimitive(PrimitiveSceneInfo);
 
 			// If the primitive has static mesh elements, it should have returned true from ShouldRecreateProxyOnUpdateTransform!
 			check(!(bUpdateStaticDrawLists && PrimitiveSceneInfo->StaticMeshes.Num()));
 		}
+		// ⭐⭐⭐⭐⭐⭐⭐
 
 		// Re-add the primitive to the scene with the new transform.
 		if (UpdatedSceneInfosWithStaticDrawListUpdate.Num() > 0)
@@ -749,9 +780,21 @@ void FScene::UpdateAllPrimitiveSceneInfos(FRHICommandListImmediate& RHICmdList, 
 			};
 
 			BeginCleanup(new DeferDeleteHitProxies(MoveTemp(PrimitiveSceneInfo->HitProxies)));
+
+
+			// ⭐
 			// free the primitive scene proxy.
+			//
+			// PrimitiveSceneInfo를 정리(제거) 해준다.
+			//
+			// PrimitiveSceneInfo와 매칭되는 FPrimitiveSceneProxy도 함께 제거해준다.
+			// 게임 스레드에서 생성해준 PrimitiveSceneInfo와와 FPrimitiveSceneProxy를 렌더스레드에서 제거해주는 것을 알 수 있다.
+			// 생성은 게임 스레드가, 제거는 렌더스레드가 맡으므로서 게임 스레드에서 PrimitiveComponnet를 제거해주더라도
+			// 게임 스레드를 뒤따라오는 렌더스레드가 제거 되기 전 프레임에서 해당 Primitive를 안전하게 렌더링할 수 있다.
+			// ⭐
 			delete PrimitiveSceneInfo->Proxy;
 			delete PrimitiveSceneInfo;
+
 
 			// Invalidate PathTraced image because we removed something from the scene
 			bPathTracingNeedsInvalidation = true;
