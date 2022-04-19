@@ -26,7 +26,7 @@ UE4 4.27 버전을 기준으로 작성하였다.
 ----------------------------              
              
 이번 챕터에는 **FMobileSceneRenderer::InitViews**에 대해 분석해볼 것이다.              
-                    
+                       
 ------------------------------         
 
 ```cpp
@@ -70,18 +70,23 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 
 	// ⭐⭐⭐⭐⭐⭐⭐
 	// 가시성 결정 연산을 수행한다.
-	// 아래로 내려가서 자세한 분석을 읽자.
+	// 아래로 내려가서 자세한 분석을 읽으세요.
 	ComputeViewVisibility(RHICmdList, BasePassDepthStencilAccess, ViewCommandsPerView, DynamicIndexBuffer, DynamicVertexBuffer, DynamicReadBuffer);
 	// ⭐⭐⭐⭐⭐⭐⭐
 
 	PostVisibilityFrameSetup(ILCTaskData);
 
 	const FIntPoint RenderTargetSize = (ViewFamily.RenderTarget->GetRenderTargetTexture().IsValid()) ? ViewFamily.RenderTarget->GetRenderTargetTexture()->GetSizeXY() : ViewFamily.RenderTarget->GetSizeXY();
+
+	// ⭐
+	// 업스케일링이 필요한지 여부.
 	const bool bRequiresUpscale = 
 		((int32)RenderTargetSize.X > FamilySize.X || (int32)RenderTargetSize.Y > FamilySize.Y) 
 		// in the editor color surface and backbuffer could have a different pixel formats and size, 
 		// so we always run upscale pass to blit content from scene color to backbuffer 
 		|| (GIsEditor && !IsMobileHDR() && NumMSAASamples > 1);
+	// ⭐
+
 	// ES requires that the back buffer and depth match dimensions.
 	// For the most part this is not the case when using scene captures. Thus scene captures always render to scene color target.
 	const bool bStereoRenderingAndHMD = ViewFamily.EngineShowFlags.StereoRendering && ViewFamily.EngineShowFlags.HMDDistortion;
@@ -130,6 +135,9 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 	const bool bSeparateTranslucencyActive = IsMobileSeparateTranslucencyActive(Views.GetData(), Views.Num()); 
 	const bool bPostProcessUsesSceneDepth = PostProcessUsesSceneDepth(Views[0]);
 	bRequiresMultiPass = RequiresMultiPass(RHICmdList, Views[0]);
+
+	// ⭐
+	// 포스트 프로세싱을 위해 Depth Buffer를 저장해둘지 여부. 
 	bKeepDepthContent = 
 		bRequiresMultiPass || 
 		bForceDepthResolve ||
@@ -139,6 +147,7 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 		(bDeferredShading && bPostProcessUsesSceneDepth) ||
 		bShouldRenderVelocities ||
 		bIsFullPrepassEnabled;
+	//
     
 	// never keep MSAA depth
 	bKeepDepthContent = (NumMSAASamples > 1 ? false : bKeepDepthContent);
@@ -176,9 +185,13 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 		ReleasePixelProjectedReflectionOutputs();
 	}
 
+
 	if (bRequiresAmbientOcclusionPass)
-	{
+	{	
+		// ⭐
+		// Ambient Occlusion을 위한 사전 작업
 		InitAmbientOcclusionOutputs(RHICmdList, SceneContext.SceneDepthZ);
+		// ⭐
 	}
 	else
 	{
@@ -197,6 +210,10 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 	//make sure all the targets we're going to use will be safely writable.
 	GRenderTargetPool.TransitionTargetsWritable(RHICmdList);
 
+	
+	// ⭐
+	// CustomDepthStencil Pass를 그릴지 여부.
+	//
 	// Find out whether custom depth pass should be rendered.
 	{
 		bool bCouldUseCustomDepthStencil = !bGammaSpace && (!Scene->World || (Scene->World->WorldType != EWorldType::EditorPreview && Scene->World->WorldType != EWorldType::Inactive));
@@ -206,21 +223,22 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 			bShouldRenderCustomDepth |= Views[ViewIndex].bCustomDepthStencilValid;
 		}
 	}
+	// ⭐
 
-#if PLATFORM_HOLOLENS
-	// Check if any material renders depth to translucent materials.
-	for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
-	{
-		bShouldRenderDepthToTranslucency |= Views[ViewIndex].bShouldRenderDepthToTranslucency;
-	}
-#endif
+	// ...
+	// ... 홀로렌즈 관련 처리
+	// ...
 	
 	const bool bDynamicShadows = ViewFamily.EngineShowFlags.DynamicShadows;
 	
 	if (bDynamicShadows && !IsSimpleForwardShadingEnabled(ShaderPlatform))
 	{
+		// ⭐
+		// Dynamic Shadow를 위한 사전 작업
+		//
 		// Setup dynamic shadows.
 		InitDynamicShadows(RHICmdList);		
+		// ⭐
 	}
 	else
 	{
@@ -266,8 +284,13 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 			View.ViewState->UpdatePreExposure(View);
 		}
 
+		// ⭐
+		// 이 View에서 사용할 RHI 리소스들을 초기화한다.
+		// ex) View와 관련된 각종 Uniform Buffer 데이터들을 초기화한다.
+		//
 		// Initialize the view's RHI resources.
 		View.InitRHIResources();
+		// ⭐
 
 		// TODO: remove when old path is removed
 		// Create the directional light uniform buffers
@@ -280,7 +303,18 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 		}
 	}
 
+	//
+	// In order to have different primitives in the same instanced draw with primitive-specific parameters, 
+	// supporting platforms (UseGPUScene) upload them to a scene-wide buffer (UpdateGPUScene) and index into it with a PrimitiveId. 
+	// For FLocalVertexFactory, PrimitiveId comes from a instance-frequency vertex input stream. 
+	// This must be passed to the pixel shader, which must use GetPrimitiveData(Parameters.PrimitiveId).
+	// Member to access Primitive shader parameters, instead of accessing the primitive uniform buffer directly (Primitive.Member).
+	//
+	// https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/MeshDrawingPipeline/#gpuscene
+	//
 	UpdateGPUScene(RHICmdList, *Scene);
+	//
+
 	for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 	{
 		UploadDynamicPrimitiveShaderDataForView(RHICmdList, *Scene, Views[ViewIndex]);
@@ -332,11 +366,24 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 ```
                
 
-
+**FSceneRenderer::ComputeViewVisibility** 함수는 Primitive에 대한 가시성 테스트 뿐만아니라 Dynamic Primitive에 대한 FMeshBatch, FMeshDrawCommand를 생성하는 매우 중요한 역할을 하는 함수이다.        
 
 ```cpp
-void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList, FExclusiveDepthStencil::Type BasePassDepthStencilAccess, FViewVisibleCommandsPerView& ViewCommandsPerView, 
-	FGlobalDynamicIndexBuffer& DynamicIndexBuffer, FGlobalDynamicVertexBuffer& DynamicVertexBuffer, FGlobalDynamicReadBuffer& DynamicReadBuffer)
+void FSceneRenderer::ComputeViewVisibility
+(
+	FRHICommandListImmediate& RHICmdList, 
+	FExclusiveDepthStencil::Type BasePassDepthStencilAccess, 
+
+	// ⭐⭐⭐⭐⭐⭐⭐
+	// 매우 중요한 Parameter 입니다.
+	// 최종적으로 View에 그려질 Static, Dynamic Mesh들에 대한 FMeshDrawCommand들이 이 함수에서 이 Parameter에 저장될 것 입니다. 
+	FViewVisibleCommandsPerView& ViewCommandsPerView, 
+	// ⭐⭐⭐⭐⭐⭐⭐
+
+	FGlobalDynamicIndexBuffer& DynamicIndexBuffer, 
+	FGlobalDynamicVertexBuffer& DynamicVertexBuffer,
+	FGlobalDynamicReadBuffer& DynamicReadBuffer
+)
 {
 	SCOPE_CYCLE_COUNTER(STAT_ViewVisibilityTime);
 	SCOPED_NAMED_EVENT(FSceneRenderer_ComputeViewVisibility, FColor::Magenta);
@@ -354,8 +401,14 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 	int32 NumPrimitives = Scene->Primitives.Num();
 	float CurrentRealTime = ViewFamily.CurrentRealTime;
 
+	// ⭐⭐⭐⭐⭐⭐⭐
+	// HasDynamicMeshElementsMasks는 FScene->Primitives와 같은 개수로 초기화되며, 
+	// 아래 ComputeAndMarkRelevanceForViewParallel 함수에서 DynamicMesh 중 렌더링 될 Index에 1이 셋팅될 것 입니다.. 
+	// 즉, DynamicMesh 용 VisibilityMap입니다.
+	// 참고 자료 : https://scahp.tistory.com/75?category=848072
 	FPrimitiveViewMasks HasDynamicMeshElementsMasks;
 	HasDynamicMeshElementsMasks.AddZeroed(NumPrimitives);
+	// ⭐⭐⭐⭐⭐⭐⭐
 
 	FPrimitiveViewMasks HasDynamicEditorMeshElementsMasks;
 
@@ -394,7 +447,13 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 	{
 		STAT(NumProcessedPrimitives += NumPrimitives);
 
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 현재 View에서 렌더링 될 FMeshDrawCommand들이 저장될 것입니다.
+		// Visibility 연산 결과에 따라 필요한 FMeshDrawCommand도 달라진다.
+		// 참고 자료 : https://scahp.tistory.com/75?category=848072
 		FViewInfo& View = Views[ViewIndex];
+		// ⭐⭐⭐⭐⭐⭐⭐
+
 		FViewCommands& ViewCommands = ViewCommandsPerView[ViewIndex];
 		FSceneViewState* ViewState = (FSceneViewState*)View.State;
 
@@ -525,7 +584,7 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 
 
 		// ⭐
-		// 이 View에 대해 Primitive가 숨겨짐 처리가 되어 있다면 그 Primitive도 PrimitiveVisibilityMap에서 숨겨짐 처리를 한다.
+		// 이 View에 대해 어떤 Primitive가 숨겨짐 처리가 되어 있다면 그 Primitive도 PrimitiveVisibilityMap에서 숨겨짐 처리를 한다.
 		//
 		// If any primitives are explicitly hidden, remove them now.
 		if (View.HiddenPrimitives.Num())
@@ -572,6 +631,8 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 
 		// ⭐⭐⭐⭐⭐⭐⭐
 		// Occlusion Culling을 수행한다.
+		// Precomputed Visibility를 통한 Culling도 여기서 수행한다.
+		// 아래로 내려가서 자세한 분석을 보시기 바랍니다.
 		//
 		// Occlusion cull for all primitives in the view frustum, but not in wireframe.
 		if (!View.Family->EngineShowFlags.Wireframe)
@@ -610,13 +671,38 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 	// ...
 	// ... VR용 렌더링 관련 처리
 	// ...
+
 	
+	// ⭐⭐⭐⭐⭐⭐⭐
+	// 여기까지 왔다면 월드 상의 모든 Primitive들에 대한 가시성 테스트는 끝났습니다.
+	// 이제 그 가시성 테스트 결과를 바탕으로 화면 상에 보이는 Primitive들에 대한 FMeshDrawCommand들을 모을 것 입니다.
+	// ⭐⭐⭐⭐⭐⭐⭐
+	
+
+	// ⭐⭐⭐⭐⭐⭐⭐
+	// ComputeAndMarkRelevanceForViewParallel 함수는 매우 중요한 역할을 담당한다.
+	//
+	// 1. 위의 가시성 테스트 결과를 가지고 렌더링 될 StaticMesh의 FMeshDrawCommand를 모읍니다.
+	// 2. 렌더링 될 ( 화면상에 보이는 ) DynamicMesh들의 가시성 정보인 HasDynamicMeshElementsMasks를 채웁니다. DynamicMesh의 경우 해당 Index의 위치에 1이 쓰입니다.
+	// 
+	// 그리고 위의 두 동작을 동작을 병렬로 수행한다.
+	//
+	// ComputeAndMarkRelevanceForViewParallel 함수가 끝나면 StaticMesh들의 FMeshDrawCommand는 ViewCommands에 들어 있습니다.
+	//
+	// 참고 자료 : https://scahp.tistory.com/75?category=848072
 	ViewBit = 0x1;
 	for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ++ViewIndex)
 	{
 		FViewInfo& View = Views[ViewIndex];
+
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 특정 View에 그려진 Mesh들에 대한 FMeshDrawCommand이 저장되는 곳!
+		// 아래 ComputeAndMarkRelevanceForViewParallel 함수에서 이 FViewCommands로 StaticMesh(!)들에 대한 ViewCommands가 들어갑니다.
+		// 물론 가시성 결과를 토대로 View에 그려질 StaticMesh들에 대한 FViewCommands만 들어갑니다.
+		// StaticMesh들의 FMeshDrawCommand는 미리 캐싱이 되어 있기 때문에 빠르게 옮길 수 있습니다.
 		FViewCommands& ViewCommands = ViewCommandsPerView[ViewIndex];
-		
+		// ⭐⭐⭐⭐⭐⭐⭐
+
 		if (bIsInstancedStereo)
 		{
 			SCOPE_CYCLE_COUNTER(STAT_ViewRelevance);
@@ -624,17 +710,39 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 		}
 		ViewBit <<= 1;
 	}
+	// ⭐⭐⭐⭐⭐⭐⭐
 
 
 	// ⭐⭐⭐⭐⭐⭐⭐
-	// Dynamic Mesh들에 대한 MeshBatch, FMeshDrawCommand 생성한다.
-	// 참고 자료 : https://scahp.tistory.com/75?category=848072
+	// 여기까지 왔으면 렌더링 될 Static Mesh들에 대한 FMeshDrawCommand는 모두 ViewCommandsPerView에 저장되어 있습니다.
+	// ⭐⭐⭐⭐⭐⭐⭐
+
+
+	// ⭐⭐⭐⭐⭐⭐⭐
+	// Dynamic Mesh들에 대한 FMeshBatch를 생성한다.
+	//
+	// Static Mesh의 경우 미리 FMeshBatch, FMeshDrawCommands를 미리 만들어두고 캐싱을 해두지만,
+	// Dynamic Mesh의 경우 매 프레임 그때 그때 FMeshBatch, FMeshDrawCommand를 생성합니다.
+	// 일단 여기서는 DynamicMesh에 대한 FMeshBatch만 생성합니다.
+	// FMeshBatch는 Primitive를 렌더링할 때 필요한 모든 데이터를 가지고 있습니다.
+	// 모든 Pass에서의 렌더링에 필요한 모든 데이터를 가지고 있기 때문에 특정 Pass에 대해 Stateless하다고 합니다.
+	//
+	// Dynamic Mesh들에 대한 FMeshBatch는 View.DynamicMeshElements에 저장됩니다.
+	//
+	// 참고 자료 : https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/MeshDrawingPipeline/
 	{
 		SCOPED_NAMED_EVENT(FSceneRenderer_GatherDynamicMeshElements, FColor::Yellow);
 		// Gather FMeshBatches from scene proxies
 		GatherDynamicMeshElements(Views, Scene, ViewFamily, DynamicIndexBuffer, DynamicVertexBuffer, DynamicReadBuffer,
 			HasDynamicMeshElementsMasks, HasDynamicEditorMeshElementsMasks, MeshCollector);
 	}
+	// ⭐⭐⭐⭐⭐⭐⭐
+
+
+	// ⭐⭐⭐⭐⭐⭐⭐
+	// 여기까지 왔다면 
+	// 화면 상에 그려질 모든 Static Mesh들에 대한 FMeshDrawCommand는 ViewCommands에 들어있고,
+	// 화면 상에 그려질 모든 Dynamic Mesh들에 대한 FMeshBatch는 View.DynamicMeshElements에 모두 들어 있습니다.
 	// ⭐⭐⭐⭐⭐⭐⭐
 
 
@@ -652,12 +760,157 @@ void FSceneRenderer::ComputeViewVisibility(FRHICommandListImmediate& RHICmdList,
 		DumpPrimitives(ViewCommands);
 #endif
 
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 각 Pass 별로 
+		// Static Mesh에 대한 FMeshDrawCommand를 모으고, 
+		// Dynamic Mesh들에 대한 FMeshDrawCommand 생성하여,
+		// View.ParallelMeshDrawCommandPasses에 모두 저장합니다.
+		//  
+		// 참고 자료 : https://scahp.tistory.com/75?category=848072
 		SetupMeshPass(View, BasePassDepthStencilAccess, ViewCommands);
+		// ⭐⭐⭐⭐⭐⭐⭐
+
 	}
 
 	INC_DWORD_STAT_BY(STAT_ProcessedPrimitives,NumProcessedPrimitives);
 	INC_DWORD_STAT_BY(STAT_CulledPrimitives,NumCulledPrimitives);
 	INC_DWORD_STAT_BY(STAT_OccludedPrimitives,NumOccludedPrimitives);
+}
+```
+
+
+```cpp
+static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* Scene, FViewInfo& View, FGlobalDynamicVertexBuffer& DynamicVertexBuffer)
+{
+	SCOPE_CYCLE_COUNTER(STAT_OcclusionCull);	
+	RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_OcclusionReadback));
+
+	// INITVIEWS_TODO: This could be more efficient if broken up in to separate concerns:
+	// - What is occluded?
+	// - For which primitives should we render occlusion queries?
+	// - Generate occlusion query geometry.
+
+	int32 NumOccludedPrimitives = 0;
+	FSceneViewState* ViewState = (FSceneViewState*)View.State;
+	
+	// ⭐
+	// Hierarchical Z Buffer로 Occlusion Culling을 수행할지 결정한다.
+	// 프로젝트 셋팅에서 설정을 할 수 있고, OpenGL이냐 여부에 따라 또 달라진다.
+	//
+	// Disable HZB on OpenGL platforms to avoid rendering artifacts
+	// It can be forced on by setting HZBOcclusion to 2
+	bool bHZBOcclusion = !IsOpenGLPlatform(GShaderPlatformForFeatureLevel[Scene->GetFeatureLevel()]);
+	bHZBOcclusion = bHZBOcclusion && GHZBOcclusion;
+	bHZBOcclusion = bHZBOcclusion && FDataDrivenShaderPlatformInfo::GetSupportsHZBOcclusion(GShaderPlatformForFeatureLevel[Scene->GetFeatureLevel()]);
+	bHZBOcclusion = bHZBOcclusion || (GHZBOcclusion == 2);
+	// ⭐
+
+	// ⭐
+	// Precomputed visibility 데이터를 가지고 가시성 체크를 수행한다. 
+	//
+	// Use precomputed visibility data if it is available.
+	if (View.PrecomputedVisibilityData)
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_LookupPrecomputedVisibility);
+
+		FViewElementPDI OcclusionPDI(&View, nullptr, nullptr);
+		uint8 PrecomputedVisibilityFlags = EOcclusionFlags::CanBeOccluded | EOcclusionFlags::HasPrecomputedVisibility;
+		for (FSceneSetBitIterator BitIt(View.PrimitiveVisibilityMap); BitIt; ++BitIt)
+		{
+			if ((Scene->PrimitiveOcclusionFlags[BitIt.GetIndex()] & PrecomputedVisibilityFlags) == PrecomputedVisibilityFlags)
+			{
+				FPrimitiveVisibilityId VisibilityId = Scene->PrimitiveVisibilityIds[BitIt.GetIndex()];
+				if ((View.PrecomputedVisibilityData[VisibilityId.ByteIndex] & VisibilityId.BitMask) == 0)
+				{
+					View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
+					INC_DWORD_STAT_BY(STAT_StaticallyOccludedPrimitives,1);
+					STAT(NumOccludedPrimitives++);
+
+					// ...
+					// ... 디버깅용 처리
+					// ...
+				}
+			}
+		}
+	}
+	// ⭐
+
+	float CurrentRealTime = View.Family->CurrentRealTime;
+	if (ViewState)
+	{
+		if (ViewState->SceneSoftwareOcclusion)
+		{	
+			// ⭐
+			// SW Occlusion 컬링을 수행하는 경우.
+			// 잘못하면 겁나 느려진다.....
+			// ⭐
+
+			SCOPE_CYCLE_COUNTER(STAT_SoftwareOcclusionCull)
+			NumOccludedPrimitives += ViewState->SceneSoftwareOcclusion->Process(RHICmdList, Scene, View);
+		}
+		else if (Scene->GetFeatureLevel() >= ERHIFeatureLevel::ES3_1)
+		{
+			// ⭐
+			// 일반적인 HW Occlusion Query
+			// ⭐
+
+			// ⭐
+			// 이번 프레임에도 Occlusion Query 테스트를 수행할 경우 bSubmitQueries는 true
+			bool bSubmitQueries = !View.bDisableQuerySubmissions; 
+			// ⭐
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+			bSubmitQueries = bSubmitQueries && !ViewState->HasViewParent() && !ViewState->bIsFrozen;
+#endif
+
+			if( bHZBOcclusion )
+			{
+				QUICK_SCOPE_CYCLE_COUNTER(STAT_MapHZBResults);
+				check(!ViewState->HZBOcclusionTests.IsValidFrame(ViewState->OcclusionFrameCounter));
+				ViewState->HZBOcclusionTests.MapResults(RHICmdList);
+			}
+ 
+			// ...
+			// ... VR 관련 처리.
+			// ...
+
+			View.ViewState->PrimitiveOcclusionQueryPool.AdvanceFrame(
+				ViewState->OcclusionFrameCounter,
+				FOcclusionQueryHelpers::GetNumBufferedFrames(Scene->GetFeatureLevel()),
+				View.ViewState->IsRoundRobinEnabled() && !View.bIsSceneCapture && IStereoRendering::IsStereoEyeView(View));
+
+			// ⭐⭐⭐⭐⭐⭐⭐
+			// Occlusion Query의 결과를 가져옵니다.
+			// 옵션에 따라 병렬로도 처리하기도 합니다.
+			NumOccludedPrimitives += FetchVisibilityForPrimitives(Scene, View, bSubmitQueries, bHZBOcclusion, DynamicVertexBuffer);
+			// ⭐⭐⭐⭐⭐⭐⭐
+
+			if( bHZBOcclusion )
+			{
+				QUICK_SCOPE_CYCLE_COUNTER(STAT_HZBUnmapResults);
+
+				ViewState->HZBOcclusionTests.UnmapResults(RHICmdList);
+
+				if( bSubmitQueries )
+				{
+					ViewState->HZBOcclusionTests.SetValidFrameNumber(ViewState->OcclusionFrameCounter);
+				}
+			}
+		}
+		else
+		{
+			// ⭐
+			// OccOcclusion을 수행하지 않는 경우
+			// ⭐
+
+			// No occlusion queries, so mark primitives as not occluded
+			for (FSceneSetBitIterator BitIt(View.PrimitiveVisibilityMap); BitIt; ++BitIt)
+			{
+				View.PrimitiveDefinitelyUnoccludedMap.AccessCorrespondingBit(BitIt) = true;
+			}
+		}
+	}
+	RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_AfterOcclusionReadback));
+	return NumOccludedPrimitives;
 }
 ```
 

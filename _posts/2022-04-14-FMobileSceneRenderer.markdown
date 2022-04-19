@@ -102,6 +102,9 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 
     // ⭐⭐⭐⭐⭐⭐⭐
 	// 2. Primitive들의 가시성 연산,  반투명 오브젝트들에 대한 Sorting 작업등을 수행한다. ( 대부분 CPU에서 처리 )
+	//    또한 View에 그려질 Static Mesh, Dynamic Mesh에 대한 FMeshBatch, FMeshDrawCommand를 생성하고 모읍니다. ( 매우 중요!! )
+	//    그리고 각종 Pass들에 필요한 사전 작업들을 수행한다.
+	//
 	// Find the visible primitives and prepare targets and buffers for rendering
 	InitViews(RHICmdList);
     // ⭐⭐⭐⭐⭐⭐⭐
