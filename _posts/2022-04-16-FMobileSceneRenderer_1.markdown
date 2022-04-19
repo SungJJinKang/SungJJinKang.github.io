@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Unreal Engine4 FMobileSceneRenderer 분석 - 2"
+title:  "Unreal Engine4 FMobileSceneRenderer 분석 - 2 ( FScene::UpdateAllPrimitiveSceneInfos )"
 date:   2022-04-16
 categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
 ---

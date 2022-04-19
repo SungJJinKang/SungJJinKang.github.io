@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Unreal Engine4 FMobileSceneRenderer 분석 - 1"
+title:  "Unreal Engine4 FMobileSceneRenderer 분석 - 1 ( FMobileSceneRenderer::Render )"
 date:   2022-04-14
 categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
 ---
@@ -24,6 +24,8 @@ UGameViewportClient::Draw -> FRendererModule::BeginRenderingViewFamily -> Render
 주요 코드들 위주로 챕터를 나누어서 소개할 것이다.         
 
 - 1. [FScene::UpdateAllPrimitiveSceneInfos](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)               
+- 2. [FMobileSceneRenderer::InitViews](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)               
+
 
 
 ```cpp
@@ -35,11 +37,16 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	SCOPED_GPU_STAT(RHICmdList, MobileSceneRender);
 
     // ⭐⭐⭐⭐⭐⭐⭐
-	// 1.
+	// 1. PrimitiveSceneInfo를 업데이트해주고 필요한 FMeshBatch를 생성해서 캐싱해둔다.
+	//    추가되거나 ( 갱싱된 ) StaticMesh에 대한 FMeshBatch, FMeshDrawCommand를 생성하고 캐싱한다.
 	Scene->UpdateAllPrimitiveSceneInfos(RHICmdList);
 	// ⭐⭐⭐⭐⭐⭐⭐
 
+	// ⭐
+	// FViewInfo를 설정한다.
+	// 해상도, 렌더링 수행할 영역... 등등을 셋팅한다.
 	PrepareViewRectsForRendering(RHICmdList);
+	// ⭐
 
 	if (ShouldRenderSkyAtmosphere(Scene, ViewFamily.EngineShowFlags))
 	{
@@ -68,12 +75,36 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	SCOPED_DRAW_EVENT(RHICmdList, MobileSceneRender);
 	SCOPED_GPU_STAT(RHICmdList, MobileSceneRender);
 
+	// ⭐
+	// RHI 스레드가 렌더 스레드와 분리되어 있는 경우 이전 프레임의 Occlusion Query 결과를 기다린다.
+	// 여기서 Occlusion Query란 : 
+	// Occlude 될(!) 오브젝트들을 픽셀 쉐이딩 없이 ( 그냥 Depth 값만 얻으면 되니 ) 그려본 후 ( Occluder와 Depth 값만 비교하는 용도로 ),
+	// 그려졌다면 ( Depth Test를 통과했다면 ) 해당 오브젝트는 Occlude되지 않은 오브젝트이니 제대로 그린다.        
+	// GPU를 사용하여 수행하는 Occlusion Culling의 일종이다.
+	// Occlusion Query 결과 ( Occlude될 오브젝트가 Depth Test를 통과했는지 여부 )를 시스템 메모리 ( 메인 메모리 )로 다시 읽어와야하기 때문에
+	// 성능 문제 ( reference : https://megayuchi.com/2021/06/06/ddraw-surface-d3d-dynamic-buffer-%EC%97%90%EC%84%9C%EC%9D%98-write-combine-memory/ )가 있다.
+	//  
 	WaitOcclusionTests(RHICmdList);
-	FRHICommandListExecutor::GetImmediateCommandList().PollOcclusionQueries();
-	RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+	// ⭐
 
+	
+	// ⭐
+	// 이전 프레임의 Occlusion Query의 결과가 나왔는지 확인한다.
+	// GPU에서 아직 Occlusion Query를 처리하지 못했다면 그냥 빠져나온다. ( Stall되지 않는다. )
+	FRHICommandListExecutor::GetImmediateCommandList().PollOcclusionQueries();
+	// ⭐
+
+	// ⭐
+	// 렌더스레드에서 RHI 스레드로 전송 대기 중인 커맨드들을 즉시 처리한다.
+	RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+	// ⭐
+
+
+    // ⭐⭐⭐⭐⭐⭐⭐
+	// 2. Primitive들의 가시성 연산,  반투명 오브젝트들에 대한 Sorting 작업등을 수행한다. ( 대부분 CPU에서 처리 )
 	// Find the visible primitives and prepare targets and buffers for rendering
 	InitViews(RHICmdList);
+    // ⭐⭐⭐⭐⭐⭐⭐
 	
 	if (GRHINeedsExtraDeletionLatency || !GRHICommandList.Bypass())
 	{
