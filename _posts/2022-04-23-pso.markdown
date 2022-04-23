@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "PSO ( Pipeline State Object )"
+date:   2022-04-23
+categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+---
+
+references : [https://logins.github.io/graphics/2020/04/12/DX12PipelineStateObject.html](https://logins.github.io/graphics/2020/04/12/DX12PipelineStateObject.html), [https://developer.nvidia.com/dx12-dos-and-donts#pipeline](https://developer.nvidia.com/dx12-dos-and-donts#pipeline), [https://docs.unrealengine.com/5.0/ko/optimizing-rendering-with-pso-caches-in-unreal-engine/](https://docs.unrealengine.com/5.0/ko/optimizing-rendering-with-pso-caches-in-unreal-engine/), [https://blog.naver.com/PostView.naver?blogId=kgh861028&logNo=221792944918&parentCategoryNo=&categoryNo=10&viewDate=&isShowPopularPosts=true&from=search](https://blog.naver.com/PostView.naver?blogId=kgh861028&logNo=221792944918&parentCategoryNo=&categoryNo=10&viewDate=&isShowPopularPosts=true&from=search)      
