@@ -24,7 +24,8 @@ UGameViewportClient::Draw -> FRendererModule::BeginRenderingViewFamily -> Render
 주요 코드들 위주로 챕터를 나누어서 소개할 것이다.         
 
 - 1. [FScene::UpdateAllPrimitiveSceneInfos](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)               
-- 2. [FMobileSceneRenderer::InitViews](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)               
+- 2. [FMobileSceneRenderer::InitViews](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_2.html)   
+- 3. [FSceneRenderer::RenderCustomDepthPass](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/23/FMobileSceneRenderer_3.html)             
 
 
 
@@ -192,8 +193,11 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 		ViewList.Add(&Views[ViewIndex]);
 	}
 
-	// Custom depth
+    // ⭐⭐⭐⭐⭐⭐⭐
+	// 3. Custom Depth Pass
 	// bShouldRenderCustomDepth has been initialized in InitViews on mobile platform
+	//
+	// Custom Depth 옵션이 활성화되어 있는 경우 Custom Depth Pass를 렌더링한다.
 	if (bShouldRenderCustomDepth)
 	{
 		FRDGBuilder GraphBuilder(RHICmdList);
@@ -201,6 +205,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 		RenderCustomDepthPass(GraphBuilder, SceneTextures);
 		GraphBuilder.Execute();
 	}
+    // ⭐⭐⭐⭐⭐⭐⭐
 
 	if (bIsFullPrepassEnabled)
 	{
