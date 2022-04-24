@@ -914,6 +914,145 @@ static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* S
 }
 ```
 
+```cpp
+static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, const bool bSubmitQueries, const bool bHZBOcclusion, FGlobalDynamicVertexBuffer& DynamicVertexBuffer)
+{
+	CSV_SCOPED_TIMING_STAT_EXCLUSIVE(FetchVisibilityForPrimitives);
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_FetchVisibilityForPrimitives);
+	FSceneViewState* ViewState = (FSceneViewState*)View.State;
+	
+	static int32 SubIsOccludedArrayIndex = 0;
+	SubIsOccludedArrayIndex = 1 - SubIsOccludedArrayIndex;
+
+	const int32 NumBufferedFrames = FOcclusionQueryHelpers::GetNumBufferedFrames(Scene->GetFeatureLevel());
+	uint32 OcclusionFrameCounter = ViewState->OcclusionFrameCounter;
+
+	// ⭐
+	// Primitive들의 이전 프레임에서의 가시성/오클루전 결과 값
+	TSet<FPrimitiveOcclusionHistory, FPrimitiveOcclusionHistoryKeyFuncs>& ViewPrimitiveOcclusionHistory = ViewState->PrimitiveOcclusionHistorySet;
+	// ⭐
+
+	if (GOcclusionCullParallelPrimFetch && GSupportsParallelOcclusionQueries)
+	{		
+		//
+		// ...
+		// ... GOcclusionCullParallelPrimFetch, GSupportsParallelOcclusionQueries 두 변수의 기본 값은 false이다.
+		// ...
+		//
+	}
+	else
+	{
+		//SubIsOccluded stuff needs a frame's lifetime
+		TArray<bool>& SubIsOccluded = View.FrameSubIsOccluded[SubIsOccludedArrayIndex];
+		SubIsOccluded.Reset();
+
+		static TArray<FOcclusionBounds> PendingIndividualQueriesWhenOptimizing;
+		PendingIndividualQueriesWhenOptimizing.Reset();
+
+		static TArray<FOcclusionBounds*> PendingIndividualQueriesWhenOptimizingSorter;
+		PendingIndividualQueriesWhenOptimizingSorter.Reset();
+
+		FViewElementPDI OcclusionPDI(&View, nullptr, nullptr);
+		int32 StartIndex = 0;
+		int32 NumToProcess = View.PrimitiveVisibilityMap.Num();				
+		FVisForPrimParams Params(
+			Scene,
+			&View,
+			&OcclusionPDI,
+			StartIndex,
+			NumToProcess,
+			bSubmitQueries,
+			bHZBOcclusion,			
+			nullptr,
+			nullptr,
+			nullptr,
+			&PendingIndividualQueriesWhenOptimizing,
+			&SubIsOccluded
+			);
+
+		FetchVisibilityForPrimitives_Range<true>(Params, &DynamicVertexBuffer);
+
+		int32 IndQueries = PendingIndividualQueriesWhenOptimizing.Num();
+		if (IndQueries)
+		{
+			int32 SoftMaxQueries = GRHIMaximumReccommendedOustandingOcclusionQueries / FMath::Min(NumBufferedFrames, 2); // extra RHIT frame does not count
+			int32 UsedQueries = View.GroupedOcclusionQueries.GetNumBatchOcclusionQueries();
+
+			int32 FirstQueryToDo = 0;
+			int32 QueriesToDo = IndQueries;
+
+
+			if (SoftMaxQueries < UsedQueries + IndQueries)
+			{
+				QueriesToDo = (IndQueries + 9) / 10;  // we need to make progress, even if it means stalling and waiting for the GPU. At a minimum, we will do 10%
+
+				if (SoftMaxQueries > UsedQueries + QueriesToDo)
+				{
+					// we can do more than the minimum
+					QueriesToDo = SoftMaxQueries - UsedQueries;
+				}
+			}
+			if (QueriesToDo == IndQueries)
+			{
+				for (int32 Index = 0; Index < IndQueries; Index++)
+				{
+					FOcclusionBounds* RunQueriesIter = &PendingIndividualQueriesWhenOptimizing[Index];
+					FPrimitiveOcclusionHistory* PrimitiveOcclusionHistory = ViewPrimitiveOcclusionHistory.Find(RunQueriesIter->PrimitiveOcclusionHistoryKey);
+
+					PrimitiveOcclusionHistory->SetCurrentQuery(OcclusionFrameCounter,
+						View.IndividualOcclusionQueries.BatchPrimitive(RunQueriesIter->BoundsOrigin, RunQueriesIter->BoundsExtent, DynamicVertexBuffer),
+						NumBufferedFrames,
+						false,
+						Params.bNeedsScanOnRead
+					);
+				}
+			}
+			else
+			{
+				check(QueriesToDo < IndQueries);
+				PendingIndividualQueriesWhenOptimizingSorter.Reserve(PendingIndividualQueriesWhenOptimizing.Num());
+				for (int32 Index = 0; Index < IndQueries; Index++)
+				{
+					FOcclusionBounds* RunQueriesIter = &PendingIndividualQueriesWhenOptimizing[Index];
+					PendingIndividualQueriesWhenOptimizingSorter.Add(RunQueriesIter);
+				}
+
+				PendingIndividualQueriesWhenOptimizingSorter.Sort(
+					[](const FOcclusionBounds& A, const FOcclusionBounds& B) 
+					{
+						return A.LastQuerySubmitFrame < B.LastQuerySubmitFrame;
+					}
+				);
+				for (int32 Index = 0; Index < QueriesToDo; Index++)
+				{
+					FOcclusionBounds* RunQueriesIter = PendingIndividualQueriesWhenOptimizingSorter[Index];
+					FPrimitiveOcclusionHistory* PrimitiveOcclusionHistory = ViewPrimitiveOcclusionHistory.Find(RunQueriesIter->PrimitiveOcclusionHistoryKey);
+					PrimitiveOcclusionHistory->SetCurrentQuery(OcclusionFrameCounter,
+						View.IndividualOcclusionQueries.BatchPrimitive(RunQueriesIter->BoundsOrigin, RunQueriesIter->BoundsExtent, DynamicVertexBuffer),
+						NumBufferedFrames,
+						false,
+						Params.bNeedsScanOnRead
+					);
+				}
+			}
+
+
+			// lets prevent this from staying too large for too long
+			if (PendingIndividualQueriesWhenOptimizing.GetSlack() > IndQueries * 4)
+			{
+				PendingIndividualQueriesWhenOptimizing.Empty();
+				PendingIndividualQueriesWhenOptimizingSorter.Empty();
+			}
+			else
+			{
+				PendingIndividualQueriesWhenOptimizing.Reset();
+				PendingIndividualQueriesWhenOptimizingSorter.Reset();
+			}
+		}
+		return Params.NumOccludedPrims;
+	}
+}
+```
 
 ------------------------------         
 
