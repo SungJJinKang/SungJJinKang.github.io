@@ -69,7 +69,11 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 	// ⭐
 
 	// ⭐⭐⭐⭐⭐⭐⭐
-	// 가시성 결정 연산을 수행한다.
+	// 가시성 결정(컬링) 연산을 수행한다.
+	// 가시성 판단은 Primitive가 화면 상에 보여질지를 판단하는 과정으로,
+	// 화면 상에 보이지 않는 Primitive에 대해서는 Draw Graphics API를 호출하지 않아, 드로우 콜을 줄이고자 하는 목적으로 수행한다.
+	// 대부분은 CPU에서 이러한 연산을 수행하여, GPU의 연산 부담을 덜어주기 위한 목적으로 컬링을 수행한다. ( HW Occlusion Query의 경우 GPU를 활용한다. )
+	//
 	// 아래로 내려가서 자세한 분석을 읽으세요.
 	ComputeViewVisibility(RHICmdList, BasePassDepthStencilAccess, ViewCommandsPerView, DynamicIndexBuffer, DynamicVertexBuffer, DynamicReadBuffer);
 	// ⭐⭐⭐⭐⭐⭐⭐
@@ -537,6 +541,18 @@ void FSceneRenderer::ComputeViewVisibility
 		// ⭐⭐⭐⭐⭐⭐⭐
 		// Frustum Culling을 수행한다.
 		// UE4에서는 Frustum Culling을 병렬로 처리한다.
+		// 
+		// Frustum Culling이란,
+		// 카메라의 절두체를 기준으로 어떤 Primivie가 절두체 밖에 있는 경우 해당 Primitive는 화면에 보이지 않는 것으로 판단을해 Draw Graphics API를 호출하지 않는 것이다.
+		// 일반적으로는 Primitive의 AABB ( 바운딩 박스 )를 기준으로 카메라 절두체 Plane과 비교한다.
+		// 바운딩 박스를 이용하는 이유는 그 만큼 연산량이 적기 때문이다. 
+		// Primitive의 Vertex마다 일일이 절두체 안에 속해 있는지 비교 연산을 한다고 생각을 해보아라.
+		// 연산량이 엄청날 것이다. 그렇기 때문에 정확도는 조금 낮을 수 있지만 상대적으로 가벼운 연산량으로 Frustum Culling 테스트를 수행하는 것이다.
+		//
+		// 엄연히 CPU에서 수행하는 것으로 드로우콜을 최대한 줄여서 GPU의 연산 부담을 낮추어주기 위한 목적이다.
+		// 
+		// 필자도 이를 직접 구현해보았다.
+		// https://github.com/SungJJinKang/EveryCulling#view-frustum-culling-from-frostbite-engine-of-ea-dice--100-
 		//
 		// Most views use standard frustum culling.
 		if (bNeedsFrustumCulling)
@@ -632,6 +648,43 @@ void FSceneRenderer::ComputeViewVisibility
 		// ⭐⭐⭐⭐⭐⭐⭐
 		// Occlusion Culling을 수행한다.
 		// Precomputed Visibility를 통한 Culling도 여기서 수행한다.
+		//
+		// Occlusion Culling이란 기본적으로 Primitive가 다른 Primitive에 의해 가려져 있는지를 판단하는 것이다.
+		// Primitive가 카메라 절두체 밖에 있는지 판단하는 Frustum Culling과는 엄연히 다른 것이다.
+		//
+		// Primitive들을 단순하게 그려보았을 때 ( Fragment Shading 단계에서 그냥 점만 찍어서 Depth Test를 통과했는지만 확인하여 ),
+		// 모든 Fragment가 Depth Test를 통과하지 못하였다면 해당 Primitive는 Cull된 것으로 판단한다.
+		// 일반적으로는 Primitive의 AABB ( 바운딩 박스 )를 그려보는 방식을 사용한다.
+		// Primitive의 원본을 그리려면 너무 연산량이 많으니 바운딩 박스를 그려보며 바운딩 박스가 Occlude 되었는지 ( 모든 Fragment들이 Depth Test를 통과하지 못하였는지 ) 확인하고,
+		// 그렇다면 해당 Primitive도 Cull되었다고 판단하는 것이다.
+		// Primitive 원본을 가지고 Occlusion 테스트를 하는 것보다 연산량을 엄청나게 줄일 수 있다.
+		// 다만 Cull해도 될 오브젝트를 그리는 경우 ( Draw Call )가 생길 수도 있다.
+		//
+		// 대표적으로 CPU에서 수행하는 SW Occlusion Culling과 GPU를 활용하는 하드웨어 Occlusion Query 두 방법이 있다.
+		//
+		// 기본 값은 HW Occlusion Query를 사용한다. 
+		// HW Occlusion Query의 경우 Primitive들을 GPU로 위에서 말한 것과 같이 한번 그려본 후 Query의 결과 값을 다시 시스템 메모리 ( Host 메모리 )로 읽어와야한다.
+		// VRAM에서 DRAM으로 데이터를 읽어오는 것은 엄청나게 느려터진 동작이다.......
+		// VRAM을 읽는 것이 느린 이유는 이 링크를 따라가보면 이유를 알 수 있다 ( https://megayuchi.com/2021/06/06/ddraw-surface-d3d-dynamic-buffer-%EC%97%90%EC%84%9C%EC%9D%98-write-combine-memory/ )
+		// ( Conditinal Rendering이라고 시스템 메모리로 읽어오지 않는 방법도 있는데 잘 사용하지 않는 것 같다..... )
+		//
+		// 또한 Occlusion Query도 결국에는 일반적으로 렌더링을 하는 것과 같이 똑같이 Primitive를 한번 그려보는 것이기 때문에 
+		// ( 다만 Pixel Shader는 점만 찍어 Depth Test를 확인하는 방법으로 )
+		// Occlusion Query 하나 하나가 Draw Call이다. 이 또한 비용이다.
+		//
+		//
+		// SW Occlusion Culling은 CPU로 Rasterizing을 수행하는 것인데 겁나게 느리다.....
+		// CPU는 이러한 대량의, 단순한 연산에 GPU에 비해 많이 느리다...
+		// 그렇지만 흔히 GPU Bound한 게임에서는 HW Occlusion Query로 인한 연산 부담을 GPU로부터 덜어주기 위해 사용하기도 한다.
+		// 필자의 경우에도 구현을 해보았고, 확실히 GPU Bound한 경우 큰 프레임 향상을 보여주었다.
+		//
+		// 아래의 링크에서 필자가 구현한 SW Occlusion Culling의 소스코드를 확인할 수 있다.
+		// https://github.com/SungJJinKang/EveryCulling#masked-sw--cpu--occlusion-culling-from-intel--100-
+		//
+		//
+		// 일반적으로 Frustum Culling을 처리하고, Culling이 되지 않는 오브젝트들을 대상으로 Occlusion Culling을 수행한다.
+		// Frustum Culling의 연산 비용이 상대적으로 저렴하기 때문에 Frustum Culling을 먼저 수행하는 것이다.
+		//
 		// 아래로 내려가서 자세한 분석을 보시기 바랍니다.
 		//
 		// Occlusion cull for all primitives in the view frustum, but not in wireframe.
@@ -805,9 +858,14 @@ static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* S
 	bHZBOcclusion = bHZBOcclusion || (GHZBOcclusion == 2);
 	// ⭐
 
-	// ⭐
+
+	// ⭐⭐⭐⭐⭐⭐⭐
 	// Precomputed visibility 데이터를 가지고 가시성 체크를 수행한다. 
-	//
+	// Precomputed Visibility는 빌드시 카메라의 특정 위치에서 Primitive가 컬링이 되었는지를 판단하여 미리 저장해두는 개념이다.
+	// 월드를 바운딩 박스로 쪼갠 후 카메라가 각 바운딩 박스에 위치해 있다고 가정하고,
+	// 월드 내에 Static으로 설정된 Primitive들이 보이는지를 빌드 타임에 연산하고 저장해두는 것이다.
+	// 런타임 비용이 0에 가깝다.
+	// 
 	// Use precomputed visibility data if it is available.
 	if (View.PrecomputedVisibilityData)
 	{
@@ -817,14 +875,23 @@ static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* S
 		uint8 PrecomputedVisibilityFlags = EOcclusionFlags::CanBeOccluded | EOcclusionFlags::HasPrecomputedVisibility;
 		for (FSceneSetBitIterator BitIt(View.PrimitiveVisibilityMap); BitIt; ++BitIt)
 		{
+			// ⭐
+			// Primtive가 Precomputed Visibility Culling 처리 될 수 있다는 Flag를 가지고 있는지..
 			if ((Scene->PrimitiveOcclusionFlags[BitIt.GetIndex()] & PrecomputedVisibilityFlags) == PrecomputedVisibilityFlags)
+			// ⭐
 			{
+				// ⭐
+				// Primitive의 PrimitiveVisibilityId를 Index로 하여 PrecomputedVisibilityData에서 Culling 여부를 판단.
 				FPrimitiveVisibilityId VisibilityId = Scene->PrimitiveVisibilityIds[BitIt.GetIndex()];
 				if ((View.PrecomputedVisibilityData[VisibilityId.ByteIndex] & VisibilityId.BitMask) == 0)
+				// ⭐
 				{
+					// ⭐
+					// Precomputed Visbility Data에서 Primitive가 컬링이 된 경우.
 					View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
 					INC_DWORD_STAT_BY(STAT_StaticallyOccludedPrimitives,1);
 					STAT(NumOccludedPrimitives++);
+					// ⭐
 
 					// ...
 					// ... 디버깅용 처리
@@ -833,7 +900,8 @@ static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* S
 			}
 		}
 	}
-	// ⭐
+	// ⭐⭐⭐⭐⭐⭐⭐
+
 
 	float CurrentRealTime = View.Family->CurrentRealTime;
 	if (ViewState)
@@ -881,6 +949,8 @@ static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* S
 			// ⭐⭐⭐⭐⭐⭐⭐
 			// Occlusion Query의 결과를 가져옵니다.
 			// 옵션에 따라 병렬로도 처리하기도 합니다.
+			// 여기서 가져오는 Occlusion Query 결과는 몇 프레임 전 ( 3 ~ 4 프레임 ) 전에 발행한 ( Occludee에 대한 DrawCall을 보내는 ) Occlusion Query에 대한 결과 값이다.
+			// Occlusion Query를 발행하는 부분은 이 글에서 다루지 않는다.
 			NumOccludedPrimitives += FetchVisibilityForPrimitives(Scene, View, bSubmitQueries, bHZBOcclusion, DynamicVertexBuffer);
 			// ⭐⭐⭐⭐⭐⭐⭐
 
@@ -932,19 +1002,26 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 	TSet<FPrimitiveOcclusionHistory, FPrimitiveOcclusionHistoryKeyFuncs>& ViewPrimitiveOcclusionHistory = ViewState->PrimitiveOcclusionHistorySet;
 	// ⭐
 
+	// ⭐
+	// Occlusion Culling을 병렬로 처리하는 경우,
+	// GOcclusionCullParallelPrimFetch, GSupportsParallelOcclusionQueries 두 변수 모두 기본 값은 false이다.
 	if (GOcclusionCullParallelPrimFetch && GSupportsParallelOcclusionQueries)
+	// ⭐
 	{		
-		//
 		// ...
-		// ... GOcclusionCullParallelPrimFetch, GSupportsParallelOcclusionQueries 두 변수의 기본 값은 false이다.
+		// ... 
 		// ...
-		//
 	}
 	else
 	{
+		
+		// ⭐
 		//SubIsOccluded stuff needs a frame's lifetime
+		//
+		// 아래에서 설명하겠다.
 		TArray<bool>& SubIsOccluded = View.FrameSubIsOccluded[SubIsOccludedArrayIndex];
 		SubIsOccluded.Reset();
+		// ⭐
 
 		static TArray<FOcclusionBounds> PendingIndividualQueriesWhenOptimizing;
 		PendingIndividualQueriesWhenOptimizing.Reset();
@@ -954,28 +1031,34 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 
 		FViewElementPDI OcclusionPDI(&View, nullptr, nullptr);
 		int32 StartIndex = 0;
-		int32 NumToProcess = View.PrimitiveVisibilityMap.Num();				
+		int32 NumToProcess = View.PrimitiveVisibilityMap.Num();			
+
+		
+		// ⭐	
 		FVisForPrimParams Params(
 			Scene,
 			&View,
-			&OcclusionPDI,
-			StartIndex,
-			NumToProcess,
-			bSubmitQueries,
-			bHZBOcclusion,			
+			&OcclusionPDI, // FVisForPrimParams::OcclusionPDI
+			StartIndex, // FVisForPrimParams::StartIndex
+			NumToProcess, // FVisForPrimParams::NumToProcess
+			bSubmitQueries, // FVisForPrimParams::bSubmitQueries
+			bHZBOcclusion, // FVisForPrimParams::bHZBOcclusion			
 			nullptr,
 			nullptr,
 			nullptr,
-			&PendingIndividualQueriesWhenOptimizing,
-			&SubIsOccluded
+			&PendingIndividualQueriesWhenOptimizing, // FVisForPrimParams::QueriesToAdd
+			&SubIsOccluded // FVisForPrimParams::SubIsOccluded
 			);
+		// ⭐
 
+		// ⭐⭐⭐⭐⭐⭐⭐
 		FetchVisibilityForPrimitives_Range<true>(Params, &DynamicVertexBuffer);
+		// ⭐⭐⭐⭐⭐⭐⭐
 
 		int32 IndQueries = PendingIndividualQueriesWhenOptimizing.Num();
 		if (IndQueries)
 		{
-			int32 SoftMaxQueries = GRHIMaximumReccommendedOustandingOcclusionQueries / FMath::Min(NumBufferedFrames, 2); // extra RHIT frame does not count
+			int32 SoftMaxQueries = GRHIMaximumReccommendedOustandingOcclusionQueries /* Occlusion Query 최대 가능 발행 횟수 */ / FMath::Min(NumBufferedFrames, 2); // extra RHIT frame does not count
 			int32 UsedQueries = View.GroupedOcclusionQueries.GetNumBatchOcclusionQueries();
 
 			int32 FirstQueryToDo = 0;
@@ -1054,6 +1137,671 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 }
 ```
 
-------------------------------         
+```cpp
+//This function is shared between the single and multi-threaded versions.  Modifications to any primitives indexed by BitIt should be ok
+//since only one of the task threads will ever reference it.  However, any modifications to shared state like the ViewState must be buffered
+//to be recombined later.
+// ⭐
+// 엔진의 기본 값은 Occlusion Culling을 싱글 스레드에서 수행하는 것이다.
+// 그러므로 true이다.
+template<bool bSingleThreaded>
+// ⭐
+static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGlobalDynamicVertexBuffer* DynamicVertexBufferIfSingleThreaded)
+{	
+	int32 NumOccludedPrimitives = 0;
+	
+	const FScene* Scene				= Params.Scene;
+	FViewInfo& View					= *Params.View;
+	FViewElementPDI* OcclusionPDI	= Params.OcclusionPDI;
 
-references : [Graphics Programming Overview](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/Overview/), [Rendering Dependency Graph](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/RenderDependencyGraph/), [Threaded Rendering](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/ThreadedRendering/), [Mesh Drawing Pipeline](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Rendering/MeshDrawingPipeline/)             
+	// ⭐
+	// Occlusion 커링의 대상이 될 Primitive 리스트에서 시작 Index
+	const int32 StartIndex			= Params.StartIndex;
+	// ⭐
+	
+	// ⭐
+	// Occlusion 컬링의 대상이 될 Primitive의 수.
+	// View.PrimitiveVisibilityMap의 Element 개수와 일치한다.
+	const int32 NumToProcess		= Params.NumToProcess;
+	// ⭐
+
+	const bool bSubmitQueries		= Params.bSubmitQueries;
+
+	// ⭐
+	// 모바일의 경우, 옵션을 킨 경우 HI-Z 버퍼를 가지고 Occlusion Test를 수행한다.
+	// 테스트할 Fragment가 상대적으로 적어지니 빨라진다.
+	const bool bHZBOcclusion		= Params.bHZBOcclusion;
+	// ⭐
+
+	const float PrimitiveProbablyVisibleTime = GEngine->PrimitiveProbablyVisibleTime;
+
+	FSceneViewState* ViewState = (FSceneViewState*)View.State;
+	
+	// ⭐
+	// 기본적으로 Occlusion Query는 Query를 발행한 후 3 프레임 후 그 결과값을 가시성 테스트에 사용한다.
+	// 3 프레임 전의 Occlusion 가시성을 기준으로 현재 프레임에 렌더링 할 오브젝트를 결정한다는 것이다.
+	// Occlusion Query가 오래걸리는 동작이다보니, 
+	// 현재 프레임에 발행한 Query의 결과 값을 기다리느라 렌더 스레드를 Stall 시키기 보다는 몇 프레임 후 그 결과값을 가져오도록 구현을 한 것이다. 
+	// 이렇게 구현이 되나보니 3 프레임 사이에 카메라의 Transform이 급격하게 변화하면 
+	// Occlude 되지 말아야 할 Primitive가 3 프레임 전 결과를 기준으로 Occlude 되었다고 판단이 되어 렌더링을 하지 않는 불상사가 발생할 수 있다.
+	// UE4는 이러한 경우에 대한 대비책도 가지고 있는 듯 보인다(?)
+	//
+	// 다른 플랫폼과 달리 모바일 플랫폼에서는 3 프레임이 아닌 4 프레임 전의 HW Occlusion Query 결과를 가져온다.
+	// PC 플랫폼 같은 경우 GPU가 충분히 빨라 3 프레임 정도 지나면 Occlusion Query 연산이 끝나고 CPU로 Query 결과를 가져올 수 있지만,
+	// GPU 연산량이 상대적으로 부족한 모바일의 경우에는 4 프레임 정도 충분한 텀을 두고 Occlusion Query 결과를 가져온다.
+	const int32 NumBufferedFrames = FOcclusionQueryHelpers::GetNumBufferedFrames(Scene->GetFeatureLevel());
+	// ⭐
+
+	bool bClearQueries = !View.Family->EngineShowFlags.HitProxies;
+	const float CurrentRealTime = View.Family->CurrentRealTime;
+	uint32 OcclusionFrameCounter = ViewState->OcclusionFrameCounter;
+	FRHIRenderQueryPool* OcclusionQueryPool = ViewState->OcclusionQueryPool;
+	FHZBOcclusionTester& HZBOcclusionTests = ViewState->HZBOcclusionTests;
+
+	int32 ReadBackLagTolerance = NumBufferedFrames;
+
+	const bool bIsStereoView = IStereoRendering::IsStereoEyeView(View);
+	const bool bUseRoundRobinOcclusion = bIsStereoView && !View.bIsSceneCapture && View.ViewState->IsRoundRobinEnabled();
+	if (bUseRoundRobinOcclusion)
+	{
+		// ...
+		// ... VR 관련 처리들
+		// ...
+	}
+	// Round robin occlusion culling can make holes in the occlusion history which would require scanning the history when reading
+	Params.bNeedsScanOnRead = bUseRoundRobinOcclusion;
+
+	// ⭐
+	// 예전 프레임에서의 Occlusion Culling 결과를 가져온다.
+	// 예전 프레임에서의 결과를 활용한다.
+	TSet<FPrimitiveOcclusionHistory, FPrimitiveOcclusionHistoryKeyFuncs>& ViewPrimitiveOcclusionHistory = ViewState->PrimitiveOcclusionHistorySet;
+	// ⭐
+
+	TArray<FPrimitiveOcclusionHistory>* InsertPrimitiveOcclusionHistory = Params.InsertPrimitiveOcclusionHistory;
+	TArray<FPrimitiveOcclusionHistory*>* QueriesToRelease = Params.QueriesToRelease;
+	TArray<FHZBBound>* HZBBoundsToAdd = Params.HZBBoundsToAdd;
+	TArray<FOcclusionBounds>* QueriesToAdd = Params.QueriesToAdd;	
+
+	const bool bNewlyConsideredBBoxExpandActive = GExpandNewlyOcclusionTestedBBoxesAmount > 0.0f && GFramesToExpandNewlyOcclusionTestedBBoxes > 0 && GFramesNotOcclusionTestedToExpandBBoxes > 0;
+
+	// ⭐
+	// Primitive의 Boundig Sphere의 Center와 ViewPort 사이의 거리가 이 값보다 작은 경우 절대 Occlusion Cull 하지 않는다.
+	// 제곱을 사용하는 이유는 피타고라스 정리로 계산된 거리 값과 비교를 할 때 a^2 + b^2 = c^2에서 c 즉 거리의 값을 구하기 위해
+	// 루트를 해야하는데 루트는 매우 비싼 연산이기 때문에, 차라리 GNeverOcclusionTestDistance을 제곱해서 c^2과 비교하는 것이다.
+	// 비교시 두 변수가 양수인 것이 보장되면 두 변수의 제곱을 하여도 비교 연산의 결과 값은 동일하다는 속성을 이용한 것이다. 
+	const float NeverOcclusionTestDistanceSquared = GNeverOcclusionTestDistance * GNeverOcclusionTestDistance;
+	// ⭐
+
+	// ⭐
+	// ViewPort의 World Space 원점 값
+	const FVector ViewOrigin = View.ViewMatrices.GetViewOrigin();
+	// ⭐
+
+	const int32 ReserveAmount = NumToProcess;
+	if (!bSingleThreaded)
+	{		
+		check(InsertPrimitiveOcclusionHistory);
+		check(QueriesToRelease);
+		check(HZBBoundsToAdd);
+		check(QueriesToAdd);
+
+		//avoid doing reallocs as much as possible.  Unlikely to make an entry per processed element.		
+		InsertPrimitiveOcclusionHistory->Reserve(ReserveAmount);
+		QueriesToRelease->Reserve(ReserveAmount);
+		HZBBoundsToAdd->Reserve(ReserveAmount);
+		QueriesToAdd->Reserve(ReserveAmount);
+	}
+	
+	int32 NumProcessed = 0;
+	// ⭐
+	int32 NumTotalPrims = View.PrimitiveVisibilityMap.Num();
+	// ⭐
+	int32 NumTotalDefUnoccluded = View.PrimitiveDefinitelyUnoccludedMap.Num();
+
+	//if we are load balanced then we iterate only the set bits, and the ranges have been pre-selected to evenly distribute set bits among the tasks with no overlaps.
+	//if not, then the entire array is evenly divided by range.
+#if BALANCE_LOAD
+	// ⭐
+	// 여기서는 Occlusion 컬링을 싱글스레드에서 수행하는 것을 기준으로 하기 때문에 ( 엔진 기본 값임 ), 모든 Primtiive가 이 함수에서의 연산 대상이다.
+	// 모든 Primitive를 순회한다.
+	for (FSceneSetBitIterator BitIt(View.PrimitiveVisibilityMap, StartIndex); BitIt && (NumProcessed < NumToProcess); ++BitIt, ++NumProcessed)
+	// ⭐
+#else
+	for (TBitArray<SceneRenderingBitArrayAllocator>::FIterator BitIt(View.PrimitiveVisibilityMap, StartIndex); BitIt && (NumProcessed < NumToProcess); ++BitIt, ++NumProcessed)
+#endif
+	{		
+		uint8 OcclusionFlags = Scene->PrimitiveOcclusionFlags[BitIt.GetIndex()];
+	
+		// ⭐
+		// Primitive가 Occlusion 컬링의 대상이 될 수 있는지 확인한다.
+		// Occluder에 의해서 가려진 경우 컬링 처리할지를 말하는 것이다.
+		// Primitive Component의 옵션을 보면 "CanBeOccluded"라는 옵션이 있다. 그것이 이것이다.
+		bool bCanBeOccluded = (OcclusionFlags & EOcclusionFlags::CanBeOccluded) != 0;
+		// ⭐
+
+#if !BALANCE_LOAD		
+		if (!View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt))
+		{
+			continue;
+		}
+#endif
+
+		//we can't allow the prim history insertion array to realloc or it will invalidate pointers in the other output arrays.
+		const bool bCanAllocPrimHistory = bSingleThreaded /* 기본 값은 true */ || InsertPrimitiveOcclusionHistory->Num() < InsertPrimitiveOcclusionHistory->Max();		
+
+		if (GIsEditor)
+		{
+			// ...
+			// ... 에디터 관련 처리
+			// ... 
+		}
+		int32 NumSubQueries = 1;
+		bool bSubQueries = false;
+		const TArray<FBoxSphereBounds>* SubBounds = nullptr;
+
+		// ⭐
+		// Sub Primitive들을 각각 Query 할지 여부를 결정한다.
+		// 현재는 Hierarchical Instanced Static Mesh에서만 사용된다.
+		// Hierarchical Instanced Static Mesh는 인스턴스 Mesh Draw에서 각 Mesh에 대한 LOD 연산이 추가된 개념이다.
+		// 일반 Instanced Static Mesh의 경우 각 Mesh들의 LOD가 하나로 통일된다.
+		// 자세한건 오른쪽 링크를 참고하세요. ( https://forums.unrealengine.com/t/difference-between-instanced-static-mesh-component-and-hierarchical-instanced-static-mesh-component/308142/3 )
+		//
+		// Instanced된 Primitive들은 하나의 FPrimitiveSceneInfo에 합쳐저 들어 있기 때문에 SubQuery라는 개념을 두는 것 같다 ( ?, 확인 필요 )
+		//
+		// 기본 값은 1이다.
+		// 만약 Disabled 되어 있다면 Hierarchical Instanced static Mesh 들을 그냥 하나의 Query로 통으로 처리한다.
+		// 결국 Instanced된 Mesh들의 Query 연산할 Primitive가 매우 ( 화면상에서 차지할 넓이가 ) 커지게 될 가능서잉 높아지고, Occlusion Cull될 가능성이 낮아진다. 
+		// ( 왜냐면 크기가 매우 크니, 그만큼 다른 오브젝트에 의해 가려질 가능성도 낮아지기 때문이다. )
+		//
+		// Primitive의 Sub Query
+		check(Params.SubIsOccluded);
+		TArray<bool>& SubIsOccluded = *Params.SubIsOccluded;
+		int32 SubIsOccludedStart = SubIsOccluded.Num();
+		// ⭐
+		// Hierarchical Instanced Static Mesh가 아닌 일반적인 Primitive는 EOcclusionFlags::HasSubprimitiveQueries Flag를 가지고 있지 않다.
+		if ((OcclusionFlags & EOcclusionFlags::HasSubprimitiveQueries) && GAllowSubPrimitiveQueries && !View.bDisableQuerySubmissions)
+		// ⭐
+		{
+			FPrimitiveSceneProxy* Proxy = Scene->Primitives[BitIt.GetIndex()]->Proxy;
+
+			// ⭐
+			// Instanced Static Mesh 처리된 Prmitive의 Sub Query를 가져온다. SubQuery를 AABB 바운딩 박스이다.
+			SubBounds = Proxy->GetOcclusionQueries(&View);
+			// ⭐
+
+			NumSubQueries = SubBounds->Num();
+			bSubQueries = true;
+			if (!NumSubQueries)
+			{
+				View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
+				continue;
+			}
+			SubIsOccluded.Reserve(NumSubQueries);
+		}
+		// ⭐
+
+		bool bAllSubOcclusionStateIsDefinite = true;
+		bool bAllSubOccluded = true;
+		FPrimitiveComponentId PrimitiveId = Scene->PrimitiveComponentIds[BitIt.GetIndex()];
+
+		
+		// ⭐
+		// Primitive가 Hierarchical Instanced static Mesh가 아닌 경우 NumSubQueries는 1이다.
+		for (int32 SubQuery = 0; SubQuery < NumSubQueries; SubQuery++)
+		{
+		// ⭐
+			
+			// ⭐
+			// Primitive에 대한 과거 Occlusion Culling 결과를 가져온다.
+			// 위에서 말한 것처럼 Occlusion Query는 매우 느려터진 동작이기 때문에,
+			// 3 ~ 4 프레임 전에 발행한 Query의 결과 값을 사용한다.
+			//
+			// FPrimitiveOcclusionHistory가 있다는 것은 과거에 Occlusion Query 명령을 GPU로 보내두었다는 것ㅇ디ㅏ.
+			FPrimitiveOcclusionHistory* PrimitiveOcclusionHistory = ViewPrimitiveOcclusionHistory.Find(FPrimitiveOcclusionHistoryKey(PrimitiveId, SubQuery));
+			// ⭐
+
+			bool bIsOccluded = false;
+			bool bOcclusionStateIsDefinite = false;	
+					
+			// ⭐
+			// Primitive에 대한 과거의 Occlusion Culling 결과 값 데이터가 없는 경우,
+			// Primitive에 대한 Occlusion Culling을 처음 수행하는 경우....
+			if (!PrimitiveOcclusionHistory)
+			// ⭐
+			{
+				
+
+				// If the primitive doesn't have an occlusion history yet, create it.
+				if (bSingleThreaded /* 기본 값은 true */ )
+				{					
+					// ⭐
+					// ViewPrimitiveOcclusionHistory를 만든다.
+					//
+					// In singlethreaded mode we can safely modify the view's history directly.
+					PrimitiveOcclusionHistory = &ViewPrimitiveOcclusionHistory[
+						ViewPrimitiveOcclusionHistory.Add(FPrimitiveOcclusionHistory(PrimitiveId, SubQuery))
+					];
+					// ⭐
+				}
+				else if (bCanAllocPrimHistory)
+				{
+					// In multithreaded mode we have to buffer the new histories and add them to the view during a post-combine
+					PrimitiveOcclusionHistory = &(*InsertPrimitiveOcclusionHistory)[
+						InsertPrimitiveOcclusionHistory->Add(FPrimitiveOcclusionHistory(PrimitiveId, SubQuery))
+					];
+				}				
+				
+				// If the primitive hasn't been visible recently enough to have a history, treat it as unoccluded this frame so it will be rendered as an occluder and its true occlusion state can be determined.
+				// already set bIsOccluded = false;
+
+				// Flag the primitive's occlusion state as indefinite, which will force it to be queried this frame.
+				// The exception is if the primitive isn't occludable, in which case we know that it's definitely unoccluded.
+				bOcclusionStateIsDefinite = bCanBeOccluded ? false : true;
+			}
+
+			// ⭐
+			// Primitive에 대한 과거의 Occlusion Culling 결과 값 데이터가 있는 경우
+			//
+			else
+			// ⭐
+			{
+				if (View.bIgnoreExistingQueries)
+				{
+					// If the view is ignoring occlusion queries, the primitive is definitely unoccluded.
+					// already set bIsOccluded = false;
+					bOcclusionStateIsDefinite = View.bDisableQuerySubmissions;
+				}
+				// ⭐
+				// Primitive Component에서 "CanBeOccluded" 옵션을 Enable한 경우
+				else if (bCanBeOccluded)
+				// ⭐
+				{
+					if (bHZBOcclusion)
+					{
+						if (HZBOcclusionTests.IsValidFrame(PrimitiveOcclusionHistory->LastTestFrameNumber))
+						{
+							bIsOccluded = !HZBOcclusionTests.IsVisible(PrimitiveOcclusionHistory->HZBTestIndex);
+							bOcclusionStateIsDefinite = true;
+						}
+					}
+					else
+					{
+						// Read the occlusion query results.
+						uint64 NumSamples = 0;
+						bool bGrouped = false;
+						
+						// ⭐
+						// 과거 프레임 ( 3~4 프레임 전 )의 Occlusion Query 오브젝트 ( FRHIRenderQuery )를 가져온다.
+						FRHIRenderQuery* PastQuery = PrimitiveOcclusionHistory->GetQueryForReading(OcclusionFrameCounter, NumBufferedFrames, ReadBackLagTolerance, bGrouped);
+						// ⭐
+						
+						// ⭐
+						// PrimitiveOcclusionHistory에 FRHIRenderQuery 데이터가 있는 경우
+						if (PastQuery)
+						// ⭐
+						{
+							// ⭐⭐⭐⭐⭐⭐⭐
+							// int32 RefCount = PastQuery.GetReference()->GetRefCount();
+							// NOTE: RHIGetOcclusionQueryResult should never fail when using a blocking call, rendering artifacts may show up.
+							// if (RHICmdList.GetRenderQueryResult(PastQuery, NumSamples, true))
+							//
+							// FRHIRenderQuery로부터 Occlusion Query 결과를 가져온다.
+							if (GDynamicRHI->RHIGetRenderQueryResult(PastQuery, NumSamples, true))
+							// ⭐⭐⭐⭐⭐⭐⭐
+							{
+								// ⭐
+								// we render occlusion without MSAA
+								//
+								// Occludee의 렌더링 중 몇개의 Fragment가 Depth Test를 통과했는지
+								uint32 NumPixels = (uint32)NumSamples;
+								// ⭐
+
+								// ⭐⭐⭐⭐⭐⭐⭐
+								// The primitive is occluded if none of its bounding box's pixels were visible in the previous frame's occlusion query.
+								//
+								// Occludee의 Query 중 하나의 Fragment도 Depth Test를 통과하지 못한 경우, 최종적으로 Occlude ( Culled ) 되었다고 판단한다.
+								bIsOccluded = (NumPixels == 0);
+								// ⭐⭐⭐⭐⭐⭐⭐
+								
+								// ⭐
+								// 화면의 전체 Fragment 중 몇개의 Fragment가 Depth Test를 통과했는지 기록한다.
+								if (!bIsOccluded)
+								{
+									checkSlow(View.OneOverNumPossiblePixels > 0.0f);
+									PrimitiveOcclusionHistory->LastPixelsPercentage = NumPixels * View.OneOverNumPossiblePixels;
+								}
+								else
+								{
+									PrimitiveOcclusionHistory->LastPixelsPercentage = 0.0f;
+								}
+								// ⭐								
+
+								// Flag the primitive's occlusion state as definite if it wasn't grouped.
+								bOcclusionStateIsDefinite = !bGrouped;
+							}
+							else
+							{
+								// If the occlusion query failed, treat the primitive as visible.  
+								// already set bIsOccluded = false;
+							}
+						}
+
+						// ⭐
+						// PrimitiveOcclusionHistory에 FRHIRenderQuery 데이터가 없는 경우,
+						// Primitive가 Occlude 되었었는지 여부만 가져온다.
+						else
+						// ⭐
+						{
+							if 
+							(
+								NumBufferedFrames > 1 || 
+
+								// Occlusion Query 최대 가능 발행 횟수, 기본 값은 MAX_int32. 
+								// 안드로이드 플랫폼에서 OpenGL을 사용하는 경우 MAX_int32보다 작을 수 있다.
+								GRHIMaximumReccommendedOustandingOcclusionQueries < MAX_int32 
+							)
+							{
+								// If there's no occlusion query for the primitive, assume it is whatever it was last frame
+								bIsOccluded = PrimitiveOcclusionHistory->WasOccludedLastFrame;
+								bOcclusionStateIsDefinite = PrimitiveOcclusionHistory->OcclusionStateWasDefiniteLastFrame;
+							}
+							else
+							{
+								// If there's no occlusion query for the primitive, set it's visibility state to whether it has been unoccluded recently.
+								bIsOccluded = (PrimitiveOcclusionHistory->LastProvenVisibleTime + GEngine->PrimitiveProbablyVisibleTime < CurrentRealTime);
+								// the state was definite last frame, otherwise we would have ran a query
+								bOcclusionStateIsDefinite = true;
+							}
+							if (bIsOccluded)
+							{
+								PrimitiveOcclusionHistory->LastPixelsPercentage = 0.0f;
+							}
+							else
+							{
+								PrimitiveOcclusionHistory->LastPixelsPercentage = GEngine->MaxOcclusionPixelsFraction;
+							}
+						}
+					}
+
+					// ...
+					// ... 디버깅 관련 코드
+					// ...
+				}
+				else
+				{					
+					// Primitives that aren't occludable are considered definitely unoccluded.
+					// already set bIsOccluded = false;
+					bOcclusionStateIsDefinite = true;
+				}
+
+				if (bClearQueries)
+				{					
+					if (bSingleThreaded)
+					{						
+						PrimitiveOcclusionHistory->ReleaseQuery(OcclusionFrameCounter, NumBufferedFrames);
+					}
+					else
+					{
+						if (PrimitiveOcclusionHistory->GetQueryForEviction(OcclusionFrameCounter, NumBufferedFrames))
+						{
+							QueriesToRelease->Add(PrimitiveOcclusionHistory);							
+						}
+					}
+				}
+			}
+
+			if (PrimitiveOcclusionHistory)
+			{
+				if 
+				(
+					bSubmitQueries /* 이번 프레임에 Primitive에 대한 Occlusion Query를 발행하는 경우 true */ && 
+					bCanBeOccluded 
+				)
+				{
+					bool bSkipNewlyConsidered = false;
+
+					if (bNewlyConsideredBBoxExpandActive /* 기본 값은 false */ )
+					{
+						if (!PrimitiveOcclusionHistory->BecameEligibleForQueryCooldown && OcclusionFrameCounter - PrimitiveOcclusionHistory->LastConsideredFrameNumber > uint32(GFramesNotOcclusionTestedToExpandBBoxes))
+						{
+							PrimitiveOcclusionHistory->BecameEligibleForQueryCooldown = GFramesToExpandNewlyOcclusionTestedBBoxes;
+						}
+
+						bSkipNewlyConsidered = !!PrimitiveOcclusionHistory->BecameEligibleForQueryCooldown;
+
+						if (bSkipNewlyConsidered)
+						{
+							PrimitiveOcclusionHistory->BecameEligibleForQueryCooldown--;
+						}
+					}
+
+
+					bool bAllowBoundsTest;
+
+					// ⭐
+					// Occlusion Query에 사용될 Occludee Primitive의 AABB 바운딩 박스 데이터를 가져온다.
+					const FBoxSphereBounds OcclusionBounds = (bSubQueries ? (*SubBounds)[SubQuery] : Scene->PrimitiveOcclusionBounds[BitIt.GetIndex()]).ExpandBy(GExpandAllTestedBBoxesAmount + (bSkipNewlyConsidered ? GExpandNewlyOcclusionTestedBBoxesAmount : 0.0));
+					// ⭐
+
+					// ⭐
+					// Primitive에 대해 Occlusion Query Test를 수행할지 결정한다.
+					// Occlusion Query 수를 최대한 줄여보기 위한 노력이다.
+					// Occludion Query도 결국 하나 하나가 Draw Call이니,
+					// 어차피 Occlude 되지 않을 것 같은 Primitive는 아예 Query Test를 하지 않는 것도 좋은 방법이다.
+					//
+					// bAllowBoundsTest이 true다 -> Occlusion Query Test를 수행한다.
+					
+					// ⭐
+					// Primitive가 카메라에 너무 가까운 경우 ->
+					// Occlude 되지 않을 가능성이 매우 높다.
+					// 그럼 그냥 Occlusion Test를 안한다!
+					if (FVector::DistSquared(ViewOrigin, OcclusionBounds.Origin) < NeverOcclusionTestDistanceSquared)
+					// ⭐
+					{
+						bAllowBoundsTest = false;
+					}
+					else if (View.bHasNearClippingPlane)
+					{
+						bAllowBoundsTest = View.NearClippingPlane.PlaneDot(OcclusionBounds.Origin) <
+							-(FVector::BoxPushOut(View.NearClippingPlane, OcclusionBounds.BoxExtent));
+
+					}
+					else if (!View.IsPerspectiveProjection())
+					{
+						// Transform parallel near plane
+						static_assert((int32)ERHIZBuffer::IsInverted != 0, "Check equation for culling!");
+						bAllowBoundsTest = View.WorldToScreen(OcclusionBounds.Origin).Z - View.ViewMatrices.GetProjectionMatrix().M[2][2] * OcclusionBounds.SphereRadius < 1;
+					}
+					else
+					{
+						bAllowBoundsTest = OcclusionBounds.SphereRadius < HALF_WORLD_MAX;
+					}
+					// ⭐
+
+					if (bAllowBoundsTest)
+					{
+						PrimitiveOcclusionHistory->LastTestFrameNumber = OcclusionFrameCounter;
+						if (bHZBOcclusion)
+						{
+							// Always run
+							if (bSingleThreaded)
+							{								
+								PrimitiveOcclusionHistory->HZBTestIndex = HZBOcclusionTests.AddBounds(OcclusionBounds.Origin, OcclusionBounds.BoxExtent);
+							}
+							else
+							{
+								HZBBoundsToAdd->Emplace(PrimitiveOcclusionHistory, OcclusionBounds.Origin, OcclusionBounds.BoxExtent);
+							}
+						}
+						else
+						{
+							// decide if a query should be run this frame
+							bool bRunQuery, bGroupedQuery;
+							
+							// ⭐
+							// 여러 Occlusion Query를 하나로 합쳐서 Query 테스트에 필요한 Draw Call을 줄여볼지 결정한다. 
+							if (!bSubQueries && // sub queries are never grouped, we assume the custom code knows what it is doing and will group internally if it wants
+								(OcclusionFlags & EOcclusionFlags::AllowApproximateOcclusion))
+							{
+							// ⭐
+								if (bIsOccluded)
+								{
+									// ⭐
+									// 이전 프레임 ( 3 ~ 4 프레임 전 )에 Occlude 되었었다면, 
+									// 이번 프레임에도 Query를 실행하고, 여러 Query를 하나로 합친다.
+									//
+									// Primitives that were occluded the previous frame use grouped queries.
+									bGroupedQuery = true;
+									bRunQuery = true;
+									// ⭐
+								}
+								else if (bOcclusionStateIsDefinite)
+								{
+									bGroupedQuery = false;
+									float Rnd = GOcclusionRandomStream.GetFraction();
+									if (GRHISupportsExactOcclusionQueries)
+									{
+										float FractionMultiplier = FMath::Max(PrimitiveOcclusionHistory->LastPixelsPercentage / GEngine->MaxOcclusionPixelsFraction, 1.0f);
+										bRunQuery = (FractionMultiplier * Rnd) < GEngine->MaxOcclusionPixelsFraction;
+									}
+									else
+									{
+										bRunQuery = CurrentRealTime - PrimitiveOcclusionHistory->LastProvenVisibleTime > PrimitiveProbablyVisibleTime * (0.5f * 0.25f * Rnd);
+									}									
+								}
+								else
+								{
+									bGroupedQuery = false;
+									bRunQuery = true;
+								}
+							}
+							else
+							{
+								// ⭐
+								// Primitives that need precise occlusion results use individual queries.
+								bGroupedQuery = false;
+								bRunQuery = true;
+								// ⭐
+							}
+
+							// ⭐
+							if (bRunQuery /* 이번 프레임에 Occlusion Query Test를 수행하는 경우 */ )
+							// ⭐
+							{
+								const FVector BoundOrigin = OcclusionBounds.Origin + View.ViewMatrices.GetPreViewTranslation();
+								const FVector BoundExtent = OcclusionBounds.BoxExtent;
+
+								if (bSingleThreaded /* 기본 값은 true */ )
+								{
+									checkSlow(DynamicVertexBufferIfSingleThreaded);
+
+									if 
+									(
+										// Occlusion Query 최대 가능 발행 횟수, 기본 값은 MAX_int32. 
+										// 안드로이드 플랫폼에서 OpenGL을 사용하는 경우 MAX_int32보다 작을 수 있다.
+										GRHIMaximumReccommendedOustandingOcclusionQueries < MAX_int32 && 
+										!bGroupedQuery
+									)
+									{
+										QueriesToAdd->Emplace(FPrimitiveOcclusionHistoryKey(PrimitiveId, SubQuery), BoundOrigin, BoundExtent, PrimitiveOcclusionHistory->LastQuerySubmitFrame());
+									}
+									else
+									{
+										// ⭐⭐⭐⭐⭐⭐⭐
+										// Primitive에 대한 Occlusion Query Mesh를 셋팅한다.
+										// 위에서 말한대로 Occlusion Query 대상 Primitive에 대한 AABB ( 바운딩 박스 )를 사용하여,
+										// 연산량을 줄인다. 다만 Cull해도 될 오브젝트를 그리는 경우가 생길 수도 있다.
+										PrimitiveOcclusionHistory->SetCurrentQuery(OcclusionFrameCounter,
+											bGroupedQuery ?
+											// ⭐
+											// Query를 하나로 합치는 경우 ( Occlusion Query Test의 Draw Call을 최대한 줄이기 위해 )
+											View.GroupedOcclusionQueries.BatchPrimitive(BoundOrigin, BoundExtent, *DynamicVertexBufferIfSingleThreaded) :
+											// ⭐
+											View.IndividualOcclusionQueries.BatchPrimitive(BoundOrigin, BoundExtent, *DynamicVertexBufferIfSingleThreaded),
+											NumBufferedFrames,
+											bGroupedQuery,
+											Params.bNeedsScanOnRead
+										);
+										// ⭐⭐⭐⭐⭐⭐⭐
+									}
+								}
+								else
+								{
+									// ...
+									// ...
+									// ...
+								}
+							}
+						}
+					}
+					else
+					{
+						// If the primitive's bounding box intersects the near clipping plane, treat it as definitely unoccluded.
+						bIsOccluded = false;
+						bOcclusionStateIsDefinite = true;
+					}
+				}
+				// Set the primitive's considered time to keep its occlusion history from being trimmed.
+				PrimitiveOcclusionHistory->LastConsideredTime = CurrentRealTime;
+				if (!bIsOccluded && bOcclusionStateIsDefinite)
+				{
+					PrimitiveOcclusionHistory->LastProvenVisibleTime = CurrentRealTime;
+				}
+				PrimitiveOcclusionHistory->LastConsideredFrameNumber = OcclusionFrameCounter;
+				PrimitiveOcclusionHistory->WasOccludedLastFrame = bIsOccluded;
+				PrimitiveOcclusionHistory->OcclusionStateWasDefiniteLastFrame = bOcclusionStateIsDefinite;
+			}
+
+			if (bSubQueries)
+			{
+				SubIsOccluded.Add(bIsOccluded);
+				if (!bIsOccluded)
+				{
+					bAllSubOccluded = false;
+				}
+				if (bIsOccluded || !bOcclusionStateIsDefinite)
+				{
+					bAllSubOcclusionStateIsDefinite = false;
+				}
+			}
+			else
+			{
+					
+				if (bIsOccluded)
+				{
+					View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
+					STAT(NumOccludedPrimitives++);
+				}
+				else if (bOcclusionStateIsDefinite)
+				{
+					View.PrimitiveDefinitelyUnoccludedMap.AccessCorrespondingBit(BitIt) = true;
+				}					
+			}			
+		}
+
+		if (bSubQueries)
+		{
+			if (SubIsOccluded.Num() > 0)
+			{
+				FPrimitiveSceneProxy* Proxy = Scene->Primitives[BitIt.GetIndex()]->Proxy;
+				Proxy->AcceptOcclusionResults(&View, &SubIsOccluded, SubIsOccludedStart, SubIsOccluded.Num() - SubIsOccludedStart);
+			}
+
+			if (bAllSubOccluded)
+			{
+				View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
+				STAT(NumOccludedPrimitives++);
+			}
+			else if (bAllSubOcclusionStateIsDefinite)
+			{
+				View.PrimitiveDefinitelyUnoccludedMap.AccessCorrespondingBit(BitIt) = true;
+			}
+		}
+	}
+
+	check(NumTotalDefUnoccluded == View.PrimitiveDefinitelyUnoccludedMap.Num());
+	check(NumTotalPrims == View.PrimitiveVisibilityMap.Num());
+	check(!InsertPrimitiveOcclusionHistory || InsertPrimitiveOcclusionHistory->Num() <= ReserveAmount);
+	Params.NumOccludedPrims = NumOccludedPrimitives;	
+}
+```
