@@ -25,7 +25,8 @@ UGameViewportClient::Draw -> FRendererModule::BeginRenderingViewFamily -> Render
 
 - 1. [FScene::UpdateAllPrimitiveSceneInfos](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)               
 - 2. [FMobileSceneRenderer::InitViews](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_2.html)   
-- 3. [FSceneRenderer::RenderCustomDepthPass](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/23/FMobileSceneRenderer_3.html)             
+- 3. [FSceneRenderer::RenderCustomDepthPass](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/23/FMobileSceneRenderer_3.html)      
+- 3. [FSceneRenderer::RenderForward](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/FMobileSceneRenderer_4.html)          
 
 
 
@@ -90,15 +91,15 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 
 	
 	// ⭐
-	// 이전 프레임의 Occlusion Query의 결과가 나왔는지 확인한다.
+	// 이전 프레임 ( 3 ~ 4 프레임 전 )의 Occlusion Query의 결과가 나왔는지 확인한다.
 	// GPU에서 아직 Occlusion Query를 처리하지 못했다면 그냥 빠져나온다. ( Stall되지 않는다. )
 	FRHICommandListExecutor::GetImmediateCommandList().PollOcclusionQueries();
 	// ⭐
 
-	// ⭐
+	// ⭐⭐⭐⭐⭐⭐⭐
 	// 렌더스레드에서 RHI 스레드로 전송 대기 중인 커맨드들을 즉시 처리한다.
 	RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
-	// ⭐
+	// ⭐⭐⭐⭐⭐⭐⭐
 
 
     // ⭐⭐⭐⭐⭐⭐⭐
@@ -149,7 +150,12 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	}
 	
 	FSortedLightSetSceneInfo SortedLightSet;
+
+	// ⭐
+	// 모바일의 경우 G버퍼도 저장할만큼 메모리가 충분치 않아,
+	// 기본적으로 Forward 렌더링으로 렌더링한다.
 	if (bDeferredShading)
+	// ⭐
 	{
 		GatherAndSortLights(SortedLightSet);
 		int32 NumReflectionCaptures = Views[0].NumBoxReflectionCaptures + Views[0].NumSphereReflectionCaptures;
@@ -207,78 +213,108 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	}
     // ⭐⭐⭐⭐⭐⭐⭐
 
+	// ⭐
+	// Depth Buffer를 그릴지에 대한 옵션 enum
+	// enum EDepthDrawingMode
+	// { 
+	//   // tested at a higher level
+	// 	 DDM_None			= 0,
+	//
+	// 	 // Opaque 매터리얼의 경우에만
+	// 	 DDM_NonMaskedOnly	= 1,
+	//
+	// 	 // Opaque, Masked 매터리얼의 경우, 단 bUseAsOccluder 옵션이 disabled되어 있는 오브젝트는 제외하고
+	// 	 DDM_AllOccluders	= 2,
+	//
+	// 	 // Full prepass, 모든 오브젝트의 Depth가 그려져야하고, 모든 픽셀은 Base Pass의 Depth와 일치해야한다.
+	// 	 DDM_AllOpaque		= 3,
+	//
+	// 	 // Masked materials만
+	// 	 DDM_MaskedOnly = 4,
+	// };
+	//
+	//
+	// void FScene::UpdateEarlyZPassMode()
+	// {
+	//   DefaultBasePassDepthStencilAccess = FExclusiveDepthStencil::DepthWrite_StencilWrite;
+    //	 EarlyZPassMode = DDM_NonMaskedOnly;
+	//	 bEarlyZPassMovable = false;
+	//
+	//   if (GetShadingPath(GetFeatureLevel()) == EShadingPath::Deferred)
+	//   {
+	//   	...
+	//      ... 모바일의 경우 G버퍼도 저장할만큼 메모리가 충분치 않아, 기본적으로 Forward 렌더링으로 렌더링한다.
+	//		...
+	//	 }
+	//   else if (GetShadingPath(GetFeatureLevel()) == EShadingPath::Mobile)
+	//	 {
+	//		 EarlyZPassMode = DDM_None;
+	//
+	//		 if (MaskedInEarlyPass(GetFeatureLevelShaderPlatform(FeatureLevel)))
+	//		 {
+	//			 EarlyZPassMode = DDM_MaskedOnly;
+	//		 }
+	//
+	//		 if (IsMobileDistanceFieldEnabled(GetShaderPlatform()) || IsMobileAmbientOcclusionEnabled(GetShaderPlatform()))
+	//		 {
+	//			 EarlyZPassMode = DDM_AllOpaque;
+	//		 }
+	//	 }
+	// }
+	//
+	//
+	// 모든 오브젝트에 대해 Depth Prepass를 수행하는 경우.
+	// Depth Only Pass ( 픽셀 쉐이더 단계에서 점만 찍는다, 그냥 Depth 값만 취한다. )의 경우,
+	// Base Pass에서 Primitive를 렌더링 할 때 Early Z를 극대화하여 오버드로우를 최소화, 픽셀 쉐이딩 연산을 최소화하기 위함이다.
+	// ( 값 비싼 픽셀 쉐이딩을 최소화하겠다! )
+	// 결과적으로 한 Fragment에 한번만 Pixel 쉐이딩을 수행하고자 ( 오버드로우를 최소화 ) 하는 목적으로 사용한다.
+	// ( 디퍼드 렌더링의 경우 어차피 Pixel 쉐이더가 가벼운데 왜 Depth Only Pass를 수행하느냐는 논쟁도 있더라..... )
+	//
+	// 모바일 Forward 렌더링의 경우에는 Sigend Distance Field나 Ambient Occlusion이 Enabled되어 있는 경우에만 Full Depth Pre Pass를 수행한다.
+	//
+	// 반면 Deffered 렌더링의 경우 EarlyZPass 프로젝트 설정에 따라 달라진다.
+	//
+	//
+	// 모바일 Mali GPU의 경우에는 Depth Pre Pass가 불필요 하다고 한다.
+	// 오히려 성능에 해가된다고....
+	// reference : https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/mali_early_z.html       
+	//
+	// EarlyZPassMode가 DDM_AllOpaque인 경우. 
 	if (bIsFullPrepassEnabled)
+	// ⭐
 	{
-		//SDF and AO require full depth prepass
-
-		FRHIRenderPassInfo DepthPrePassRenderPassInfo(
-			SceneContext.GetSceneDepthSurface(),
-			EDepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil);
-
-		DepthPrePassRenderPassInfo.NumOcclusionQueries = ComputeNumOcclusionQueriesToBatch();
-		DepthPrePassRenderPassInfo.bOcclusionQueries = DepthPrePassRenderPassInfo.NumOcclusionQueries != 0;
-
-		RHICmdList.BeginRenderPass(DepthPrePassRenderPassInfo, TEXT("DepthPrepass"));
-
-		RHICmdList.SetCurrentStat(GET_STATID(STAT_CLM_MobilePrePass));
-		// Full Depth pre-pass
-		RenderPrePass(RHICmdList);
-
-		// Issue occlusion queries
-		RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_Occlusion));
-		RenderOcclusion(RHICmdList);
-
-		RHICmdList.EndRenderPass();
-
-		if (bRequiresDistanceFieldShadowingPass)
-		{
-			CSV_SCOPED_TIMING_STAT_EXCLUSIVE(RenderSDFShadowing);
-			RenderSDFShadowing(RHICmdList);
-		}
-
-		if (bShouldRenderHZB)
-		{
-			RenderHZB(RHICmdList, SceneContext.SceneDepthZ);
-		}
-
-		if (bRequiresAmbientOcclusionPass)
-		{
-			RenderAmbientOcclusion(RHICmdList, SceneContext.SceneDepthZ);
-		}
+		// ...
+		// ...
+		// ...
 	}
 
 	FRHITexture* SceneColor = nullptr;
+	// ⭐
+	// 모바일의 경우 G버퍼도 저장할만큼 메모리가 충분치 않아,
+	// 기본적으로 Forward 렌더링으로 렌더링한다.
 	if (bDeferredShading)
+	// ⭐
 	{
-		SceneColor = RenderDeferred(RHICmdList, ViewList, SortedLightSet);
+		SceneColor = RenderDeferred(RHICmdList, ViewList, SortedLightSet);	
 	}
 	else
 	{
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 4. 모바일의 경우 기본적으로 Forward 렌더링으로 수행한다.
 		SceneColor = RenderForward(RHICmdList, ViewList);
+		// ⭐⭐⭐⭐⭐⭐⭐
 	}
 	
 
+	// ⭐
+	// Temporal Anti Aliasing을 수행하는 경우에만 해당.
+	// references : https://scahp.tistory.com/77
 	if (bShouldRenderVelocities)
+	// ⭐
 	{
-		FRDGBuilder GraphBuilder(RHICmdList);
-
-		FRDGTextureMSAA SceneDepthTexture = RegisterExternalTextureMSAA(GraphBuilder, SceneContext.SceneDepthZ);
-		FRDGTextureRef VelocityTexture = TryRegisterExternalTexture(GraphBuilder, SceneContext.SceneVelocity);
-
-		if (VelocityTexture != nullptr)
-		{
-			AddClearRenderTargetPass(GraphBuilder, VelocityTexture);
-		}
-
-		// Render the velocities of movable objects
-		AddSetCurrentStatPass(GraphBuilder, GET_STATID(STAT_CLMM_Velocity));
-		RenderVelocities(GraphBuilder, SceneDepthTexture.Resolve, VelocityTexture, FSceneTextureShaderParameters(), EVelocityPass::Opaque, false);
-		AddSetCurrentStatPass(GraphBuilder, GET_STATID(STAT_CLMM_AfterVelocity));
-
-		AddSetCurrentStatPass(GraphBuilder, GET_STATID(STAT_CLMM_TranslucentVelocity));
-		RenderVelocities(GraphBuilder, SceneDepthTexture.Resolve, VelocityTexture, GetSceneTextureShaderParameters(CreateMobileSceneTextureUniformBuffer(GraphBuilder, EMobileSceneTextureSetupMode::SceneColor)), EVelocityPass::Translucent, false);
-
-		GraphBuilder.Execute();
+		// ...
+		// ...
+		// ...
 	}
 
 	{
@@ -288,22 +324,9 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 
 		if (FXSystem && Views.IsValidIndex(0))
 		{
-			AddUntrackedAccessPass(GraphBuilder, [this](FRHICommandListImmediate& RHICmdList)
-			{
-				check(RHICmdList.IsOutsideRenderPass());
-
-				FXSystem->PostRenderOpaque(
-					RHICmdList,
-					Views[0].ViewUniformBuffer,
-					nullptr,
-					nullptr,
-					Views[0].AllowGPUParticleUpdate()
-				);
-				if (FGPUSortManager* GPUSortManager = FXSystem->GetGPUSortManager())
-				{
-					GPUSortManager->OnPostRenderOpaque(RHICmdList);
-				}
-			});
+			// ...
+			// ... /** The cached FXSystem which could be released while we are rendering. */
+			// ...
 		}
 		GraphBuilder.Execute();
 	}

@@ -25,7 +25,9 @@ UE4 4.27 버전을 기준으로 작성하였다.
           
 ----------------------------              
              
-이번 챕터에는 **FMobileSceneRenderer::InitViews**에 대해 분석해볼 것이다.              
+이번 챕터에는 **FMobileSceneRenderer::InitViews**에 대해 분석해볼 것이다.      
+
+함께 보면 좋은 참고 자료 : [UE5 MeshDrawCommand (1/2)](https://scahp.tistory.com/74?category=848072), [UE5 MeshDrawCommand (2/2)](https://scahp.tistory.com/75?category=848), [Why Talking About Render Graphs](https://logins.github.io/graphics/2021/05/31/RenderGraphs.html), [EveryCulling](https://github.com/SungJJinKang/EveryCulling)         
                        
 ------------------------------         
 
