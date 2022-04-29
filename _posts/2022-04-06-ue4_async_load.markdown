@@ -285,6 +285,12 @@ AsyncLoader는 버전 1과 버전 2, 두가지 버전이 있다.
 왜 버전 2가 나왔는지는 모르겠다. 구글에 검색해보아도 찾을 수 없었다.           
 필자의 경우 UE 4.25.4 버전을 기준으로 에디터 상에서 버전 1로 작동되는 것을 확인하였기 때문에, 버전 1을 기준으로 코드를 살펴보겠다.           
 
+이후 찾아본 바로는 버전 2의 경우 UE4 4.24 버전부터 들어온 새로운 Async 로드 구현이다.       
+기본 버전 1에 비해 로딩 속도에서의 개선이 있다.          
+기본적으로 버전 2가 사용되고,                
+IoStore를 사용하지 않는 경우와 에디터에서만 기존 버전 1이 그대로 사용된다.                  
+[참고 - IoStore](https://youtu.be/i31wSiqt-7w)            
+
 
 ```cpp
 int32 LoadPackageAsync(const FString& InName, const FGuid* InGuid /*= nullptr*/, const TCHAR* InPackageToLoadFrom /*= nullptr*/, FLoadPackageAsyncDelegate InCompletionDelegate /*= FLoadPackageAsyncDelegate()*/, EPackageFlags InPackageFlags /*= PKG_None*/, int32 InPIEInstanceID /*= INDEX_NONE*/, int32 InPackagePriority /*= 0*/, const FLinkerInstancingContext* InstancingContext /*=nullptr*/)
