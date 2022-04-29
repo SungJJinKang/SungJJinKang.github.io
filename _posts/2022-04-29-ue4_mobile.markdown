@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "UE4 모바일 최적화 관련 자료 스크랩"
+date:   2022-04-29
+categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+---
+
+[https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Rendering/MobileOptimization/OptimizationandDevelopmentBestPracticesforMobile/](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Rendering/MobileOptimization/OptimizationandDevelopmentBestPracticesforMobile/),            
+[https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/),          
+[https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/TipsAndTricks/](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/TipsAndTricks/),               
+[https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/ue4_unreal_insights.html](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/ue4_unreal_insights.html),                  
+[https://docs.unity3d.com/Packages/com.unity.adaptiveperformance@4.0/manual/user-guide.html#boost-mode](https://docs.unity3d.com/Packages/com.unity.adaptiveperformance@4.0/manual/user-guide.html#boost-mode),          
+[https://blog.unity.com/kr/technology/higher-fidelity-and-smoother-frame-rates-with-adaptive-performance](https://blog.unity.com/kr/technology/higher-fidelity-and-smoother-frame-rates-with-adaptive-performance)      
