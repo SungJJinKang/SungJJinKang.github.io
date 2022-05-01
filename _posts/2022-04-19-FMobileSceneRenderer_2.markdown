@@ -833,6 +833,12 @@ void FSceneRenderer::ComputeViewVisibility
 }
 ```
 
+이제 **오클루전 컬링** 부분이다.         
+여기서는 3 ~ 4 프레임 전 발행된 **Occlusion Query 결과를 가지고 Primitive들에 대한 가시성 여부를 PrimitiveVisibilityMap에 저장**하고,         
+현재 프레임에서 **발행할 Query들을 결정**하는 동작만 수행한다.    
+Query를 결정한다는 것은 결국 Query로 수행 될 Primitive들의 AABB Vertex 데이터를 모은다는 것이다.               
+**실제로 Query를 GPU에 보내는 작업은 FMobileSceneRenderer::RenderForward에서 수행**된다.             
+`
 
 ```cpp
 static int32 OcclusionCull(FRHICommandListImmediate& RHICmdList, const FScene* Scene, FViewInfo& View, FGlobalDynamicVertexBuffer& DynamicVertexBuffer)
@@ -1025,8 +1031,11 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 		SubIsOccluded.Reset();
 		// ⭐
 
+		// ⭐
+		// FetchVisibilityForPrimitives_Range에서 Query로 발행될 AABB들이 저장된다.
 		static TArray<FOcclusionBounds> PendingIndividualQueriesWhenOptimizing;
 		PendingIndividualQueriesWhenOptimizing.Reset();
+		// ⭐
 
 		static TArray<FOcclusionBounds*> PendingIndividualQueriesWhenOptimizingSorter;
 		PendingIndividualQueriesWhenOptimizingSorter.Reset();
@@ -1048,25 +1057,50 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 			nullptr,
 			nullptr,
 			nullptr,
+			// ⭐
 			&PendingIndividualQueriesWhenOptimizing, // FVisForPrimParams::QueriesToAdd
+			// ⭐
 			&SubIsOccluded // FVisForPrimParams::SubIsOccluded
 			);
 		// ⭐
 
 		// ⭐⭐⭐⭐⭐⭐⭐
+		// 아래에서 정확한 분석을 확인해주세요
 		FetchVisibilityForPrimitives_Range<true>(Params, &DynamicVertexBuffer);
 		// ⭐⭐⭐⭐⭐⭐⭐
 
+		// ⭐
+		// Individual Query의 개수
 		int32 IndQueries = PendingIndividualQueriesWhenOptimizing.Num();
+		// ⭐
 		if (IndQueries)
 		{
+			// ⭐
+			// 한 프레임에 발행 가능한 최대 Query 개수
+			// 앞서 말했듯이 3 ~ 4 프레임 전 Query를 사용하기 때문에,
+			//
+			// 한 프레임에 발행 가능한 최대 Query 개수
+			// = ( GPU에서 지원하는 총 Query 수 ) / ( Query 버퍼 프레임 수 ( 3 ~ 4 프레임 ) )
 			int32 SoftMaxQueries = GRHIMaximumReccommendedOustandingOcclusionQueries /* Occlusion Query 최대 가능 발행 횟수 */ / FMath::Min(NumBufferedFrames, 2); // extra RHIT frame does not count
+			// ⭐
+
+			// ⭐
+			// Group된 Query의 개수
+			// Group된 Query들이 Individual Query보다 처리 우선 순위가 높다.
+			// ( 
+			// 	처리하려는 Query 수가 한 프레임에 처리 가능한 Query 수보다 많은 경우,
+			// 	Individual Query를 몇 개 버린다는 의미이다. 
+			// )
 			int32 UsedQueries = View.GroupedOcclusionQueries.GetNumBatchOcclusionQueries();
+			// ⭐
 
 			int32 FirstQueryToDo = 0;
 			int32 QueriesToDo = IndQueries;
 
 
+			// ⭐
+			// Group된 Query와 Individual Query의 개수 합이 한 프레임에 발행 가능한 Query 개수보다 큰 경우
+			// Individual Query 수를 줄인다.
 			if (SoftMaxQueries < UsedQueries + IndQueries)
 			{
 				QueriesToDo = (IndQueries + 9) / 10;  // we need to make progress, even if it means stalling and waiting for the GPU. At a minimum, we will do 10%
@@ -1077,6 +1111,12 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 					QueriesToDo = SoftMaxQueries - UsedQueries;
 				}
 			}
+			// ⭐
+
+			// ⭐
+			// 처리 가능한 Query 수가 충분하여 위에서 Individual Query 수를 줄이지 않은 경우
+			// 모든 Individual Query를 온전히 수행한다.
+			// PrimitiveOcclusionHistory에 상응하는 Query를 저장해주어 나중에 Query의 결과를 얻을 수 있게 한다.
 			if (QueriesToDo == IndQueries)
 			{
 				for (int32 Index = 0; Index < IndQueries; Index++)
@@ -1092,6 +1132,12 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 					);
 				}
 			}
+			// ⭐
+
+
+			// ⭐
+			// 처리 가능한 Query 수가 충분하지 않아 Individual Query 수를 줄여야하는 경우,
+			// Query를 수행한지 오래된 Primitive에 대한 Query를 우선으로 하여 처리한다.
 			else
 			{
 				check(QueriesToDo < IndQueries);
@@ -1119,6 +1165,7 @@ static int32 FetchVisibilityForPrimitives(const FScene* Scene, FViewInfo& View, 
 						Params.bNeedsScanOnRead
 					);
 				}
+				// ⭐
 			}
 
 
@@ -1222,7 +1269,10 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 	TArray<FPrimitiveOcclusionHistory>* InsertPrimitiveOcclusionHistory = Params.InsertPrimitiveOcclusionHistory;
 	TArray<FPrimitiveOcclusionHistory*>* QueriesToRelease = Params.QueriesToRelease;
 	TArray<FHZBBound>* HZBBoundsToAdd = Params.HZBBoundsToAdd;
+
+	// ⭐
 	TArray<FOcclusionBounds>* QueriesToAdd = Params.QueriesToAdd;	
+	// ⭐
 
 	const bool bNewlyConsideredBBoxExpandActive = GExpandNewlyOcclusionTestedBBoxesAmount > 0.0f && GFramesToExpandNewlyOcclusionTestedBBoxes > 0 && GFramesNotOcclusionTestedToExpandBBoxes > 0;
 
@@ -1358,7 +1408,7 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 			// 위에서 말한 것처럼 Occlusion Query는 매우 느려터진 동작이기 때문에,
 			// 3 ~ 4 프레임 전에 발행한 Query의 결과 값을 사용한다.
 			//
-			// FPrimitiveOcclusionHistory가 있다는 것은 과거에 Occlusion Query 명령을 GPU로 보내두었다는 것ㅇ디ㅏ.
+			// PrimitiveOcclusionHistory가 있다는 것은 Primitive에 대해 과거에 Occlusion Query를 수행한 적이 있다는 것이다.
 			FPrimitiveOcclusionHistory* PrimitiveOcclusionHistory = ViewPrimitiveOcclusionHistory.Find(FPrimitiveOcclusionHistoryKey(PrimitiveId, SubQuery));
 			// ⭐
 
@@ -1620,7 +1670,10 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 					}
 					// ⭐
 
+					// ⭐
+					// bAllowBoundsTest이 true다 -> Occlusion Query Test를 수행한다.
 					if (bAllowBoundsTest)
+					// ⭐
 					{
 						PrimitiveOcclusionHistory->LastTestFrameNumber = OcclusionFrameCounter;
 						if (bHZBOcclusion)
@@ -1646,6 +1699,7 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 								(OcclusionFlags & EOcclusionFlags::AllowApproximateOcclusion))
 							{
 							// ⭐
+
 								if (bIsOccluded)
 								{
 									// ⭐
@@ -1705,21 +1759,35 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 										!bGroupedQuery
 									)
 									{
+										// ⭐
+										// 추가될 QueriesToAdd를 넣는다.
 										QueriesToAdd->Emplace(FPrimitiveOcclusionHistoryKey(PrimitiveId, SubQuery), BoundOrigin, BoundExtent, PrimitiveOcclusionHistory->LastQuerySubmitFrame());
+										// ⭐
 									}
 									else
 									{
 										// ⭐⭐⭐⭐⭐⭐⭐
-										// Primitive에 대한 Occlusion Query Mesh를 셋팅한다.
-										// 위에서 말한대로 Occlusion Query 대상 Primitive에 대한 AABB ( 바운딩 박스 )를 사용하여,
-										// 연산량을 줄인다. 다만 Cull해도 될 오브젝트를 그리는 경우가 생길 수도 있다.
+										// PrimitiveOcclusionHistory에 Query를 셋팅한다.
+										// SetCurrentQuery 함수에 두번째 매개변수로 들어갈 FRHIRenderQuery가 PrimitiveOcclusionHistory에 저장된다.
+										// 이후 위에서 보아듯이 PrimitiveOcclusionHistory를 통해 FRHIRenderQuery의 결과를 얻을 수 있다.
+										//
+										// 여기서 설정한 Query는 이후에 FMobileSceneRenderer::RenderOcclusion 함수에서 Query가 발행될 때 사용된다.
 										PrimitiveOcclusionHistory->SetCurrentQuery(OcclusionFrameCounter,
+
+											// ⭐
+											// Query ( FRHIRenderQuery )를 만들어서,
+											// GroupedOcclusionQueries 혹은 IndividualOcclusionQueries에 저장한다.
+											// 또한 그 Query의 결과를 나중에 확인할 수 있게 PrimitiveOcclusionHistory에 저장한다.
+											//
 											bGroupedQuery ?
 											// ⭐
 											// Query를 하나로 합치는 경우 ( Occlusion Query Test의 Draw Call을 최대한 줄이기 위해 )
 											View.GroupedOcclusionQueries.BatchPrimitive(BoundOrigin, BoundExtent, *DynamicVertexBufferIfSingleThreaded) :
 											// ⭐
 											View.IndividualOcclusionQueries.BatchPrimitive(BoundOrigin, BoundExtent, *DynamicVertexBufferIfSingleThreaded),
+											//
+											// ⭐
+
 											NumBufferedFrames,
 											bGroupedQuery,
 											Params.bNeedsScanOnRead
@@ -1743,6 +1811,11 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 						bOcclusionStateIsDefinite = true;
 					}
 				}
+
+				// ⭐
+				// PrimitiveOcclusionHistory에 Occlusion Query 결과를 저장한다. ( 물론 3 ~ 4 프레임 전의 Query의 결과이다 )
+				// 위에서 보아듯이 이후 프레임에서 사용될 것이다.
+				//
 				// Set the primitive's considered time to keep its occlusion history from being trimmed.
 				PrimitiveOcclusionHistory->LastConsideredTime = CurrentRealTime;
 				if (!bIsOccluded && bOcclusionStateIsDefinite)
@@ -1752,6 +1825,8 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 				PrimitiveOcclusionHistory->LastConsideredFrameNumber = OcclusionFrameCounter;
 				PrimitiveOcclusionHistory->WasOccludedLastFrame = bIsOccluded;
 				PrimitiveOcclusionHistory->OcclusionStateWasDefiniteLastFrame = bOcclusionStateIsDefinite;
+				// ⭐
+
 			}
 
 			if (bSubQueries)
@@ -1769,6 +1844,8 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 			else
 			{
 					
+				// ⭐⭐⭐⭐⭐⭐⭐	
+				// Occlusion Query 결과를 바탕으로 PrimitiveVisibilityMap에 가시성 여부를 저장한다.
 				if (bIsOccluded)
 				{
 					View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
@@ -1778,6 +1855,7 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 				{
 					View.PrimitiveDefinitelyUnoccludedMap.AccessCorrespondingBit(BitIt) = true;
 				}					
+				// ⭐⭐⭐⭐⭐⭐⭐
 			}			
 		}
 
@@ -1789,6 +1867,8 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 				Proxy->AcceptOcclusionResults(&View, &SubIsOccluded, SubIsOccludedStart, SubIsOccluded.Num() - SubIsOccludedStart);
 			}
 
+			// ⭐⭐⭐⭐⭐⭐⭐	
+			// Occlusion Query 결과를 바탕으로 PrimitiveVisibilityMap에 가시성 여부를 저장한다.
 			if (bAllSubOccluded)
 			{
 				View.PrimitiveVisibilityMap.AccessCorrespondingBit(BitIt) = false;
@@ -1798,12 +1878,66 @@ static void FetchVisibilityForPrimitives_Range(FVisForPrimParams& Params, FGloba
 			{
 				View.PrimitiveDefinitelyUnoccludedMap.AccessCorrespondingBit(BitIt) = true;
 			}
+			// ⭐⭐⭐⭐⭐⭐⭐	
+
 		}
 	}
 
 	check(NumTotalDefUnoccluded == View.PrimitiveDefinitelyUnoccludedMap.Num());
 	check(NumTotalPrims == View.PrimitiveVisibilityMap.Num());
 	check(!InsertPrimitiveOcclusionHistory || InsertPrimitiveOcclusionHistory->Num() <= ReserveAmount);
+
+	// ⭐
 	Params.NumOccludedPrims = NumOccludedPrimitives;	
+	// ⭐
+}
+```
+
+```cpp
+// ⭐⭐⭐⭐⭐⭐⭐
+// 새로운 FRHIRenderQuery를 추가한다.
+// FViewInfo::GroupedOcclusionQueries ( FOcclusionQueryBatcher 타입), 
+// FViewInfo::IndividualOcclusionQueries ( FOcclusionQueryBatcher 타입 )에 추가된다.
+// 그럼 이후 FMobileSceneRenderer::RenderForward 함수에서 GPU로 보내진다.
+//
+// Query시에는 Primitive의 AABB를 가지고 수행한다.
+// 원본 Primitive 데이터를 가지고 Query를 수행하는 것은 매우 비싸고 느리다.
+// 그러니 AABB를 가지고 Query를 수행하는 것이다.
+// 정확도는 떨어지지만 ( 더 보수적으로 컬링 -> 안 그려져도 되는 것이, 그려질 수 있다. 다만 그려져야 할 것이 안 그려지는 경우는 발생하지 않는다. ),          
+// Query 처리 속도는 높이는, 
+// 일종의 Trade Off이다.
+FRHIRenderQuery* FOcclusionQueryBatcher::BatchPrimitive(const FVector& BoundsOrigin,const FVector& BoundsBoxExtent, FGlobalDynamicVertexBuffer& DynamicVertexBuffer)
+// ⭐⭐⭐⭐⭐⭐⭐
+{
+	// Check if the current batch is full.
+	if(CurrentBatchOcclusionQuery == NULL || NumBatchedPrimitives >= MaxBatchedPrimitives)
+	{
+		check(OcclusionQueryPool);
+		CurrentBatchOcclusionQuery = new(BatchOcclusionQueries) FOcclusionBatch;
+		CurrentBatchOcclusionQuery->Query = OcclusionQueryPool->AllocateQuery();
+		CurrentBatchOcclusionQuery->VertexAllocation = DynamicVertexBuffer.Allocate(MaxBatchedPrimitives * 8 * sizeof(FVector));
+		check(CurrentBatchOcclusionQuery->VertexAllocation.IsValid());
+		NumBatchedPrimitives = 0;
+	}
+
+	// Add the primitive's bounding box to the current batch's vertex buffer.
+	const FVector PrimitiveBoxMin = BoundsOrigin - BoundsBoxExtent;
+	const FVector PrimitiveBoxMax = BoundsOrigin + BoundsBoxExtent;
+	float* RESTRICT Vertices = (float*)CurrentBatchOcclusionQuery->VertexAllocation.Buffer;
+	Vertices[ 0] = PrimitiveBoxMin.X; Vertices[ 1] = PrimitiveBoxMin.Y; Vertices[ 2] = PrimitiveBoxMin.Z;
+	Vertices[ 3] = PrimitiveBoxMin.X; Vertices[ 4] = PrimitiveBoxMin.Y; Vertices[ 5] = PrimitiveBoxMax.Z;
+	Vertices[ 6] = PrimitiveBoxMin.X; Vertices[ 7] = PrimitiveBoxMax.Y; Vertices[ 8] = PrimitiveBoxMin.Z;
+	Vertices[ 9] = PrimitiveBoxMin.X; Vertices[10] = PrimitiveBoxMax.Y; Vertices[11] = PrimitiveBoxMax.Z;
+	Vertices[12] = PrimitiveBoxMax.X; Vertices[13] = PrimitiveBoxMin.Y; Vertices[14] = PrimitiveBoxMin.Z;
+	Vertices[15] = PrimitiveBoxMax.X; Vertices[16] = PrimitiveBoxMin.Y; Vertices[17] = PrimitiveBoxMax.Z;
+	Vertices[18] = PrimitiveBoxMax.X; Vertices[19] = PrimitiveBoxMax.Y; Vertices[20] = PrimitiveBoxMin.Z;
+	Vertices[21] = PrimitiveBoxMax.X; Vertices[22] = PrimitiveBoxMax.Y; Vertices[23] = PrimitiveBoxMax.Z;
+
+	// Bump the batches buffer pointer.
+	Vertices += 24;
+	CurrentBatchOcclusionQuery->VertexAllocation.Buffer = (uint8*)Vertices;
+	NumBatchedPrimitives++;
+
+	return CurrentBatchOcclusionQuery->Query;
 }
 ```

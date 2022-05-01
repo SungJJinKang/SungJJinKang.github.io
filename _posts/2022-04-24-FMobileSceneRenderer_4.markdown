@@ -295,6 +295,7 @@ FRHITexture* FMobileSceneRenderer::RenderForward(FRHICommandListImmediate& RHICm
 
 			// ⭐⭐⭐⭐⭐⭐⭐
 			//
+			// BasePass 후 Occlusion Query를 발행한다.
 			// 기본 프로젝트 셋팅 값으로는 여기서 Occlusion Query를 날린다.
 			//
 			// 아래쪽으로 내려가 자세한 분석을 보세요.
@@ -662,17 +663,31 @@ void FMobileSceneRenderer::RenderOcclusion(FRHICommandListImmediate& RHICmdList)
 
 	{
 		SCOPED_NAMED_EVENT(FMobileSceneRenderer_BeginOcclusionTests, FColor::Emerald);
+
+		// ⭐
+		// Projected Shadow, PlanarReflection들에 대한 Occlusion Query를 생성한다.
 		const FViewOcclusionQueriesPerView QueriesPerView = AllocateOcclusionTests(Scene, VisibleLightInfos, Views);
+		// ⭐
 
 		if (QueriesPerView.Num())
 		{
+			// ⭐⭐⭐⭐⭐⭐⭐
+			// RHI 스레드에 Occlusion Query 커맨드를 보낸다.
 			BeginOcclusionTests(RHICmdList, Views, FeatureLevel, QueriesPerView, 1.0f);
+			// ⭐⭐⭐⭐⭐⭐⭐
 		}
 	}
 
+	// ⭐
+	// RHI 스레드가 별개로 존재하는 경우,
+	// 렌더 스레드 커맨트 큐에 쌓여있는 Occlusion Query 수행 커맨드들을 곧바로 RHI 스레드로 전송한다.
+	// 
+	// RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+	// RHICmdList.PollRenderQueryResults();
 	FRDGBuilder GraphBuilder(RHICmdList);
 	FenceOcclusionTests(GraphBuilder);
 	GraphBuilder.Execute();
+	// ⭐
 }
 
 
@@ -857,8 +872,16 @@ static void BeginOcclusionTests(
 		FSceneViewState* ViewState = (FSceneViewState*)View.State;
 		SCOPED_GPU_MASK(RHICmdList, View.GPUMask);
 
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// Occlusion Query를 수행하는데 필요한 PSO를 셋팅한다.
+		//
+		
+		// ⭐
+		// 당연히 Front Face만 렌더링하면 된다.
 		// We only need to render the front-faces of the culling geometry (this halves the amount of pixels we touch)
 		GraphicsPSOInit.RasterizerState = View.bReverseCulling ? TStaticRasterizerState<FM_Solid, CM_CCW>::GetRHI() : TStaticRasterizerState<FM_Solid, CM_CW>::GetRHI();
+		// ⭐
+
 
 		const FIntRect ViewRect = GetDownscaledRect(View.ViewRect, DownsampleFactor);
 		RHICmdList.SetViewport(ViewRect.Min.X, ViewRect.Min.Y, 0.0f, ViewRect.Max.X, ViewRect.Max.Y, 1.0f);
@@ -875,7 +898,12 @@ static void BeginOcclusionTests(
 		}
 
 		SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
+		// ⭐⭐⭐⭐⭐⭐⭐
 
+		// ⭐
+		// 각종 Shadow, Reflection들에 대한 Occlusion Query 수행 커맨드를 RHI 스레드로 전송한다.
+		// 쉐도우 맵도 결국에는 월드를 렌더링하는 것이다. ( 다른 것은 Depth 값만 취한다는 것 )
+		// 그러니 쉐도우 맵을 그릴 필요가 있는지에 대해서도 Occlusion Query를 수행하여 확인하다.
 		if (FeatureLevel > ERHIFeatureLevel::ES3_1)
 		{
 			SCOPED_DRAW_EVENT(RHICmdList, ShadowFrustumQueries);
@@ -950,7 +978,12 @@ static void BeginOcclusionTests(
 
 			VertexBufferRHI.SafeRelease();
 		}
+		// ⭐
 
+		// 미리 저장해둔 Occlusion Query들에 대한 Query 수행 커맨드를 RHI 스레드로 전송한다.
+		//
+		// GroupedOcclusionQueries와 IndividualOcclusionQueries는 이전 InitViews 단계에서 저장을 해두었었다.      
+		// 참고 : https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_2.html
 		if (ViewQuery.bFlushQueries)
 		{
 			VertexShader->SetParameters(RHICmdList, View);
