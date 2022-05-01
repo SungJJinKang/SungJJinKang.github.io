@@ -285,6 +285,8 @@ FRHITexture* FMobileSceneRenderer::RenderForward(FRHICommandListImmediate& RHICm
 	const bool bAdrenoOcclusionMode = CVarMobileAdrenoOcclusionMode.GetValueOnRenderThread() != 0;
 	// ⭐
 
+	// ⭐
+	// 일반적인 셋팅의 경우 여기서 Occlusion Query 수행 커맨드가 RHI 스레드로 전송된다.
 	if (!bIsFullPrepassEnabled)
 	{
 		
@@ -305,6 +307,7 @@ FRHITexture* FMobileSceneRenderer::RenderForward(FRHICommandListImmediate& RHICm
 			RHICmdList.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
 		}
 	}
+	// ⭐
 
 	{
 		CSV_SCOPED_TIMING_STAT_EXCLUSIVE(ViewExtensionPostRenderBasePass);
