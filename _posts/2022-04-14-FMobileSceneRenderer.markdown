@@ -382,12 +382,24 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 
 	FRDGTextureRef ViewFamilyTexture = TryCreateViewFamilyTexture(GraphBuilder, ViewFamily);
 	
+	// ⭐
+	// bRenderToSceneColor = 
+	//		!bGammaSpace || 
+	//		bStereoRenderingAndHMD || 
+	//		bRequiresUpscale || 
+	//		FSceneRenderer::ShouldCompositeEditorPrimitives(Views[0]) || 
+	//		Views[0].bIsSceneCapture || 
+	//		Views[0].bIsReflectionCapture;
 	if (ViewFamily.bResolveScene)
+	// ⭐
 	{
 		if (!bGammaSpace || bRenderToSceneColor)
 		{
 			// Finish rendering for each view, or the full stereo buffer if enabled
 			{
+				// ⭐⭐⭐⭐⭐⭐⭐ 
+				// Post Process Pass
+
 				RDG_EVENT_SCOPE(GraphBuilder, "PostProcessing");
 				SCOPE_CYCLE_COUNTER(STAT_FinishRenderViewTargetTime);
 
@@ -396,6 +408,8 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 				TArray<TRDGUniformBufferRef<FMobileSceneTextureUniformParameters>, TInlineAllocator<1, SceneRenderingAllocator>> MobileSceneTexturesPerView;
 				MobileSceneTexturesPerView.SetNumZeroed(Views.Num());
 
+				// ⭐
+				// Post Prcess에 사용할 Scene Texture를 지정할 Uniform Buffer를 생성한다.
 				const auto SetupMobileSceneTexturesPerView = [&]()
 				{
 					for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ++ViewIndex)
@@ -414,6 +428,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 						MobileSceneTexturesPerView[ViewIndex] = CreateMobileSceneTextureUniformBuffer(GraphBuilder, SetupMode);
 					}
 				};
+				// ⭐
 
 				SetupMobileSceneTexturesPerView();
 
@@ -424,8 +439,14 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 				{
 					RDG_EVENT_SCOPE_CONDITIONAL(GraphBuilder, Views.Num() > 1, "View%d", ViewIndex);
 					PostProcessingInputs.SceneTextures = MobileSceneTexturesPerView[ViewIndex];
+
+					// ⭐
+					// AddMobilePostProcessingPasses 함수를 확인해보면 수 많은 PostProcess
 					AddMobilePostProcessingPasses(GraphBuilder, Views[ViewIndex], PostProcessingInputs, NumMSAASamples > 1);
+					// ⭐
 				}
+				
+				// ⭐⭐⭐⭐⭐⭐⭐ 
 			}
 		}
 	}
