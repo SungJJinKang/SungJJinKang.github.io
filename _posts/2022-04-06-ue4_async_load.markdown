@@ -1387,7 +1387,10 @@ EAsyncPackageState::Type FAsyncPackage2::Event_PostLoadExportBundle(FAsyncLoadin
 					check(Object->IsReadyForAsyncPostLoad());
 
 					// ⭐
-					// PostLoad 동작을 Async로 수행할 수 있는 경우 ( AsyncPostLoad 옵션이 켜져 있는 경우 )
+					// Async Load Thread가 Disabled되어 있어 현재 코드가 게임 스레드에서 수행되는 경우 ( 게임 스레드에서 수행되니, PostLoad해도 안전 ),
+					// 혹은 Async Load Thread가 Enabled되고 PostLoad 동작을 Async로 수행하는 옵션이 Enabled되어 있는 경우 ( AsyncPostLoad 옵션이 켜져 있는 경우 )에 수행된다.
+					//
+					// 그 외의 경우에는 아래 FAsyncPackage2::Event_DeferredPostLoadExportBundle에서 게임 스레드가 PostLoad를 수행한다.
 					if (!bIsMultithreaded || (bAsyncPostLoadEnabled && CanPostLoadOnAsyncLoadingThread(Object)))
 					{
 						ThreadContext.CurrentlyPostLoadedObjectByALT = Object;
