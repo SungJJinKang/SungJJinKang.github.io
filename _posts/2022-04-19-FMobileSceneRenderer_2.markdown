@@ -144,6 +144,7 @@ void FMobileSceneRenderer::InitViews(FRHICommandListImmediate& RHICmdList)
 
 	// ⭐
 	// 포스트 프로세싱을 위해 Depth Buffer를 저장해둘지 여부. 
+	// 혹은 
 	bKeepDepthContent = 
 		bRequiresMultiPass || 
 		bForceDepthResolve ||

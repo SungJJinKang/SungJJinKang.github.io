@@ -249,11 +249,28 @@ FRHITexture* FMobileSceneRenderer::RenderForward(FRHICommandListImmediate& RHICm
 		//
 		// Depth pre-pass
 		//
-		// 여기서 Prepass 를 수행하지만 기본값으로는 아무 동작도 하지 않는다.
-		// 아래의 조건을 충족해야한다.
-		// if (Scene->EarlyZPassMode == DDM_MaskedOnly || Scene->EarlyZPassMode == DDM_AllOpaque)
+		// Depth Pre-Pass를 수행한다.
+		// 월드의 Opaque한 오브젝트들에 대해 픽셀 쉐이딩이 생략된(간소화된) Draw를 수행한다. ( 그냥 Depth 버퍼만 채우는 것이다. )
+		// 이는 아래 BasePass에서 오브젝트들에 대한 렌더링을 수행할 때 Early-Z를 극대화하기 위함이다.
 		//
+		// 여기서 RenderPrePass 함수를 호출하지만 기본 셋팅으로는 아무 동작도 하지 않는다.
+		// 아래의 조건을 충족해야한다.
+		//
+		// void FMobileSceneRenderer::RenderPrePass(FRHICommandListImmediate& RHICmdList)
+		// {
+		//		...
+		//		...
+		//		...
+		//		if (Scene->EarlyZPassMode == DDM_MaskedOnly || Scene->EarlyZPassMode == DDM_AllOpaque)
+		//		{
+		//			...
+		//			...
+		//			...
+		//		}
+		// }
+		// 
 		RenderPrePass(RHICmdList);
+		// ⭐
 	}
 	
 	// Opaque and masked
@@ -299,6 +316,7 @@ FRHITexture* FMobileSceneRenderer::RenderForward(FRHICommandListImmediate& RHICm
 			//
 			// BasePass 후 Occlusion Query를 발행한다.
 			// 기본 프로젝트 셋팅 값으로는 여기서 Occlusion Query를 날린다.
+			// 위의 BasePass에서 Depth Buffer를 채웠다.
 			//
 			// 아래쪽으로 내려가 자세한 분석을 보세요.
 			RenderOcclusion(RHICmdList);
@@ -414,6 +432,7 @@ FRHITexture* FMobileSceneRenderer::RenderForward(FRHICommandListImmediate& RHICm
 	}
 	
 	// ⭐⭐⭐⭐⭐⭐⭐
+	// 투명, 반투명한 오브젝트를 렌더링한다.
 	//
 	// Draw translucency.
 	if (ViewFamily.EngineShowFlags.Translucency)

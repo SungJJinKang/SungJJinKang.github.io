@@ -288,9 +288,52 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	if (bIsFullPrepassEnabled)
 	// ⭐
 	{
-		// ...
-		// ...
-		// ...
+		//SDF and AO require full depth prepass
+
+		FRHIRenderPassInfo DepthPrePassRenderPassInfo(
+			SceneContext.GetSceneDepthSurface(),
+			EDepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil);
+
+		DepthPrePassRenderPassInfo.NumOcclusionQueries = ComputeNumOcclusionQueriesToBatch();
+		DepthPrePassRenderPassInfo.bOcclusionQueries = DepthPrePassRenderPassInfo.NumOcclusionQueries != 0;
+
+		RHICmdList.BeginRenderPass(DepthPrePassRenderPassInfo, TEXT("DepthPrepass"));
+
+		RHICmdList.SetCurrentStat(GET_STATID(STAT_CLM_MobilePrePass));
+
+		// ⭐
+		// Full Depth pre-pass
+		//
+		// Depth Pre-Pass를 수행한다.
+		// 월드의 Opaque한 오브젝트들에 대해 픽셀 쉐이딩이 생략된(간소화된) Draw를 수행한다. ( 그냥 Depth 버퍼만 채우는 것이다. )
+		RenderPrePass(RHICmdList);
+		// ⭐
+
+		// ⭐
+		// Issue occlusion queries
+		//
+		// 바로 위 RenderPrePass에서 채운 Depth Buffer를 가지고 Occlusion Query를 수행한다.
+		RHICmdList.SetCurrentStat(GET_STATID(STAT_CLMM_Occlusion));
+		RenderOcclusion(RHICmdList);
+		// ⭐
+
+		RHICmdList.EndRenderPass();
+
+		if (bRequiresDistanceFieldShadowingPass)
+		{
+			CSV_SCOPED_TIMING_STAT_EXCLUSIVE(RenderSDFShadowing);
+			RenderSDFShadowing(RHICmdList);
+		}
+
+		if (bShouldRenderHZB)
+		{
+			RenderHZB(RHICmdList, SceneContext.SceneDepthZ);
+		}
+
+		if (bRequiresAmbientOcclusionPass)
+		{
+			RenderAmbientOcclusion(RHICmdList, SceneContext.SceneDepthZ);
+		}
 	}
 
 	FRHITexture* SceneColor = nullptr;
@@ -409,7 +452,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 				MobileSceneTexturesPerView.SetNumZeroed(Views.Num());
 
 				// ⭐
-				// Post Prcess에 사용할 Scene Texture를 지정할 Uniform Buffer를 생성한다.
+				// Post Process에 사용할 Scene Texture를 지정할 Uniform Buffer를 생성한다.
 				const auto SetupMobileSceneTexturesPerView = [&]()
 				{
 					for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ++ViewIndex)
@@ -441,7 +484,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 					PostProcessingInputs.SceneTextures = MobileSceneTexturesPerView[ViewIndex];
 
 					// ⭐
-					// AddMobilePostProcessingPasses 함수를 확인해보면 수 많은 PostProcess
+					// AddMobilePostProcessingPasses 함수를 확인해보면 수 많은 PostProcess 효과들을 만들어내는 동작을 수행한다.
 					AddMobilePostProcessingPasses(GraphBuilder, Views[ViewIndex], PostProcessingInputs, NumMSAASamples > 1);
 					// ⭐
 				}
@@ -466,7 +509,11 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 		EndLateLatching(RHICmdList, Views[0]);
 	}
 
+	// ⭐
+	// 디버깅용 여러 동작들을 수행한다.
 	RenderFinish(GraphBuilder, ViewFamilyTexture);
+	// ⭐
+
 	GraphBuilder.Execute();
 
 	FRHICommandListExecutor::GetImmediateCommandList().PollOcclusionQueries();
