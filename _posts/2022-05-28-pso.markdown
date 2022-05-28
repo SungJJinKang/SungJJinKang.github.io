@@ -24,7 +24,9 @@ D3D12 / Vulkan / Metal의 경우 렌더 스테이트와, 쉐이더 스테이트�
 -------------------------------
 
 이제 OpenGL의 PSO 캐시를 위주로 살펴보겠다.        
-위에서 말했듯이 **OpenGL은 바운드된 쉐이더 스테이트(BSS, FRHIBoundShaderState)에 대한 캐싱만 지원**한다.           
+위에서 말했듯이 **OpenGL은 바운드된 쉐이더 스테이트(BSS, FRHIBoundShaderState)에 대한 캐싱만 지원**한다.          
+**바운드된 쉐이더 스테이트에는 각 Stage별 쉐이더 코드들과 그 조합들**이 들어 있다.          
+개발사에서 PSO를 수집하며 한번이라도 사용되었던 쉐이더 코드를 BSS에 담아 배포시 함께 배포한 후 유저는 개발사에서 배포한 PSO에 담겨 있는 쉐이더 코드를 Pre Compile하여 아래에 나올 Program Binary의 형태로 보관하거나 미리 Program 오브젝트를 만들어 두는 것이다.             
                
 **OpenGL의 경우 컴파일한 쉐이더를 드라이버에서 관리하는 Program 객체에 Link한 후 바인딩해서 Draw에 사용**한다.        
 **바운드된 쉐이더 스테이트(BSS)는 이 Program 객체에 플랫폼 독립적인 버전**이다.       
@@ -33,7 +35,6 @@ Draw에 사용 될 각 Stage의 모든 쉐이더 ( 버텍스 쉐이더, 픽셀 �
 ( PC에서는 [Seperate Shader Object](https://www.khronos.org/opengl/wiki/Shader_Compilation#Separate_programs)라는 개념을 지원해서, 각 Stage별 쉐이더를 별개의 Program에 링크하여 사용할 수 있게 지원한다. 어느 특정 Stage에 링크된 Program를 조합하여 사용할 수 있는 것이다. )         
             
 OpenGL은 [이렇게 쉐이어들이 링크된 Program 객체를 바이너리 형태로 보관](https://www.khronos.org/opengl/wiki/Shader_Compilation#Binary_upload)할 수 있게 지원해준다.        
-이 Program 객체의 바이너리 데이터를 캐싱해둔다는 것이 위에서 말한 BBS에 대한 캐싱을 의미한다.             
            
 Program 객체를 바이너리 형태로 메모리나, 디스크에 보관해두었다가, 이 바이너리 데이터를 가지고 GPU 드라이버에 Program 객체를 생성해줄 것을 요청할 수 있다. Program 오브젝트에 일일이 쉐이더를 링크하는 것에 비해 훨씬 빠르다.                 
 이 Program 객체의 포맷은 GPU Vendor마다 다르고, GPU 드라이버마다 다르고, 휴대폰마다 달라서 개발사에서 배포할 수는 없다. 심지어는 같은 휴대폰으로도 휴대폰 업데이트 후 Program 객체의 포맷이 달라져서 기존의 Program 바이너리를 재사용할 수 없는 경우도 생긴다.             
@@ -43,7 +44,14 @@ Program 객체를 바이너리 형태로 메모리나, 디스크에 보관해두
 또한 Program 오브젝트 자체도 매번 새로 생성하는 것이 아니라 캐싱을 해두는데, 문제는 모바일 디바이스에서 GPU에 따라서 너무 많은 Program 오브젝트를 생성한 경우 문제가 될 수 도 있다는 것이다.       
 일부 모바일 GPU의 경우 쉐이더 메모리 ( 위에서 말했듯이 Program 오브젝트는 드라이버에서 관리한다. )가 작기 때문에 너무 많은 Program 오브젝트를 생성하면 텍스쳐가 깨지는 등의 문제가 발생한다.          
 그래서 UE4는 Program 오브젝트에 대한 LRU 캐싱 정책을 지원한다. 생성한 Program 오브젝트의 사이즈가 일정 사이즈보다 커지는 경우 사용하지 않은지 오래된 Program 오브젝트를 파괴하는 것이다. ( r.OpenGL.EnableProgramLRUCache )            
-이렇게 Evict한 Program 오브젝트에 대한 Program Binary를 시스템 메모리에 보관할 수도 있다. ( r.OpenGL.ProgramLRUKeepBinaryResident )             
+이렇게 Evict한 Program 오브젝트에 대한 Program Binary를 시스템 메모리에 보관할 수도 있다. ( r.OpenGL.ProgramLRUKeepBinaryResident )         
+           
+요약하자면          
+           
+1. 개발사는 PSO 수집을 하며 한번이라도 사용된 쉐이더 조합 ( 한 Program 오브젝트에 같이 링크된 쉐이더들의 조합 )을 BSS의 형태로 PSO 캐시 파일에 담아 유저들에게 배포한다.
+2. 유저들은 최초 앱 구동시 PSO에 담긴 BSS 데이터를 가지고 쉐이더들을 컴파일하고, Program 오브젝트 생성 후 링크시켜서 하나의 온전한 Program 오브젝트를 만든다. 그리고 이 Program 오브젝트의 Binary 데이터를 유저의 기기 디스크에 저장해둔다. ( Program Binary는 위에서 말했듯 기기마다 포맷이 다르기 때문에 개발사가 배포할 수 없고 유저 기기에서 직접 만들어서 보관해두어야한다. ) 그리고 이를 PreCompile한다고 말한다.
+3. 유저가 이후 앱을 구동할 때는 앱 시작시 최초 구동 때 디스크에 저장해두었던 Program Binary로부터 곧 바로 Program 오브젝트를 생성한다. 당연히 이 Program 오브젝트는 캐싱해두었다가 게임을 플레이하는 동안 가져와서 사용한다. ( 런타임에 Program 오브젝트를 생성하고 링크하는 비용이 들지 않는 것이다. )
+4. 또한 유저가 플레이하면서 새로운 ( 캐싱되어 있지 않은 ) 쉐이더 조합 ( Program 오브젝트 )을 발견하면 이 Program 오브젝트의 Binary 또한 디스크에 캐싱을 해둔다.
                
 ```cpp
 // ⭐⭐⭐⭐⭐⭐⭐
