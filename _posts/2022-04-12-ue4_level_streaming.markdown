@@ -876,3 +876,44 @@ void FRenderAssetStreamingManager::UpdateStreamingRenderAssets(int32 StageIndex,
 	CurrentUpdateStreamingRenderAssetIndex = EndIndex;
 }
 ```
+
+현재 스트리밍으로 디스크로부터 읽어오고 있는 텍스쳐의 수를 알고 싶다면 간단한 방법이 있다.          
+
+```cpp
+int32 FTextureStreamingNotificationImpl::GetNumStreamingTextures()
+{
+	FStreamingManagerCollection& StreamingManagerCollection = IStreamingManager::Get();
+
+	if (StreamingManagerCollection.IsTextureStreamingEnabled())
+	{
+		IRenderAssetStreamingManager& TextureStreamingManager = StreamingManagerCollection.GetTextureStreamingManager();
+		return TextureStreamingManager.GetNumWantingResources();
+	}
+
+	return 0;
+}
+
+/** Returns the number of resources that currently wants to be streamed in. */
+virtual int32 IStreamingManager::GetNumWantingResources() const
+{
+	return NumWantingResources;
+}
+
+/**
+ * Pure virtual base class of a streaming manager.
+ */
+struct IStreamingManager
+{
+
+	...
+	...
+	...
+
+	/** Number of resources that currently wants to be streamed in. */
+	int32		NumWantingResources;
+
+	...
+	...
+	...
+}
+```
