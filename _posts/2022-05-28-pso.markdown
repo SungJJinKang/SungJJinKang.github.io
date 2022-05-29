@@ -927,3 +927,244 @@ void FPipelineFileCache::CacheGraphicsPSO(uint32 RunTimeHash, FGraphicsPipelineS
 	}
 }
 ```
+
+-------------------------
+
+PSO에 쉐이더 정보가 어떻게 담기는지도 보겠다.            
+사실 PSO가 직접 쉐이더 코드를 가지고 있지 않다.              
+**PSO에는 특정 쉐이더에 대한 해쉬 값을 가지고 있고 그 해쉬 값을 가지고 FShaderCodeLibrary에서 원하는 쉐이더를 찾는 것**이다.      
+**개발사가 배포하는 PSO 파일에는 쉐이더 코드가 아닌 쉐이더에 대한 Hash 값이 들어 있고 그 조합들이 들어 있는 것**이다.                      
+         
+잠시 PSO를 PreCompile하는 부분에서 쉐이더를 컴파일하는 부분을 보자.           
+
+```cpp
+bool FShaderPipelineCache::Precompile(FRHICommandListImmediate& RHICmdList, EShaderPlatform Platform, FPipelineCacheFileFormatPSO const& PSO)
+{
+	INC_DWORD_STAT(STAT_PreCompileShadersTotal);
+	INC_DWORD_STAT(STAT_PreCompileShadersNum);
+    
+    uint64 StartTime = FPlatformTime::Cycles64();
+
+	bool bOk = false;
+	
+	if(PSO.Verify())
+	{
+		if(FPipelineCacheFileFormatPSO::DescriptorType::Graphics == PSO.Type)
+		{
+			FGraphicsPipelineStateInitializer GraphicsInitializer;
+			
+			FRHIVertexDeclaration* VertexDesc = PipelineStateCache::GetOrCreateVertexDeclaration(PSO.GraphicsDesc.VertexDescriptor);
+			GraphicsInitializer.BoundShaderState.VertexDeclarationRHI = VertexDesc;
+			
+			FVertexShaderRHIRef VertexShader;
+			if (PSO.GraphicsDesc.VertexShader != FSHAHash())
+			{
+				// ⭐⭐⭐⭐⭐⭐⭐
+				// 쉐이더를 컴파일하고 그 컴파일한 쉐이더를 추상화한 오브젝트를 VertexShader 저장한다.
+				VertexShader = FShaderCodeLibrary::CreateVertexShader(Platform, PSO.GraphicsDesc.VertexShader);
+				// ⭐⭐⭐⭐⭐⭐⭐
+				GraphicsInitializer.BoundShaderState.VertexShaderRHI = VertexShader;
+			}
+
+			...
+			...
+			...
+		}
+
+		...
+		...
+		...
+	}
+
+	...
+	...
+	...
+}
+```
+
+PSO.GraphicsDesc.VertexShader 변수가 쉐이더의 코드 문자열 데이터 같아 보이지만 그렇지 않다.
+
+
+```cpp
+struct RHI_API FPipelineCacheFileFormatPSO
+{
+	struct RHI_API ComputeDescriptor
+	{
+		FSHAHash ComputeShader;
+
+		FString ToString() const;
+		static FString HeaderLine();
+		void FromString(const FStringView& Src);
+	};
+	struct RHI_API GraphicsDescriptor
+	{
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 그냥 쉐이더 코드에 대한 Hash 데이터이다!
+		FSHAHash VertexShader;
+		FSHAHash FragmentShader;
+		FSHAHash GeometryShader;
+		FSHAHash HullShader;
+		FSHAHash DomainShader;
+		// ⭐⭐⭐⭐⭐⭐⭐
+
+		...
+		...
+		...
+	}
+
+	...
+	...
+	...
+
+	DescriptorType Type;
+	ComputeDescriptor ComputeDesc;
+	GraphicsDescriptor GraphicsDesc;
+	FPipelineFileCacheRayTracingDesc RayTracingDesc;
+
+	...
+	...
+	...
+}
+
+```
+
+그럼 이 쉐이더의 해쉬 값을 가지고 어떻게 쉐이더를 컴파일하는지 보겠다.         
+
+
+```cpp
+TRefCountPtr<FRHIShader> FShaderLibrariesCollection::CreateShader(EShaderFrequency Frequency, const FSHAHash& Hash)
+{
+	int32 ShaderIndex = INDEX_NONE;
+	FShaderLibraryInstance* LibraryInstance = FindShaderLibraryForShader(Hash, ShaderIndex);
+	if (LibraryInstance)
+	{
+		// ⭐
+		TRefCountPtr<FRHIShader> Shader = LibraryInstance->GetOrCreateShader(ShaderIndex);
+		// ⭐
+		check(Shader->GetFrequency() == Frequency);
+		return Shader;
+	}
+	return TRefCountPtr<FRHIShader>();
+}
+
+TRefCountPtr<FRHIShader> FShaderLibraryInstance::GetOrCreateShader(int32 ShaderIndex)
+{
+	const int32 LockIndex = ShaderIndex % NumShaderLocks;
+	TRefCountPtr<FRHIShader> Shader;
+	{
+		FRWScopeLock Locker(ShaderLocks[LockIndex], SLT_ReadOnly);
+		Shader = RHIShaders[ShaderIndex];
+	}
+	if (!Shader)
+	{
+		FRWScopeLock Locker(ShaderLocks[LockIndex], SLT_Write);
+		// ⭐
+		// 찾고자 하는 쉐이더가 아직 컴파일이 안되어 있는 경우
+		Shader = Library->CreateShader(ShaderIndex);
+		// ⭐
+		RHIShaders[ShaderIndex] = Shader;
+	}
+	return Shader;
+}
+
+TRefCountPtr<FRHIShader> FShaderCodeArchive::CreateShader(int32 Index)
+{
+	LLM_SCOPE(ELLMTag::Shaders);
+	TRefCountPtr<FRHIShader> Shader;
+
+	FMemStackBase& MemStack = FMemStack::Get();
+	FMemMark Mark(MemStack);
+
+	const FShaderCodeEntry& ShaderEntry = SerializedShaders.ShaderEntries[Index];
+	FShaderPreloadEntry& ShaderPreloadEntry = ShaderPreloads[Index];
+
+	void* PreloadedShaderCode = nullptr;
+	{
+		const bool bNeededToWait = WaitForPreload(ShaderPreloadEntry);
+		if (bNeededToWait)
+		{
+			UE_LOG(LogShaderLibrary, Warning, TEXT("Blocking wait for shader preload, NumRefs: %d, FramePreloadStarted: %d"), ShaderPreloadEntry.NumRefs, ShaderPreloadEntry.FramePreloadStarted);
+		}
+
+		FWriteScopeLock Lock(ShaderPreloadLock);
+		if (ShaderPreloadEntry.NumRefs > 0u)
+		{
+			check(!ShaderPreloadEntry.PreloadEvent || ShaderPreloadEntry.PreloadEvent->IsComplete());
+			ShaderPreloadEntry.PreloadEvent.SafeRelease();
+
+			ShaderPreloadEntry.NumRefs++; // Hold a reference to code while we're using it to create shader
+			PreloadedShaderCode = ShaderPreloadEntry.Code;
+			check(PreloadedShaderCode);
+		}
+	}
+
+	// ⭐
+	// 쉐이더 코드를 가져온다.
+	const uint8* ShaderCode = (uint8*)PreloadedShaderCode;
+	if (!ShaderCode)
+	{
+		UE_LOG(LogShaderLibrary, Warning, TEXT("Blocking shader load, NumRefs: %d, FramePreloadStarted: %d"), ShaderPreloadEntry.NumRefs, ShaderPreloadEntry.FramePreloadStarted);
+
+		FGraphEventArray ReadCompleteEvents;
+		EAsyncIOPriorityAndFlags DontCache = GShaderCodeLibraryAsyncLoadingAllowDontCache ? AIOP_FLAG_DONTCACHE : AIOP_MIN;
+		IMemoryReadStreamRef LoadedCode = FileCacheHandle->ReadData(ReadCompleteEvents, LibraryCodeOffset + ShaderEntry.Offset, ShaderEntry.Size, AIOP_CriticalPath | DontCache);
+		if (ReadCompleteEvents.Num() > 0)
+		{
+			FTaskGraphInterface::Get().WaitUntilTasksComplete(ReadCompleteEvents);
+		}
+		void* LoadedShaderCode = MemStack.Alloc(ShaderEntry.Size, 16);
+		LoadedCode->CopyTo(LoadedShaderCode, 0, ShaderEntry.Size);
+		ShaderCode = (uint8*)LoadedShaderCode;
+	}
+
+	if (ShaderEntry.UncompressedSize != ShaderEntry.Size)
+	{
+		void* UncompressedCode = MemStack.Alloc(ShaderEntry.UncompressedSize, 16);
+		const bool bDecompressResult = FCompression::UncompressMemory(ShaderLibraryCompressionFormat, UncompressedCode, ShaderEntry.UncompressedSize, ShaderCode, ShaderEntry.Size);
+		check(bDecompressResult);
+		ShaderCode = (uint8*)UncompressedCode;
+	}
+	// ⭐
+
+	const auto ShaderCodeView = MakeArrayView(ShaderCode, ShaderEntry.UncompressedSize);
+	const FSHAHash& ShaderHash = SerializedShaders.ShaderHashes[Index];
+	switch (ShaderEntry.Frequency)
+	{
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 쉐이더 코드를 그래픽스 API에 전달하여 컴파일한다..
+		case SF_Vertex: Shader = RHICreateVertexShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Pixel: Shader = RHICreatePixelShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Geometry: Shader = RHICreateGeometryShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Hull: Shader = RHICreateHullShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Domain: Shader = RHICreateDomainShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Compute: Shader = RHICreateComputeShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		// ⭐⭐⭐⭐⭐⭐⭐
+	case SF_RayGen: case SF_RayMiss: case SF_RayHitGroup: case SF_RayCallable:
+#if RHI_RAYTRACING
+		if (GRHISupportsRayTracing)
+		{
+			Shader = RHICreateRayTracingShader(ShaderCodeView, ShaderHash, ShaderEntry.GetFrequency());
+			CheckShaderCreation(Shader, Index);
+		}
+#endif // RHI_RAYTRACING
+		break;
+	default: checkNoEntry(); break;
+	}
+
+	// Release the refernece we were holding
+	if (PreloadedShaderCode)
+	{
+		FWriteScopeLock Lock(ShaderPreloadLock);
+		check(ShaderPreloadEntry.NumRefs > 1u); // we shouldn't be holding the last ref here
+		--ShaderPreloadEntry.NumRefs;
+		PreloadedShaderCode = nullptr;
+	}
+
+	if (Shader)
+	{
+		Shader->SetHash(ShaderHash);
+	}
+
+	return Shader;
+}
+```
