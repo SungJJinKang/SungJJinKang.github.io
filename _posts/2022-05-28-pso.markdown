@@ -933,10 +933,12 @@ void FPipelineFileCache::CacheGraphicsPSO(uint32 RunTimeHash, FGraphicsPipelineS
 PSO에 쉐이더 정보가 어떻게 담기는지도 보겠다.            
 사실 PSO가 직접 쉐이더 코드를 가지고 있지 않다.              
 **PSO에는 특정 쉐이더에 대한 해쉬 값을 가지고 있고 그 해쉬 값을 가지고 FShaderCodeLibrary에서 원하는 쉐이더를 찾는 것**이다.      
+FShaderCodeLibrary에는 온갖 쉐이더 Permutation으로 생성된 쉐이더 코드들이 들어 있다. FShaderCodeLibrary에 들어가는 데이터는 쿠킹시 모두 결정된다.          
+
 **개발사가 배포하는 PSO 파일에는 쉐이더 코드가 아닌 쉐이더에 대한 Hash 값이 들어 있고 그 조합들이 들어 있는 것**이다.                      
          
 잠시 PSO를 PreCompile하는 부분에서 쉐이더를 컴파일하는 부분을 보자.           
-
+ 
 ```cpp
 bool FShaderPipelineCache::Precompile(FRHICommandListImmediate& RHICmdList, EShaderPlatform Platform, FPipelineCacheFileFormatPSO const& PSO)
 {
