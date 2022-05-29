@@ -1034,6 +1034,16 @@ struct RHI_API FPipelineCacheFileFormatPSO
 
 
 ```cpp
+
+FVertexShaderRHIRef FShaderCodeLibrary::CreateVertexShader(EShaderPlatform Platform, const FSHAHash& Hash)
+{
+	if (FShaderLibrariesCollection::Impl)
+	{
+		return FVertexShaderRHIRef(FShaderLibrariesCollection::Impl->CreateShader(SF_Vertex, Hash));
+	}
+	return nullptr;
+}
+
 TRefCountPtr<FRHIShader> FShaderLibrariesCollection::CreateShader(EShaderFrequency Frequency, const FSHAHash& Hash)
 {
 	int32 ShaderIndex = INDEX_NONE;
@@ -1141,6 +1151,7 @@ TRefCountPtr<FRHIShader> FShaderCodeArchive::CreateShader(int32 Index)
 		case SF_Domain: Shader = RHICreateDomainShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
 		case SF_Compute: Shader = RHICreateComputeShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
 		// ⭐⭐⭐⭐⭐⭐⭐
+
 	case SF_RayGen: case SF_RayMiss: case SF_RayHitGroup: case SF_RayCallable:
 #if RHI_RAYTRACING
 		if (GRHISupportsRayTracing)
@@ -1168,5 +1179,172 @@ TRefCountPtr<FRHIShader> FShaderCodeArchive::CreateShader(int32 Index)
 	}
 
 	return Shader;
+}
+```
+
+그럼 언제 쿠킹된 쉐이더 코드들이 FShaderCodeLibrary에 추가되는지 보자.  
+
+```cpp
+int32 FEngineLoop::PreInitPostStartupScreen(const TCHAR* CmdLine)
+{
+	SCOPED_BOOT_TIMING("FEngineLoop::PreInitPostStartupScreen");
+
+	...
+	...
+	...
+
+#if WITH_ENGINE
+	{
+		...
+		...
+		...
+
+		//Now that our EarlyStartupScreen is finished, lets take the necessary steps to mount paks, apply .ini cvars, and open the shader libraries if we installed content we expect to handle
+		//If using a bundle manager, assume its handling all this stuff and that we don't have to do it.
+		if (BundleManager == nullptr || BundleManager->IsNullInterface())
+		{
+			// ⭐
+			// Content 폴더에 있는 pak 파일들을 mount한다.
+			// mount는 pak 내의 에셋들의 데이터를 메모리에 올리는 것은 아니고, pak 파일 내의 에셋들에 대한 메타 데이터 ( 오프셋, ... )들을 로드하는 과정이다. 원하는 에셋을 바로 읽어올 수 있게 말이다.    
+			// Mount Paks that were installed during EarlyStartupScreen
+			if (FCoreDelegates::OnMountAllPakFiles.IsBound() && FPaths::HasProjectPersistentDownloadDir() )
+			{
+				SCOPED_BOOT_TIMING("MountPaksAfterEarlyStartupScreen");
+
+				FString InstalledGameContentDir = FPaths::Combine(*FPaths::ProjectPersistentDownloadDir(), TEXT("InstalledContent"), FApp::GetProjectName(), TEXT("Content"), TEXT("Paks"));
+				FPlatformMisc::AddAdditionalRootDirectory(FPaths::Combine(*FPaths::ProjectPersistentDownloadDir(), TEXT("InstalledContent")));
+
+				TArray<FString> PakFolders;
+				PakFolders.Add(InstalledGameContentDir);
+				FCoreDelegates::OnMountAllPakFiles.Execute(PakFolders);
+
+				// Look for any plugins installed during EarlyStartupScreen
+				IPluginManager::Get().RefreshPluginsList();
+				IPluginManager::Get().LoadModulesForEnabledPlugins(ELoadingPhase::PreEarlyLoadingScreen);
+			}
+			// ⭐
+
+			DumpEarlyReads(bDumpEarlyConfigReads, bDumpEarlyPakFileReads, bForceQuitAfterEarlyReads);
+
+			//Reapply CVars after our EarlyLoadScreen
+			if(bWithConfigPatching)
+			{
+				SCOPED_BOOT_TIMING("ReapplyCVarsFromIniAfterEarlyStartupScreen");
+				HandleConfigReload(bWithConfigPatching);
+			}
+
+			//Handle opening shader library after our EarlyLoadScreen
+			{
+				LLM_SCOPE(ELLMTag::Shaders);
+				SCOPED_BOOT_TIMING("FShaderCodeLibrary::OpenLibrary");
+
+				// ⭐⭐⭐⭐⭐⭐⭐
+				// 쿠킹한 컨텐츠들에서 매터리얼 쉐이더 코드들을 읽어 FShaderCodeLibrary에 데이터를 채운다.
+				// Open the game library which contains the material shaders.
+				FShaderCodeLibrary::OpenLibrary(FApp::GetProjectName(), FPaths::ProjectContentDir());
+				for (const FString& RootDir : FPlatformMisc::GetAdditionalRootDirectories())
+				{
+					FShaderCodeLibrary::OpenLibrary(FApp::GetProjectName(), FPaths::Combine(RootDir, FApp::GetProjectName(), TEXT("Content")));
+				}
+				// ⭐⭐⭐⭐⭐⭐⭐
+
+				// ⭐⭐⭐⭐⭐⭐⭐
+				// 매터리얼 쉐이더 코드들을 FShaderCodeLibrary에 채웠으니, PSO 캐시 파일을 읽어서 PreCompile 할 준비를 한다.
+				//
+				// Now our shader code main library is opened, kick off the precompile, if already initialized
+				FShaderPipelineCache::OpenPipelineFileCache(GMaxRHIShaderPlatform);
+				// ⭐⭐⭐⭐⭐⭐⭐
+			}
+		}
+	...
+	...
+	...
+}
+
+bool FShaderCodeLibrary::OpenLibrary(FString const& Name, FString const& Directory)
+{
+	bool bResult = false;
+	if (FShaderLibrariesCollection::Impl)
+	{
+		bResult = FShaderLibrariesCollection::Impl->OpenLibrary(Name, Directory);
+	}
+	return bResult;
+}
+
+bool FShaderLibrariesCollection::OpenLibrary(FString const& Name, FString const& Directory)
+{
+	using namespace UE::ShaderLibrary::Private;
+
+	bool bResult = false;
+
+	if (IsLibraryInitializedForRuntime())
+	{
+		LLM_SCOPE(ELLMTag::Shaders);
+		FRWScopeLock WriteLock(NamedLibrariesMutex, SLT_Write);
+
+		// create a named library if one didn't exist
+		TUniquePtr<FNamedShaderLibrary>* LibraryPtr = NamedLibrariesStack.Find(Name);
+		FNamedShaderLibrary* Library = LibraryPtr ? LibraryPtr->Get() : nullptr;
+		const bool bAddNewNamedLibrary(Library == nullptr);
+		if (bAddNewNamedLibrary)
+		{
+			Library = new FNamedShaderLibrary(Name, ShaderPlatform, Directory);
+		}
+
+		// ⭐
+		// 쉐이더 코드를 읽어온다.
+		//
+		// if we're able to open the library by name, it's not chunked
+		if (Library->OpenShaderCode(Directory, Name))
+		{
+			bResult = true;
+
+			// Attempt to open the shared-cooked override code library if there is one.
+			// This is probably not ideal, but it should get shared-cooks working.
+			Library->OpenShaderCode(Directory, Name + TEXT("_SC"));
+		}
+		else // attempt to open a chunked library
+		{
+			int32 PrevNumComponents = Library->GetNumComponents();
+
+			{
+				FScopeLock KnownPakFilesLocker(&FMountedPakFileInfo::KnownPakFilesAccessLock);
+				for (TSet<FMountedPakFileInfo>::TConstIterator Iter(FMountedPakFileInfo::KnownPakFiles); Iter; ++Iter)
+				{
+					Library->OnPakFileMounted(*Iter);
+				}
+			}
+
+			bResult = (Library->GetNumComponents() > PrevNumComponents);
+		
+		// ⭐
+
+#if UE_SHADERLIB_SUPPORT_CHUNK_DISCOVERY // SHUPPING 빌드에서는 0
+			
+			...
+			...
+			...
+
+#endif // UE_SHADERLIB_SUPPORT_CHUNK_DISCOVERY
+		}
+
+		if (bResult)
+		{
+			if (bAddNewNamedLibrary)
+			{
+				UE_LOG(LogShaderLibrary, Display, TEXT("Logical shader library '%s' has been created, components %d"), *Name, Library->GetNumComponents());
+				NamedLibrariesStack.Emplace(Name, Library);
+			}
+
+			// Inform the pipeline cache that the state of loaded libraries has changed
+			FShaderPipelineCache::ShaderLibraryStateChanged(FShaderPipelineCache::Opened, ShaderPlatform, Name);
+		}
+	}
+
+	...
+	...
+	...
+	
+	return bResult;
 }
 ```
