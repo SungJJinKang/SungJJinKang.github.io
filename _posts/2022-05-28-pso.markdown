@@ -1182,7 +1182,11 @@ TRefCountPtr<FRHIShader> FShaderCodeArchive::CreateShader(int32 Index)
 }
 ```
 
-그럼 언제 쿠킹된 쉐이더 코드들이 FShaderCodeLibrary에 추가되는지 보자.  
+캐싱되어 있지 않은 PSO를 만나면 왜 Hitch가 발생하는지 다 확인해보았다.            
+**캐싱되어 있지 않은 PSO를 만나면, 경우에 따라서는 쉐이더를 컴파일 해야 할 수도 있다, 또한 컴파일한 쉐이더를 가지고 Program 오브젝트를 만들어야하고, 그 Program 오브젝트의 바이너리를 캐싱해야한다. 이것들이 Hitch를 유발하는 것이다.**                            
+              
+             
+그럼 언제 쿠킹된 쉐이더 코드들이 FShaderCodeLibrary에 추가되는지 보자.             
 
 ```cpp
 int32 FEngineLoop::PreInitPostStartupScreen(const TCHAR* CmdLine)
