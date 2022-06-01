@@ -1192,9 +1192,9 @@ TRefCountPtr<FRHIShader> FShaderCodeArchive::CreateShader(int32 Index)
 그리고 OpenGL의 경우 Program 오브젝트들의 Binary를 디스크에 쓰는데 ( ProgramBinaryCache 폴더에서 확인 가능하다... ) 이는 위에서 말했듯이 개발사에서 배포한 PSO에서 나온 Program 오브젝트들에 대해서만 해당한다. 처음 앱을 실행했을 때 PSO PreCompile 과정에서 Program Binary 캐시를 디스크에 쓴 후 이후 앱 실행에서 PSO PreCompile을 할 때는 이전에 디스크에 써둔 Program Binary에서 곧 바로 Program 오브젝트를 생성해내어 상대적으로 PSO PreCompile로 인한 Hitch가 덜하다.                   
                  
 조금 더 추가로 말하면 AOS OpenGL의 경우 PSO Hitch가 발생했던 구간을 앱을 껏다 킨 후 다시 플레이하면 해당 구간에서 다시 PSO Hitch가 발생한다.         
-개발사가 배포한 PSO 캐시에 없는 PSO의 경우 런타임 캐싱만 하지 디스크에 캐싱을 하지 않는다. 그래서 앱을 껏다 키면 해당 구간에서 다시 PSO Hitch가 발생하는 것이다.          
+개발사가 배포한 PSO 캐시에 없는 PSO를 만나 PSO를 런타임에 생성하고 캐싱을 한 경우, 메모리에만 캐싱만 하지 디스크에 캐싱을 하지 않는다. ( LogPSO를 켜 디스크에 쓴 PSO 캐시도 마찬가지로 유저 기기에서 활용하지는 못한다. 개발사가 가공해서 배포를 하여야만 PSO PreCompile에 포함된다. UserCache를 사용하는 옵션이 있지만 이는 기본적으로 Disabled 되어 있고, Shipping Build에서 LogPSO는 기본적으로 수행되지 않고, 수행시 큰 Hitch가 발생할 가능성이 있다. ) 그래서 앱을 껏다 키면 해당 구간에서 다시 PSO Hitch가 발생하는 것이다.          
                   
-반면 IOS Metal은 그렇지 않다. IOS Metal의 경우 OS단에서 PSO를 캐싱해둔다. 디스크에 말이다. 그래서 IOS에서 게임을 플레이하면서 PSO Hitch가 한번 발생한 부분은 앱을 껏다 킨 후 동일한 구간을 플레이 했을 때 PSO Hitch가 발생하지 않는다. ( 단 휴대폰을 껏다 키는 경우에는 다시 동일한 구간에서 PSO Hitch가 발생한다. ) ( reference : http://geekfaner.com/shineengine/WWDC2020_BuildGPUbinarieswithMetal.html )                         
+반면 IOS Metal은 그렇지 않다. IOS Metal의 경우 쉐이더를 컴파일하면 컴파일된 쉐이더 기계 코드를 OS단에서 캐싱을 해준다. 앱을 종료해도 OS단에서 캐싱해둔 쉐이더 기계 코드는 살아 있다. 그래서 IOS에서 게임을 플레이하면서 PSO Hitch가 한번 발생한 부분은 앱을 껏다 킨 후 동일한 구간을 플레이 했을 때 해당 PSO가 언리얼 엔진단에서는 캐싱이 되어 있지 않았어도, 엔진에서 PSO를 생성하면서 쉐이더를 컴파일 할 때 캐싱해둔 쉐이더 기계 코드를 가져다가 사용하기 때문에 Hitch가 거의 발생하지 않는다. ( 단 휴대폰을 껏다 키는 경우에는 다시 동일한 구간에서 PSO Hitch가 발생한다. ) ( reference : https://developer.apple.com/forums/thread/659856?page=2, http://geekfaner.com/shineengine/WWDC2020_BuildGPUbinarieswithMetal.html )                         
 
 
 ---------------------------
