@@ -1365,3 +1365,306 @@ bool FShaderLibrariesCollection::OpenLibrary(FString const& Name, FString const&
 	return bResult;
 }
 ```
+
+
+
+---------------------------------------------------------
+
+추가로 CVarRestartAndroidAfterPrecompile 옵션에 대해 얘기해보겠다.      
+기본적으로 안드로이드의 경우 최초 앱 실행시 ( Program 오브젝트들의 Binary 데이터를 모아둔 파일이 존재하지 않는 경우 ) 혹은 ( Program 오브젝트들의 Binary 데이터를 모아둔 파일이 존재하지만 ) Program 오브젝트의 Binary 데이터의 포맷이 변경 된 경우 PSO PreCompile을 완료 후 앱을 재시작해야한다.           
+```cpp
+TAutoConsoleVariable<int32> FOpenGLProgramBinaryCache::CVarRestartAndroidAfterPrecompile(
+	TEXT("r.ProgramBinaryCache.RestartAndroidAfterPrecompile"),
+	1,	// Enabled by default on Android.
+	TEXT("If true, Android apps will restart after precompiling the binary program cache. Enabled by default only on Android"),
+	ECVF_ReadOnly | ECVF_RenderThreadSafe
+	);
+```
+이 옵션을 끈 경우 재시작하지 않아도 된다....      
+그럼 왜 UE4는 재시작 하는 옵션을 기본적으로 Enable해두었을까?             
+결론부터 말하면 위에서 말한 Program Binary 파일을 새로 만들어야 할 때는 결국 Program 오브젝트의 Binary 데이터를 얻기 위해서 Program 오브젝트를 만들어서 GPU에 올려야한다. 이 의미는 실제로 런타임에 ( PSO PreCompile 중이 아닌 ) 사용되지 않은 Program 오브젝트도 일단은 Program 오브젝트를 만들어서 GPU 메모리에 올려야한다는 것이다. ( 정확히는 ) 
+이미 Program Binary 파일이 존재하는 경우 ( 포맷도 일치하는 경우 )는 어떨까? 이 경우에는 Program 오브젝트를 미리 생성할 필요가 없다. 진짜로 Program 오브젝트가 필요할 때만 ( PSO PreCompile 중이 아닌 ) Program 오브젝트를 생성하면 된다. 
+
+
+```cpp
+
+void FOpenGLProgramBinaryCache::ScanProgramCacheFile(const FGuid& ShaderPipelineCacheVersionGuid)
+{
+	UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile"));
+	FScopeLock Lock(&GProgramBinaryCacheCS);
+	FString ProgramCacheFilename = GetProgramBinaryCacheFilePath();
+	FString ProgramCacheFilenameTemp = GetProgramBinaryCacheFilePath() + TEXT(".scan");
+
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+	check(BinaryFileState == EBinaryFileState::Uninitialized);
+
+	bool bBinaryFileIsValid = false;
+	bool bBinaryFileIsValidAndGuidMatch = false;
+
+	// Try to move the file to a temporary filename before the scan, so we won't try to read it again if it's corrupted
+	PlatformFile.DeleteFile(*ProgramCacheFilenameTemp);
+	PlatformFile.MoveFile(*ProgramCacheFilenameTemp, *ProgramCacheFilename);
+
+	TUniquePtr<FArchive> FileReader(IFileManager::Get().CreateFileReader(*ProgramCacheFilenameTemp));
+
+	// ⭐
+	// Program Binary 파일이 존재하는 경우 ( 이전에 PSO PreCompile을 한 적이 있는 경우 ProgramBinaryCache라는 폴더를 확인할 수 있을 것이다. )
+	if (FileReader)
+	// ⭐
+	{
+		UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile : Opened %s"), *ProgramCacheFilenameTemp);
+		FArchive& Ar = *FileReader;
+		uint32 Version = 0;
+		Ar << Version;
+		if(Version == GBinaryProgramFileVersion)
+		{
+			FGuid BinaryCacheGuid;
+			Ar << BinaryCacheGuid;
+			bool bCacheUsesCompressedBinaries;
+			Ar << bCacheUsesCompressedBinaries;
+
+			const bool bUseCompressedProgramBinaries = CVarStoreCompressedBinaries.GetValueOnAnyThread() != 0;
+
+			// ⭐
+			// Program Binary 파일이 존재하는 경우
+			bBinaryFileIsValid = (bUseCompressedProgramBinaries == bCacheUsesCompressedBinaries);
+			// ⭐
+
+			// ⭐
+			// Program Binary 파일이 존재하지만 휴대폰의 업데이트 등으로 Program 오브젝트의 Binary 데이터의 포맷이 바뀐 경우, 바뀐 포맷에 맞게 Program Binary 파일을 새로 Write 해주어야한다.
+			bBinaryFileIsValidAndGuidMatch = bBinaryFileIsValid && (!ShaderPipelineCacheVersionGuid.IsValid() || ShaderPipelineCacheVersionGuid == BinaryCacheGuid);
+			// ⭐
+			
+			if (CVarUseExistingBinaryFileCache.GetValueOnAnyThread() == 0 && bBinaryFileIsValidAndGuidMatch == false)
+			{
+				// If we dont want to use the existing binary cache and the guids have changed then rebuild the binary file.
+				bBinaryFileIsValid = false;
+			}
+		}
+		
+		if (bBinaryFileIsValid)
+		{
+			const uint32 ProgramBinaryStart = Ar.Tell();
+
+			// Search the file for the end record.
+			bool bFoundEndRecord = false;
+			int32 ProgramIndex = 0;
+			while (!Ar.AtEnd())
+			{
+				check(bFoundEndRecord == false); // There should be no additional data after the eof record.
+
+				FOpenGLProgramKey ProgramKey;
+				uint32 ProgramBinarySize = 0;
+				Ar << ProgramKey;
+				Ar << ProgramBinarySize;
+				uint32 ProgramBinaryOffset = Ar.Tell();
+				if (ProgramBinarySize == 0)
+				{
+					if (ProgramKey == FOpenGLProgramKey())
+					{
+						bFoundEndRecord = true;
+					}
+					else
+					{
+						// Note: This should not happen with new code. We can no longer write out records with 0 program size. see AppendProgramBinaryFile.
+						UE_LOG(LogRHI, Warning, TEXT("FOpenGLProgramBinaryCache::ScanProgramCacheFile : encountered 0 sized program during binary program cache scan"));
+					}
+				}
+				Ar.Seek(ProgramBinaryOffset + ProgramBinarySize);
+			}
+
+			if(bFoundEndRecord)
+			{
+				Ar.Seek(ProgramBinaryStart);
+				while (!Ar.AtEnd())
+				{
+					// ⭐
+					// Program 오브젝트 Binary 발견!
+					FOpenGLProgramKey ProgramKey;
+					uint32 ProgramBinarySize = 0;
+					Ar << ProgramKey;
+					Ar << ProgramBinarySize;
+					// ⭐
+
+					if (ProgramBinarySize > 0)
+					{
+						FGLProgramBinaryFileCacheEntry* NewEntry = new FGLProgramBinaryFileCacheEntry();
+						NewEntry->FileInfo.ShaderHasheSet = ProgramKey;
+						NewEntry->ProgramIndex = ProgramIndex++;
+
+						uint32 ProgramBinaryOffset = Ar.Tell();
+						NewEntry->FileInfo.ProgramSize = ProgramBinarySize;
+						NewEntry->FileInfo.ProgramOffset = ProgramBinaryOffset;
+
+						if (bBinaryFileIsValidAndGuidMatch)
+						{
+							ProgramEntryContainer.Emplace(TUniquePtr<FGLProgramBinaryFileCacheEntry>(NewEntry));
+
+							// check to see if any of the shaders are already loaded and so we should serialize the binary
+							bool bAllShadersLoaded = true;
+							for (int32 i = 0; i < CrossCompiler::NUM_SHADER_STAGES && bAllShadersLoaded; i++)
+							{
+								bAllShadersLoaded = ProgramKey.ShaderHashes[i] == FSHAHash() || ShaderIsLoaded(ProgramKey.ShaderHashes[i]);
+							}
+							if (bAllShadersLoaded)
+							{
+								FPlatformMisc::LowLevelOutputDebugStringf(TEXT("*** All shaders for %s already loaded\n"), *ProgramKey.ToString());
+								NewEntry->ProgramBinaryData.AddUninitialized(ProgramBinarySize);
+								Ar.Serialize(NewEntry->ProgramBinaryData.GetData(), ProgramBinarySize);
+								NewEntry->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramLoaded;
+								
+								// ⭐⭐⭐⭐⭐⭐⭐
+								// Program Binary 파일을 성공적으로 로드한 경우
+								CompleteLoadedGLProgramRequest_internal(NewEntry);
+								// ⭐⭐⭐⭐⭐⭐⭐
+							}
+							else
+							{
+								NewEntry->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramStored;
+							}
+							AddProgramFileEntryToMap(NewEntry);
+						}
+						else
+						{
+							check(!PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Contains(ProgramKey));
+							PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Emplace(ProgramKey, TUniquePtr<FGLProgramBinaryFileCacheEntry>(NewEntry));
+						}
+						Ar.Seek(ProgramBinaryOffset + ProgramBinarySize);
+					}
+				}
+
+				if (bBinaryFileIsValidAndGuidMatch)
+				{
+					UE_LOG(LogRHI, Log, TEXT("Program Binary cache: Found %d cached programs, end record found: %d"), ProgramIndex, (uint32)bFoundEndRecord);
+					FileReader->Close();
+					// Rename the file back after a successful scan.
+					PlatformFile.MoveFile(*ProgramCacheFilename, *ProgramCacheFilenameTemp);
+				}
+				else
+				{
+					UE_LOG(LogRHI, Log, TEXT("Program Binary cache: ShaderPipelineCache changed, regenerating for new pipeline cache. Existing cache contains %d programs, using it to populate."), PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Num());
+					// Not closing the scan source file, we're using it to move shaders from the old cache.
+					PreviousBinaryCacheInfo.OldCacheArchive = MoveTemp(FileReader);
+					PreviousBinaryCacheInfo.OldCacheFilename = ProgramCacheFilenameTemp;
+				}
+			}
+			else
+			{
+				// failed to find sentinel record, the file was not finalized.
+				UE_LOG(LogRHI, Warning, TEXT("ScanProgramCacheFile - incomplete binary cache file encountered. Rebuilding binary program cache."));
+				FileReader->Close();
+				bBinaryFileIsValid = false;
+				bBinaryFileIsValidAndGuidMatch = false;
+			}
+		}
+		
+		if(!bBinaryFileIsValid)
+		{
+			UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile : binary file version invalid"));
+		}
+
+		if (bBinaryFileIsValidAndGuidMatch)
+		{
+			OpenAsyncReadHandle();
+			BinaryFileState = EBinaryFileState::ValidCacheFile;
+		}
+	}
+	else
+	{
+		UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile : Failed to open %s"), *ProgramCacheFilename);
+	}
+
+	if (!bBinaryFileIsValid)
+	{
+		// Attempt to remove any existing binary cache or temp files (eg for different driver version)
+		UE_LOG(LogRHI, Log, TEXT("Deleting binary program cache folder: %s"), *CachePath);
+		PlatformFile.DeleteDirectoryRecursively(*CachePath);
+
+		// Create
+		if (!PlatformFile.CreateDirectoryTree(*CachePath))
+		{
+			UE_LOG(LogRHI, Warning, TEXT("Failed to create directory for a program binary cache. Cache will be disabled: %s"), *CachePath);
+			return;
+		}
+	}
+
+	if(!bBinaryFileIsValid || !bBinaryFileIsValidAndGuidMatch)
+	{
+		if (OpenWriteHandle())
+		{
+			BinaryFileState = bBinaryFileIsValid && !bBinaryFileIsValidAndGuidMatch ? EBinaryFileState::BuildingCacheFileWithMove : EBinaryFileState::BuildingCacheFile;
+
+			// save header
+			FArchive& Ar = *BinaryCacheWriteFileHandle;
+			uint32 Version = GBinaryProgramFileVersion;
+			Ar << Version;
+			FGuid BinaryCacheGuid = ShaderPipelineCacheVersionGuid;
+			Ar << BinaryCacheGuid;
+			bool bWritingCompressedBinaries = (CVarStoreCompressedBinaries.GetValueOnAnyThread() != 0);
+			Ar << bWritingCompressedBinaries;
+		}
+		else
+		{
+			// Binary cache file cannot be used, failed to open output file.
+			BinaryFileState = EBinaryFileState::Uninitialized;
+			RHIGetPanicDelegate().ExecuteIfBound(FName("FailedBinaryProgramArchiveOpen"));
+			UE_LOG(LogRHI, Fatal, TEXT("ScanProgramCacheFile - Failed to open binary cache."));
+		}
+	}
+}
+
+void FOpenGLProgramBinaryCache::CompleteLoadedGLProgramRequest_internal(FGLProgramBinaryFileCacheEntry* PendingGLCreate)
+{
+	VERIFY_GL_SCOPE();
+
+	check(PendingGLCreate->GLProgramState == FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramLoaded);
+
+	PendingGLCreate->ReadRequest = nullptr;
+
+	FOpenGLProgramKey& ProgramKey = PendingGLCreate->FileInfo.ShaderHasheSet;
+	const bool bProgramExists = GetOpenGLProgramsCache().Find(ProgramKey, false) != nullptr;
+
+	if (GetOpenGLProgramsCache().IsUsingLRU())
+	{
+		if (!bProgramExists)
+		{
+			// ⭐⭐⭐⭐⭐⭐⭐
+			// Always add programs as evicted, 1st use will create them as programs.
+			// This will reduce pressure on driver by ensuring only used programs
+			// are created.
+			// In this case do not create the GL program.
+			GetOpenGLProgramsCache().AddAsEvicted(ProgramKey, MoveTemp(PendingGLCreate->ProgramBinaryData));
+			// ⭐⭐⭐⭐⭐⭐⭐
+		}
+		else
+		{
+			// The program is already in use, discard the binary data.
+			PendingGLCreate->ProgramBinaryData.Empty();
+		}
+
+		// Ownership transfered to OpenGLProgramsCache.
+		PendingGLCreate->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramComplete;
+	}
+	else
+	{
+		if(!bProgramExists)
+		{
+			bool bSuccess = CreateGLProgramFromBinary(PendingGLCreate->GLProgramId, PendingGLCreate->ProgramBinaryData);
+			if (!bSuccess)
+			{
+				UE_LOG(LogRHI, Log, TEXT("[%s, %d, %d]"), *ProgramKey.ToString(), PendingGLCreate->GLProgramId, PendingGLCreate->ProgramBinaryData.Num());
+				RHIGetPanicDelegate().ExecuteIfBound(FName("FailedBinaryProgramCreateLoadRequest"));
+				UE_LOG(LogRHI, Fatal, TEXT("CompleteLoadedGLProgramRequest_internal : Failed to create GL program from binary data! [%s]"), *ProgramKey.ToString());
+			}
+			FOpenGLLinkedProgram* NewLinkedProgram = new FOpenGLLinkedProgram(ProgramKey, PendingGLCreate->GLProgramId);
+			GetOpenGLProgramsCache().Add(ProgramKey, NewLinkedProgram);
+			SetNewProgramStats(PendingGLCreate->GLProgramId);
+		}
+
+		// Finished with binary data.
+		PendingGLCreate->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramAvailable;
+		PendingGLCreate->ProgramBinaryData.Empty();
+	}
+}
+```
