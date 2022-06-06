@@ -43,7 +43,7 @@ Program 객체를 바이너리 형태로 메모리나, 디스크에 보관해두
              
 또한 Program 오브젝트 자체도 매번 새로 생성하는 것이 아니라 캐싱을 해두는데, 문제는 모바일 디바이스에서 GPU에 따라서 너무 많은 Program 오브젝트를 생성한 경우 문제가 될 수 도 있다는 것이다.       
 일부 모바일 GPU의 경우 쉐이더 메모리 ( 위에서 말했듯이 Program 오브젝트는 드라이버에서 관리한다. )가 작기 때문에 너무 많은 Program 오브젝트를 생성하면 텍스쳐가 깨지는 등의 문제가 발생한다.          
-그래서 UE4는 Program 오브젝트에 대한 LRU 캐싱 정책을 지원한다. 생성한 Program 오브젝트의 사이즈가 일정 사이즈보다 커지는 경우 사용하지 않은지 오래된 Program 오브젝트를 파괴하는 것이다. ( r.OpenGL.EnableProgramLRUCache ). LRU 정책으로 인해 Program 오브젝트가 파괴되고 Evict되더라도 파괴 전 해당 Program 오브젝트의 Binary 데이터는 메모리에 보관해둔다. ( 쉐이더 메모리가 아닌 일반 메모리에 말이다. 모바일의 경우 그 둘이 물리적으로는 같지만..... ). 그리고 이후 해당 Program 오브젝트가 필요하면 그 Binary 데이터로부터 바로 Program 오브젝트를 만든다. 이렇게 Program 오브젝트의 Binary로부터 Program을 만드는 경우와 아무것도 없이 처음부터 Program 오브젝트를 생성해 Link를 것은 성능면에서 차이가 매우 크다. 테스트 결과 Program 오브젝트의 Binary 데이터로부터 Program 오브젝트를 만들었을 때 10 ~ 20배 가량 빨랐다.                          
+그래서 UE4는 Program 오브젝트에 대한 LRU 정책을 지원한다. 생성한 Program 오브젝트의 사이즈가 일정 사이즈보다 커지는 경우 사용하지 않은지 오래된 Program 오브젝트를 파괴하는 것이다. ( r.OpenGL.EnableProgramLRUCache ). LRU 정책으로 인해 Program 오브젝트가 파괴되고 Evict되더라도 파괴 전 해당 Program 오브젝트의 Binary 데이터는 메모리에 보관해둔다. ( 쉐이더 메모리가 아닌 일반 메모리에 말이다. 모바일의 경우 그 둘이 물리적으로는 같지만..... ). 그리고 이후 해당 Program 오브젝트가 필요하면 그 Binary 데이터로부터 바로 Program 오브젝트를 만든다. 이렇게 Program 오브젝트의 Binary로부터 Program을 만드는 경우와 아무것도 없이 처음부터 Program 오브젝트를 생성해 Link를 것은 성능면에서 차이가 매우 크다. 테스트 결과 Program 오브젝트의 Binary 데이터로부터 Program 오브젝트를 만들었을 때 10 ~ 20배 가량 빨랐다.                          
            
 요약하자면          
            
@@ -399,6 +399,9 @@ FBoundShaderStateRHIRef FOpenGLDynamicRHI::RHICreateBoundShaderState_OnThisThrea
             // Program 오브젝트도 캐싱해둔다.
             // Probram Binary의 개념이랑은 다르다.
             // 여기서 말하는 캐싱은 그냥 생성했던 Program 오브젝트를 사용 후 곧 바로 파괴하지 않고 쉐이더 메모리에 보관해둔다는 개념이다.
+			//
+			// PSO PreCompile 중인 경우, Evict된 Program Binary에서 Program 오브젝트를 생성하지 않는다. ( 이후 필요할 때 생성해서 사용할 예정이다. )
+			//
 			FOpenGLLinkedProgram* CachedProgram = GetOpenGLProgramsCache().Find(Config.ProgramKey, bFindAndCreateEvictedProgram);
 			if (!CachedProgram)
 			{
@@ -1382,8 +1385,13 @@ TAutoConsoleVariable<int32> FOpenGLProgramBinaryCache::CVarRestartAndroidAfterPr
 ```
 이 옵션을 끈 경우 재시작하지 않아도 된다....      
 그럼 왜 UE4는 재시작 하는 옵션을 기본적으로 Enable해두었을까?             
-결론부터 말하면 위에서 말한 Program Binary 파일을 새로 만들어야 할 때는 결국 Program 오브젝트의 Binary 데이터를 얻기 위해서 Program 오브젝트를 만들어서 GPU에 올려야한다. 이 의미는 실제로 런타임에 ( PSO PreCompile 중이 아닌 ) 사용되지 않은 Program 오브젝트도 일단은 Program 오브젝트를 만들어서 GPU 메모리에 올려야한다는 것이다. ( 정확히는 ) 
-이미 Program Binary 파일이 존재하는 경우 ( 포맷도 일치하는 경우 )는 어떨까? 이 경우에는 Program 오브젝트를 미리 생성할 필요가 없다. 진짜로 Program 오브젝트가 필요할 때만 ( PSO PreCompile 중이 아닌 ) Program 오브젝트를 생성하면 된다. 
+결론부터 말하면 위에서 말한 Program Binary 파일을 새로 만들어야 할 때는 결국 Program 오브젝트의 Binary 데이터를 얻기 위해서 Program 오브젝트를 만들어서 GPU에 올려야한다. 이 의미는 실제로 런타임에 ( PSO PreCompile 중이 아닌 ) 사용되지 않은 Program 오브젝트도 일단은 Program 오브젝트를 만들어서 GPU 메모리에 올려야한다는 것이다. ( 참고로 Program Binary 파일은 PSO PreCompile 중 생긴 Program 오브젝트들에 대한 바이너리 데이터를 하나의 파일에 저장한 파일이다. )            
+이 때 앱을 재시작하지 않은 경우, GPU 메모리에는 당장 사용하지도 않을 Program 오브젝트들로 가득차 있는 것이다. 이렇게 불필요한 Program 오브젝트들로 GPU 메모리를 채운채로 게임을 시작하는 것은 분명 이상적인 상황은 아니다....        
+         
+반면 이미 Program Binary 파일이 존재하는 경우 ( 포맷도 일치하는 경우 )는 어떨까? 이 경우에는 Program 오브젝트를 미리 생성할 필요가 없다. 진짜로 Program 오브젝트가 필요할 때만 ( PSO PreCompile 중이 아닌 ) Program 오브젝트를 생성하면 된다. (LRU 정책을 사용하는 경우) Program Binary 파일에서 Program Binary를 메모리에 올려만 두고 Program 오브젝트를 생성하지는 않는다. 실제로 사용 할 때 생성한다. ( Program Binary에서 Program 오브젝트를 생성하는 것은 매우 빠르다. )              
+             
+
+
 
 
 ```cpp
@@ -1634,6 +1642,10 @@ void FOpenGLProgramBinaryCache::CompleteLoadedGLProgramRequest_internal(FGLProgr
 			// This will reduce pressure on driver by ensuring only used programs
 			// are created.
 			// In this case do not create the GL program.
+			//
+			// Program 오브젝트를 바로 생성하지 않고, Program Binary 파일에서 읽어온 Program 오브젝트의 Binary 데이터만 저장해둔다.
+			// 이후 필요할 때 이 Program Binary 데이터에서 Program 오브젝트를 생성해서 사용할 것이다. ( 이 경우 매우 빠르게 Program 오브젝트를 생성할 수 있다. )             
+			//
 			GetOpenGLProgramsCache().AddAsEvicted(ProgramKey, MoveTemp(PendingGLCreate->ProgramBinaryData));
 			// ⭐⭐⭐⭐⭐⭐⭐
 		}
