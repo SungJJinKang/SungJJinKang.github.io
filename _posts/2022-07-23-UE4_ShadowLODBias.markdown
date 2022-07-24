@@ -17,5 +17,37 @@ categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
            
 언리얼 엔진4의 엔진 코드 수정이 필요하다.               
 
+----------------------------------------------
+
+살펴볼 함수들....
+
+FMobileSceneRenderer::InitViews
+->
+FMobileSceneRenderer::InitDynamicShadows
+->
+FSceneRenderer::InitDynamicShadows
+->
+FSceneRenderer::GatherShadowDynamicMeshElements
+->
+FProjectedShadowInfo::GatherDynamicMeshElements
+->
+FProjectedShadowInfo::GatherDynamicMeshElementsArray
+->
+FPrimitiveSceneProxy::GetDynamicMeshElements
+->
+FProjectedShadowInfo::SetupMeshDrawCommandsForShadowDepth
+
+
+
+FSceneRenderer::RenderShadowDepthMaps
+->
+FSceneRenderer::RenderShadowDepthMapAtlases
+->
+FProjectedShadowInfo::RenderDepth
+->
+FProjectedShadowInfo::RenderDepthInner
+->
+FParallelMeshDrawCommandPass::DispatchDraw
+
 
 references : [https://scahp.tistory.com/92](https://scahp.tistory.com/92), [https://scahp.tistory.com/74](https://scahp.tistory.com/74), [https://scahp.tistory.com/75](https://scahp.tistory.com/75), [https://developer.android.com/stories/games/new-state-mobile](https://developer.android.com/stories/games/new-state-mobile)          
