@@ -11,6 +11,7 @@ categories: ComputerScience ComputerGraphics
 ![4](https://user-images.githubusercontent.com/33873804/180639308-6536fe9f-bc26-40ee-871f-9e640cccc8bc.png)            
 ![6](https://user-images.githubusercontent.com/33873804/180639664-77d10e53-9a9f-438d-b00d-44d66eb5401a.png)            
 ![7](https://user-images.githubusercontent.com/33873804/180639744-d3f04d7b-9c24-4b0b-80d8-e25bbcbddaf9.png)            
+![8](https://user-images.githubusercontent.com/33873804/180640075-02ff6479-ba7e-4ca4-834f-7eaa773020c7.png)            
             
              
 references : [https://mkblog.co.kr/gpgpu-series-8-branch-divergence/](https://mkblog.co.kr/gpgpu-series-8-branch-divergence/), [https://nagnae.wordpress.com/2020/12/17/shader-%ec%97%90%ec%84%9c-%ea%b0%84%eb%8b%a8%ed%95%9c-if-%eb%ac%b8%ec%9d%80-%ec%84%b1%eb%8a%a5%ec%83%81-%eb%b3%84-%eb%ac%b8%ec%a0%9c-%ec%97%86%ec%8a%b5%eb%8b%88%eb%8b%a4/](https://nagnae.wordpress.com/2020/12/17/shader-%ec%97%90%ec%84%9c-%ea%b0%84%eb%8b%a8%ed%95%9c-if-%eb%ac%b8%ec%9d%80-%ec%84%b1%eb%8a%a5%ec%83%81-%eb%b3%84-%eb%ac%b8%ec%a0%9c-%ec%97%86%ec%8a%b5%eb%8b%88%eb%8b%a4/)
