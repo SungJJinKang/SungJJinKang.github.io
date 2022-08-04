@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "GPU 메모리 관련 읽어볼만한 글"
-date:   2022-08-05
+date:   2022-08-04
 categories: ComputerScience ComputerGraphics
 ---         
                
