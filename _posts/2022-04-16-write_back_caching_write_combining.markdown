@@ -5,4 +5,4 @@ date:   2022-04-16
 categories: ComputerScience ComputerGraphics
 ---
            
-reference : [https://stackoverflow.com/a/45634024](https://stackoverflow.com/a/45634024)                
+reference : [https://stackoverflow.com/a/45634024](https://stackoverflow.com/a/45634024), [https://stackoverflow.com/a/49961612](https://stackoverflow.com/a/49961612), [https://stackoverflow.com/a/61143498](https://stackoverflow.com/a/61143498)                
