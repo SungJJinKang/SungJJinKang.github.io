@@ -20,6 +20,10 @@ UE4 공식 문서에서는 아래와 같이 말한다.
 
 -------------------------
 
+이와 관련하여 좋은 자료 ( [https://zhuanlan.zhihu.com/p/357904199](https://zhuanlan.zhihu.com/p/357904199) )가 있어서 함께 첨부한다.           
+
+-------------------------
+
 
 FStreamableManager::RequestAsyncLoad 함수를 통해 에셋들에 대한 Async Load를 수행한다. return 되는 TSharedPtr<FStreamableHandle>를 통해 진행 중인 에셋 로딩과 관련된 데이터에 접근할 수 있다.        
 
