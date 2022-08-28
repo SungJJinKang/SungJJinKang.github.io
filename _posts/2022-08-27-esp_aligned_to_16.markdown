@@ -11,5 +11,7 @@ categories: ComputerScience
                                     
 [https://stackoverflow.com/a/4175400](https://stackoverflow.com/a/4175400),                 
 [https://docs.microsoft.com/en-us/cpp/build/stack-usage?view=msvc-170](https://docs.microsoft.com/en-us/cpp/build/stack-usage?view=msvc-170),                     
-[https://stackoverflow.com/a/33868627](https://stackoverflow.com/a/33868627)              
+[https://stackoverflow.com/a/33868627](https://stackoverflow.com/a/33868627),             
+[https://youtu.be/cEnpeDMAw_Y](https://youtu.be/cEnpeDMAw_Y),           
+[https://youtu.be/D83qM9D2I3E](https://youtu.be/D83qM9D2I3E)                         
  
