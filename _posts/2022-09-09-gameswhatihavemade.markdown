@@ -7,8 +7,10 @@ categories: ComputerScience
                         
 추석 때 심심해서 적는 지금까지 개발해 온 게임, 작업물들 정리..            
 개발하다 드롭된 것들은 제외하고 출시하거나, 완성한 게임들만.                          
-                               
-1. **퇴직 후 치킨집**          
+
+--------------------------------------                                            
+                                                                                        
+**퇴직 후 치킨집**          
 플랫폼 : [안드로이드](https://play.google.com/store/apps/details?id=kr.Hours30000.ChickenShopAfterRetire&hl=ko&gl=US)                                       
 출시일 : 2016년 3월                 
 개발 기간 : 3개월             
@@ -28,9 +30,9 @@ categories: ComputerScience
 당시 게임 리뷰에 내가 댓글로 남긴 글....                      
 <img width="595" alt="퇴직 후 치킨집2" src="https://user-images.githubusercontent.com/33873804/189353636-2da88eb6-7248-4672-a35c-ac5e2d0a1b4d.png">                          
                          
-                                             
+--------------------------------------                                                                                 
                            
-2. **묵찌빠! : 가위 바위 보의 전설**             
+**묵찌빠! : 가위 바위 보의 전설**             
 플랫폼 : 안드로이드                                       
 출시일 : 2016년 5월                 
 개발 기간 : 2주             
@@ -46,9 +48,9 @@ AI와 묵찌빠 게임을 하는 게임. 순발력이 중요한 게임
 ![묵찌빠1](https://user-images.githubusercontent.com/33873804/189357568-c01584fc-c97e-4abd-8db8-51258678f56e.png)                         
 ![묵찌빠2](https://user-images.githubusercontent.com/33873804/189357574-8b91d03b-2493-473f-8e70-7ddc45409609.png)            
                     
-                  
+--------------------------------------                                           
                    
-3. **잡았다 요놈!**                
+**잡았다 요놈!**                
 플랫폼 : 안드로이드                                       
 출시일 : 2016년 6월                 
 개발 기간 : 1달             
@@ -61,9 +63,9 @@ AI와 묵찌빠 게임을 하는 게임. 순발력이 중요한 게임
 ![잡았다 요놈1](https://user-images.githubusercontent.com/33873804/189365922-5161ac8f-7dca-4382-b0a4-eceb74d1cac0.jpg)                     
 ![잡았다 요놈2](https://user-images.githubusercontent.com/33873804/189365925-6322b961-c6aa-4258-9285-3687c3c617b1.jpg)                     
                      
-                                       
+--------------------------------------                                           
                                                          
-4. **폐차시키기 : 물리학을 이용한 퍼즐 게임**                 
+**폐차시키기 : 물리학을 이용한 퍼즐 게임**                 
 플랫폼 : 안드로이드                                       
 출시일 : 2017년 7월                 
 개발 기간 : 1달             
@@ -85,9 +87,9 @@ AI와 묵찌빠 게임을 하는 게임. 순발력이 중요한 게임
 ![폐차시키기3](https://user-images.githubusercontent.com/33873804/189367993-a11061a7-5150-47ee-a271-c498fcf57123.png)                        
 ![폐차시키기4](https://user-images.githubusercontent.com/33873804/189367979-8dbff27b-c484-4c21-af91-b3db24d111d7.png)                        
                                              
-                                               
+--------------------------------------                                           
                                             
-5. **킬러를 찾아라 1**                 
+**킬러를 찾아라 1**                 
 플랫폼 : [안드로이드](https://play.google.com/store/apps/details?id=com.NintyNineMillion.FindKiller&hl=ko&gl=US), IOS                                                         
 출시일 : 2017년 9월                 
 개발 기간 : 1달             
@@ -107,9 +109,9 @@ AI인척 멍청한 무빙을 하는 것이 핵심.
                                                    
 결과적으로는 개발한 게임들 중 가장 잘 된 게임.                                                        
                                                                                                     
+--------------------------------------                                           
                                           
-                                          
-5. **킬러를 찾아라 2**                 
+**킬러를 찾아라 2**                 
 플랫폼 : [안드로이드](https://play.google.com/store/apps/details?id=com.milli.findkiller2&hl=ko&gl=US), IOS                                       
 출시일 : 2018년 11월                                   
 개발 기간 : 3달                               
@@ -122,15 +124,15 @@ AI인척 멍청한 무빙을 하는 것이 핵심.
 킬러를 찾아라 1의 게임 방식은 유지하고, 3D로 개발하면서 여러 게임 모드들을 추가함.                                                                                     
 킬러를 찾아라 1만큼 반응이 좋지는 않았음. 오히려 1이 낫다는 의견도 많았음.                                          
                                           
+--------------------------------------                                           
 
-
-6. **Dooms Engine**       
+**Dooms Engine**       
 플랫폼 : PC                                   
 개발 기간 : 2021년 1월부터 개발을 시작하여 현재까지도 개발 중                                             
 개발 인원 : 1인 개발                                   
 개발 도구 : C++, OpenGL, D3D11                   
                                                
-[깃허브 링크](https://github.com/SungJJinKang/DoomsEngine)                                               
+[깃허브 링크](https://github.com/SungJJinKang/DoomsEngine), [영상](https://youtube.com/playlist?list=PLUg9a0kyCgTR3OhYZYSMauDmjv6D96pVz)                                                              
                                                
 게임 엔진.                                                       
 킬러를 찾아라2와 이 게임 엔진을 만들기 시작한 시기 사이에 공백이 되게 긴데, 이 시기 유니티로 VR 게임도 만들어보고 했지만 어느 순간 단순히 남이 만들어둔 코드, 엔진에서 제공해주는 기능들만을 활용하여 몇 년 동안 개발을 하고 나서 나한테 남은게 없다는 것을 깨달음.                                          
@@ -139,4 +141,4 @@ AI인척 멍청한 무빙을 하는 것이 핵심.
 이 시점부터 컴퓨터 공학 지식들에 재미를 느끼고 공부하기 시작했고, 이제껏 그냥 사용해왔던 엔진이 제공해주는 기능들이 내부적으로는 어떻게 도는지 공부하기 시작함.                                          
                                                
 [EveryCulling](https://github.com/SungJJinKang/EveryCulling)도 엔진에서 제공해주는 컬링이라는 동작이 내부적으로는 어떻게 돌아가는지 궁금해 공부했던 것에서 시작하여 나만의 컬링 라이브러리를 만들게 된 것임.                                                
-[영상](https://youtube.com/playlist?list=PLUg9a0kyCgTR3OhYZYSMauDmjv6D96pVz)                      
+                
