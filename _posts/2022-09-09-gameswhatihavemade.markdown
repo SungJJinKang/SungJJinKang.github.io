@@ -1,0 +1,142 @@
+---
+layout: post
+title:  "지금까지 개발해온 게임, 작업물들 간단 정리"
+date:   2022-09-09
+categories: ComputerScience
+---         
+                        
+추석 때 심심해서 적는 지금까지 개발해 온 게임, 작업물들 정리..            
+개발하다 드롭된 것들은 제외하고 출시하거나, 완성한 게임들만.                          
+                               
+1. **퇴직 후 치킨집**          
+플랫폼 : [안드로이드](https://play.google.com/store/apps/details?id=kr.Hours30000.ChickenShopAfterRetire&hl=ko&gl=US)                                       
+출시일 : 2016년 3월                 
+개발 기간 : 3개월             
+개발 인원 : 1인 개발      
+개발 도구 : C#, 유니티                            
+다운로드 수 : 181,009 ( 2022/09/09 기준 )                             
+                    
+퇴직 후 치킨집을 개업해서 운영을 하는 컨셉의 게임.                         
+병맛 느낌으로 컨셉을 잡고 만듬.                          
+                
+당시 문과로 고등학교를 졸업하고 행정학과로 대학 생활을 하던 중 게임 개발이 하고 싶어 C#, 유니티를 독학한 후 처음으로 출시한 게임.                  
+같이 게임 개발을 할 친구가 없어서 그래픽 리소스들을 에셋스토어에서 구입해서 혼자 개발한 게임.                        
+처음 개발한 게임이고 엄청 허접한데도 게임 컨셉을 잘 잡아서 그런지 유튜버들이 플레이 해주고 첫 게임치고는 잘 된 게임.                
+<img width="838" alt="퇴직 후 치킨집3" src="https://user-images.githubusercontent.com/33873804/189353623-a4122dc8-c21f-4ba3-a2f2-2b9db7bbd666.png">                 
+<img width="638" alt="퇴직 후 치킨집1" src="https://user-images.githubusercontent.com/33873804/189353638-c471d631-bca3-4a87-b897-909c57ea0ff8.png">                 
+                   
+당시 게임 리뷰에 내가 댓글로 남긴 글....                      
+<img width="595" alt="퇴직 후 치킨집2" src="https://user-images.githubusercontent.com/33873804/189353636-2da88eb6-7248-4672-a35c-ac5e2d0a1b4d.png">                          
+                         
+                                             
+                           
+2. **묵찌빠! : 가위 바위 보의 전설**             
+플랫폼 : 안드로이드                                       
+출시일 : 2016년 5월                 
+개발 기간 : 2주             
+개발 인원 : 1인 개발              
+개발 도구 : C#, 유니티                    
+다운로드 수 : 833         
+                         
+AI와 묵찌빠 게임을 하는 게임. 순발력이 중요한 게임             
+                   
+심심해서 간단하게 만들어 본 게임.                       
+큰 기대는 안함. 2주 정도 반응보다 스토어에서 내림.                            
+                                
+![묵찌빠1](https://user-images.githubusercontent.com/33873804/189357568-c01584fc-c97e-4abd-8db8-51258678f56e.png)                         
+![묵찌빠2](https://user-images.githubusercontent.com/33873804/189357574-8b91d03b-2493-473f-8e70-7ddc45409609.png)            
+                    
+                  
+                   
+3. **잡았다 요놈!**                
+플랫폼 : 안드로이드                                       
+출시일 : 2016년 6월                 
+개발 기간 : 1달             
+개발 인원 : 1인 개발                 
+개발 도구 : C#, 유니티                 
+다운로드 수 : 2,974        
+           
+1달 정도 열심히 만들어 본 게임.                     
+![잡았다 요놈3](https://user-images.githubusercontent.com/33873804/189365917-1fdbf8cf-0e15-4fdd-bb00-3ca195d38feb.jpg)                     
+![잡았다 요놈1](https://user-images.githubusercontent.com/33873804/189365922-5161ac8f-7dca-4382-b0a4-eceb74d1cac0.jpg)                     
+![잡았다 요놈2](https://user-images.githubusercontent.com/33873804/189365925-6322b961-c6aa-4258-9285-3687c3c617b1.jpg)                     
+                     
+                                       
+                                                         
+4. **폐차시키기 : 물리학을 이용한 퍼즐 게임**                 
+플랫폼 : 안드로이드                                       
+출시일 : 2017년 7월                 
+개발 기간 : 1달             
+개발 인원 : 1인 개발                 
+개발 도구 : C#, 유니티                 
+다운로드 수 : 153           
+                  
+퍼즐 게임                 
+                
+2016년 후반기 컴공으로 편입을 준비하고, 2017년 편입 후 정신 없이 시간을 보내느라 1년 동안 게임 개발을 하지 않다가 다시 시작하면서 출시한 게임.                        
+여름 방학 시작하고 1달 동안 개발한 게임.         
+개발하면서 스트레스를 엄청 받은 게임....           
+이 당시에는 스트레스를 관리할 줄 몰라 잠을 안자고 스트레스를 받으면서도 내 자신을 더 몰아 붙였던 시기.. ( 사실 지금도 크게 다르지는 않음 )        
+그 당시 "크레용 피직스"라는 게임을 재밌게하고 영감을 받아 만든 게임.        
+나름 재밌다고 생각했지만 망한 게임.             
+            
+![폐차시키기1](https://user-images.githubusercontent.com/33873804/189368002-c9fd7ac8-8672-4a9a-8591-770d9eff09c2.png)                        
+![폐차시키기2](https://user-images.githubusercontent.com/33873804/189367997-92168d84-45d2-48ae-99c7-08f2da9441fb.png)                        
+![폐차시키기3](https://user-images.githubusercontent.com/33873804/189367993-a11061a7-5150-47ee-a271-c498fcf57123.png)                        
+![폐차시키기4](https://user-images.githubusercontent.com/33873804/189367979-8dbff27b-c484-4c21-af91-b3db24d111d7.png)                        
+                                             
+                                               
+                                            
+5. **킬러를 찾아라 1**                 
+플랫폼 : [안드로이드](https://play.google.com/store/apps/details?id=com.NintyNineMillion.FindKiller&hl=ko&gl=US), IOS                                                         
+출시일 : 2017년 9월                 
+개발 기간 : 1달             
+개발 인원 : 1인 개발                 
+개발 도구 : C#, 유니티                 
+다운로드 수 : 442,854                  
+                                                          
+"라스트 맨 스탠딩"에 영향을 받은 게임.                                                                  
+두 명의 플레이가 대결하는 게임으로 한 명은 AI 캐릭터들 속에 숨어서 타겟을 암살하고, 다른 한명은 경찰 역할로 AI 캐릭터들 속에 숨은 상대 플레이어를 찾아내어야 하는 게임.                                                                          
+AI인척 멍청한 무빙을 하는 것이 핵심.                     
+                     
+<img width="466" alt="킬러를 찾아라1" src="https://user-images.githubusercontent.com/33873804/189382490-35d974d9-e305-40e6-bc9c-c7048b5f5f89.png">                     
+<img width="598" alt="킬러를 찾아라2" src="https://user-images.githubusercontent.com/33873804/189382783-e2772182-7ca2-480e-80fd-a0a233f7f10e.png">                     
+                                                           
+유명 유튜버가 플레이 해주면서 인기를 얻은 게임.                                                                      
+<img width="819" alt="킬러를 찾아라" src="https://user-images.githubusercontent.com/33873804/189379903-6679eed6-8a75-4c44-b953-2f700d3f5d44.png">                                                   
+                                                   
+결과적으로는 개발한 게임들 중 가장 잘 된 게임.                                                        
+                                                                                                    
+                                          
+                                          
+5. **킬러를 찾아라 2**                 
+플랫폼 : [안드로이드](https://play.google.com/store/apps/details?id=com.milli.findkiller2&hl=ko&gl=US), IOS                                       
+출시일 : 2018년 11월                                   
+개발 기간 : 3달                               
+개발 인원 : 1인 개발                                   
+개발 도구 : C#, 유니티                                   
+다운로드 수 : 86,032                                             
+
+킬러를 찾아라 1의 후속작.                                          
+킬러를 찾아라 1을 출시한 후 새로운 게임을 계속 개발하고 드롭하는 것을 몇 번 반복한 후 지쳐서 개발한 게임.                                                            
+킬러를 찾아라 1의 게임 방식은 유지하고, 3D로 개발하면서 여러 게임 모드들을 추가함.                                                                                     
+킬러를 찾아라 1만큼 반응이 좋지는 않았음. 오히려 1이 낫다는 의견도 많았음.                                          
+                                          
+
+
+6. **Dooms Engine**       
+플랫폼 : PC                                   
+개발 기간 : 2021년 1월부터 개발을 시작하여 현재까지도 개발 중                                             
+개발 인원 : 1인 개발                                   
+개발 도구 : C++, OpenGL, D3D11                   
+                                               
+[깃허브 링크](https://github.com/SungJJinKang/DoomsEngine)                                               
+                                               
+게임 엔진.                                                       
+킬러를 찾아라2와 이 게임 엔진을 만들기 시작한 시기 사이에 공백이 되게 긴데, 이 시기 유니티로 VR 게임도 만들어보고 했지만 어느 순간 단순히 남이 만들어둔 코드, 엔진에서 제공해주는 기능들만을 활용하여 몇 년 동안 개발을 하고 나서 나한테 남은게 없다는 것을 깨달음.                                          
+이후 진짜 아랫단에서 돌고 있는 기술을 이해하는 것이 중요하다고 생각하여 공부의 방향을 전환하여 내 게임 엔진을 만들기 시작함.                                                     
+                                          
+이 시점부터 컴퓨터 공학 지식들에 재미를 느끼고 공부하기 시작했고, 이제껏 그냥 사용해왔던 엔진이 제공해주는 기능들이 내부적으로는 어떻게 도는지 공부하기 시작함.                                          
+                                               
+[EveryCulling](https://github.com/SungJJinKang/EveryCulling)도 엔진에서 제공해주는 컬링이라는 동작이 내부적으로는 어떻게 돌아가는지 궁금해 공부했던 것에서 시작하여 나만의 컬링 라이브러리를 만들게 된 것임.                                                
+[영상](https://youtube.com/playlist?list=PLUg9a0kyCgTR3OhYZYSMauDmjv6D96pVz)                      
