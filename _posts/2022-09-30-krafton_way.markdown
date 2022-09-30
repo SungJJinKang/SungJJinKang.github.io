@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "[책 리뷰] 크래프톤 웨이"
-date:   2022-09-31
+title:  "책 리뷰 - 크래프톤 웨이"
+date:   2022-09-30
 categories: Book
 ---         
                   

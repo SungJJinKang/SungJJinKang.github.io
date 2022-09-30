@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "[책 리뷰] 일론 머스크, 미래의 설계자"
-date:   2022-09-31
+title:  "책 리뷰 - 일론 머스크, 미래의 설계자"
+date:   2022-09-30
 categories: Book
 ---         
        
