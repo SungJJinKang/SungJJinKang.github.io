@@ -31,7 +31,10 @@ hlslcc를 사용하는 방법은 현재 UE5에서는 대부분의 그래픽 API�
                 
 아래의 사진이 hlslcc를 통한 방법, ShaderConductor를 통한 방법에서 어떻게 hlsl로 작성된 쉐이더 코드가 타깃 쉐이더 언어로 변환되는지 잘 보여준다.            
 ![hlslcc,dxc](https://user-images.githubusercontent.com/33873804/194741515-ee88360f-2eb7-4341-8ca6-7387fa9ceee6.jpg)                
-                    
+         
+아래 사진은 ShaderConductor의 구조를 보여준다.          
+<img width="522" alt="ShaderConductor" src="https://user-images.githubusercontent.com/33873804/194752357-343e2489-28ed-47e0-a1d4-6abb22bee073.png">            
+                         
 hlslcc를 이용한 경우에는 hlsl로 작성된 쉐이더 코드를 hlslcc를 통해 Mesa IR(중간 언어)로 변환하고 이 변환된 IR를 최적화하는 과정을 거쳐서 최종적으로 타깃하는 쉐이더 언어로 변환된다.                       
                  
 ShaderConductor를 활용하는 방법의 경우 언리얼 엔진에서는 이 방법은 [Shader Conductor](https://github.com/EpicGames/UnrealEngine/tree/ue5-main/Engine/Source/ThirdParty/ShaderConductor/ShaderConductor)라는 모듈로 관리하는데 Shader Conductor에서 [DXC 컴파일러](https://github.com/microsoft/DirectXShaderCompiler)를 사용하여 hlsl 쉐이더 코드를 SPIRV라는 중간 언어로 변환한 후 SPIRV에 대해 [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools)를 활용해 SPIRV를 최적화한 후 [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross)를 사용하여 목표로 하는 쉐이더 언어로 변환한다.            
@@ -64,8 +67,9 @@ OpenGL을 타깃으로 빌드한다고 가정하고 쭉 살펴보자...
 HLSL 쉐이더 코드에 대한 전처리 동작을 수행하고 ( 우버 쉐이더 코드에서 실제 사용될 코드들만 남은 HLSL 코드로 변환된다. ), ShaderConductor를 통해 실제 쉐이더 코드 변환 작업을 수행한다.         
 <img width="835" alt="16_2" src="https://user-images.githubusercontent.com/33873804/194750729-eb35e093-2182-4446-8209-7fd0275f79cf.png">             
                  
-ShaderConductor에서는 HLSL 코드에 대해 SPIRV(중간 코드)로 변환하는 과정을 수행하고 변환된 SPIRV에 대한 리플랙션 데이터(버퍼 바인딩 등 다양한 용도로 사용된다)를 만들어낸다.        
-그리고 SPIRV 코드를 최종적으로 GLSL 코드로 변환한다.            
+ShaderConductor에서는 HLSL 코드에 대해 SPIRV(중간 코드)로 변환하는 과정을 수행 ( HLSL 코드가 SPIRV로 변환되는 동작의 동작 원리는 [여기](https://github.com/microsoft/DirectXShaderCompiler/wiki/SPIR%E2%80%90V-CodeGen)서 볼 수 있다. )하고 변환된 SPIRV에 대한 리플랙션 데이터(버퍼 바인딩 등 다양한 용도로 사용된다)를 만들어낸다.        
+그리고 SPIRV 코드를 최종적으로 GLSL 코드로 변환한다. ( [SPIRV-CROSS](https://github.com/KhronosGroup/SPIRV-Cross)를 사용하여 GLSL 코드로 변환한다. )            
+HLSL 코드를 SPIRV로 변환하는 과정에는 변환된 SPIRV에 대한 최적화도 수행한다. ( [SPIRV-TOOL](https://github.com/KhronosGroup/SPIRV-Tools)을 사용하여 최적화 수행 )             
 <img width="857" alt="17" src="https://user-images.githubusercontent.com/33873804/194750404-f6c27c2b-06fc-438a-a5a1-6bcfc4a1ea0d.png">           
                  
                     
