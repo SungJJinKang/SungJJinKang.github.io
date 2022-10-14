@@ -139,3 +139,11 @@ struct x_
    char _pad1[1];    // padding to make sizeof(x_) multiple of 4
 } bar[3];
 ```
+
+C가 요구하는 Alignment로 인해 성능상 손해를 본다?            
+Array에서의 padding을 보장하지 않기 때문에 구조체 타입 자체에 padding을 넣어야 한다. ( Array에서 각 Element들도 Align이 보장되어야 하기 때문에 )                 
+또한 예를 들어 두 구조체를 memcmp 할 때도 필요도 없는 padding에 대해서도 동일함이 보장되어야 하기 ( 실제 사용하는 Field 데이터들은 같지만 Padding이 다르면 memcmp에서 두 구조체 인스턴스가 다르다고 판단함 -> 우리는 이것을 원하지 않기 때문에 padding에서도 데이터상 동일함을 유지해주어야 한다. ) 때문에 구조체 복사시 padding까지도 같이 복사해주어야 한다. 여기서 오는 성능상 손해도 있다.         
+<img width="638" alt="20221014211209" src="https://user-images.githubusercontent.com/33873804/195855235-e5ed7dce-1e89-4300-9e6f-30c7c0fd6d6c.png">                              
+             
+구조체를 0으로 초기화시 padding도 0일까? -> 컴파일러, 최적화 레벨에 따라 결과가 다름.         
+
