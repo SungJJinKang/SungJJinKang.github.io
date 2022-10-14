@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "Swap 함수 - XOR VS 임시 변수 사용"
+date:   2022-10-14
+categories: ComputerScience
+---         
+               
+[https://stackoverflow.com/questions/249423/how-does-xor-variable-swapping-work](https://stackoverflow.com/questions/249423/how-does-xor-variable-swapping-work), [https://minjang.github.io/page2/](https://minjang.github.io/page2/)
