@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "힙 할당, 해제 구현(glibc)"
+title:  "힙 할당, 해제 구현(glibc, 최적화를 위한 여러 기법들..., Arena, Binnning)"
 date:   2022-10-16
 categories: ComputerScience
 ---         
