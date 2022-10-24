@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "malloc, free에 관한 재밌는 관점"
+title:  "버텍스 재사용 ( 버텍스 쉐이더 관련 )"
 date:   2022-10-24
 categories: ComputerScience ComputerGraphics
 ---          
