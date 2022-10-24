@@ -2,7 +2,7 @@
 layout: post
 title:  "malloc, free에 관한 재밌는 관점"
 date:   2022-10-23
-categories: ComputerScience UE4
+categories: ComputerScience
 ---          
  
 간단히 설명하면 malloc시 반환해주는 메모리 블록의 실제(!) 사이즈를 알려주면 성능 향상을 얻을 수 불필요한 메모리 할당도 줄일 수 있다.    
