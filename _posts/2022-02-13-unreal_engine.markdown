@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진 관련 공부 리소스들"
 date:   2022-02-13
-categories: UnrealEngine4 UE4
+categories: UE UnrealEngine
 ---
 
 [https://algorfati.tistory.com/category/Unreal](https://algorfati.tistory.com/category/Unreal)          

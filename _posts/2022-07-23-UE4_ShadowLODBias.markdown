@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 Shadow LOD Bias ( 작성 중 )"
+title:  "Unreal Engine Shadow LOD Bias ( 작성 중 )"
 date:   2022-07-23
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---         
                 
 최근에 여러 렌더링 최적화 테크닉들을 공부하던 중 펍지 뉴 스테이트에서 적용한 최적화 기법을 보았다.         

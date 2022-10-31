@@ -2,7 +2,7 @@
 layout: post
 title:  "어떻게 언리얼 엔진4는 게임 스레드에서 렌더스레드로 데이터를 안전하게 전송할까?"
 date:   2022-03-27
-categories: ComputerScience ComputerGraphics UE4 UnrealEngine4
+categories: ComputerScience ComputerGraphics UnrealEngine UE
 ---
 
 언리얼 엔진4에서는 CPU를 게임 스레드, 렌더링 스레드로 분리하여 렌더링을 수행한다.      
@@ -20,7 +20,7 @@ GPU까지 해서 **CPU의 게임 스레드, 렌더 스레드(Draw 스레드), GP
                     
 D3D12, Vulkan에 와서는 RHI 스레드라는 것을 만들어서 렌더 스레드에서는 플랫폼 독립적인 커맨드 큐를 CPU쪽에 생성해두었다가, RHI 스레드에서 목표로 하는 플랫폼(Graphics API)에 맞는 그래픽 API를 호출해준다. 그러나 필자의 게임 엔진은 D3D11, OpenGL만을 지원하기 때문에 그래픽 API를 호출하는 부분도 렌더 스레드에 넣을 생각이다.             
                 
-참고 자료 : [Unreal Engine4 렌더링 파이프라인 분석 - SungJJinKang](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/ue4_rendering.html), [그래픽 프로그래밍 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/Overview/), [스레디드 렌더링](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ThreadedRendering/), [병렬 렌더링 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/)            
+참고 자료 : [언리얼 엔진4 렌더링 파이프라인 분석 - SungJJinKang](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/ue4_rendering.html), [그래픽 프로그래밍 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/Overview/), [스레디드 렌더링](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ThreadedRendering/), [병렬 렌더링 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/)            
             
 ----------------------------------------------------           
             

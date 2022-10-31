@@ -2,7 +2,7 @@
 layout: post
 title:  "Why Talking About UE4 Shaders ( Render Dependency Graph, Shader Objects )"
 date:   2022-04-23
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---
 
 references : [https://logins.github.io/graphics/2021/03/31/UE4ShadersIntroduction.html](https://logins.github.io/graphics/2021/03/31/UE4ShadersIntroduction.html), [https://logins.github.io/graphics/2021/05/31/RenderGraphs.html](https://logins.github.io/graphics/2021/05/31/RenderGraphs.html), [https://docs.unrealengine.com/5.0/en-US/render-dependency-graph-in-unreal-engine/](https://docs.unrealengine.com/5.0/en-US/render-dependency-graph-in-unreal-engine/), [https://docs.unrealengine.com/4.26/en-US/ProgrammingAndScripting/Rendering/RenderDependencyGraph/](https://docs.unrealengine.com/4.26/en-US/ProgrammingAndScripting/Rendering/RenderDependencyGraph/), [https://epicgames.ent.box.com/s/ul1h44ozs0t2850ug0hrohlzm53kxwrz](https://epicgames.ent.box.com/s/ul1h44ozs0t2850ug0hrohlzm53kxwrz)                        

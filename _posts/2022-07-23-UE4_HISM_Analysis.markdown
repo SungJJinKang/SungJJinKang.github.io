@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 HISM(Hierarchical Instanced Static Mesh), UHierarchicalInstancedStaticMeshComponent, Foliage 코드 분석 ( 작성 중 )"
+title:  "언리얼 엔진4 HISM(Hierarchical Instanced Static Mesh), UHierarchicalInstancedStaticMeshComponent, Foliage 코드 분석 ( 작성 중 )"
 date:   2022-08-09
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---         
                 
 ![0_UInstancedStaticMeshComponent_CreateSceneProxy](https://user-images.githubusercontent.com/33873804/183704194-ed1bcee8-bf0b-4939-a8a5-aaefaab3ad37.png)                  

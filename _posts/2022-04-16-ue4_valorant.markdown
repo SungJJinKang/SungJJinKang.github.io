@@ -2,7 +2,7 @@
 layout: post
 title:  "VALORANT's Performance Requirements | Inside Unreal"
 date:   2022-04-16
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---
 
 [https://youtu.be/GO6MIboHDiY](https://youtu.be/GO6MIboHDiY)             

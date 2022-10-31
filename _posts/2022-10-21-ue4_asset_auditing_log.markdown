@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 현재 사용 중인 컨테츠들 로깅용 커맨드들 ( Asset Auditing Logs )"
+title:  "UnrealEngine에서 현재 사용 중인 컨테츠들 로깅용 커맨드들 ( Asset Auditing Logs )"
 date:   2022-10-22
-categories: ComputerScience UE4
+categories: ComputerScience UE UnrealEngine
 ---          
       
 [https://youtu.be/FeWtslAEtyc?t=7571](https://youtu.be/FeWtslAEtyc?t=7571)                

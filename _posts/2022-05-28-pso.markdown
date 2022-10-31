@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 PSO(Pipeline State Object) Cache ( OpenGL 위주로 )"
+title:  "언리얼 엔진4 PSO(Pipeline State Object) Cache ( OpenGL 위주로 )"
 date:   2022-05-28
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---
 
 PSO란 하나의 Draw를 위해 필요한 여러 렌더링의 상태들을 말한다.          

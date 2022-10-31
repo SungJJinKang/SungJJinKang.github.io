@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 Construction Time Asset Load ( ConstructorHelpers )"
+title:  "언리얼 엔진4 Construction Time Asset Load ( ConstructorHelpers )"
 date:   2022-04-10
-categories: UE4 UnrealEngine4 ComputerScience
+categories: UE UnrealEngine ComputerScience
 ---
 
 

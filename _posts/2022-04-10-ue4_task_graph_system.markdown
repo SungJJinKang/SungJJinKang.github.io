@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 Task Graph System"
+title:  "언리얼 엔진4 Task Graph System"
 date:   2022-04-10
-categories: UE4 UnrealEngine4 ComputerScience
+categories: UE UnrealEngine ComputerScience
 ---
 
 [UE4 Task Graph System을 이해하는데 도움을 준 글](https://www.casualdistractiongames.com/post/2018/12/10/unreal-tick-functions-delta-time-and-the-task-graph),          

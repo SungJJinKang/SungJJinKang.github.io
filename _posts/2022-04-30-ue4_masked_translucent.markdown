@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 Masked vs Translucent ( 모바일 GPU에서의 Alpha Test, Alpha Blend )"
+title:  "언리얼 엔진4 Masked vs Translucent ( 모바일 GPU에서의 Alpha Test, Alpha Blend )"
 date:   2022-04-30
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---
 
 [Translucent vs Masked Rendering in Real-Time Applications](https://developer.oculus.com/blog/translucent-vs-masked-rendering-in-real-time-applications/?locale=ko_KR)        

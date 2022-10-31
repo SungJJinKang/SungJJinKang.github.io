@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4에 붙여 볼만한 프로파일러"
+title:  "Unreal Engine에 붙여 볼만한 프로파일러"
 date:   2022-08-04
-categories: ComputerScience ComputerGraphics
+categories: ComputerScience ComputerGraphics UE UnrealEngine
 ---         
                
 [https://superluminal.eu/](https://superluminal.eu/)

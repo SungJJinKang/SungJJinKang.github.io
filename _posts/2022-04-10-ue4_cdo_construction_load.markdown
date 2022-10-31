@@ -2,7 +2,7 @@
 layout: post
 title:  "UE4 CDO 생성 코드 분석. ( UClass::CreateDefaultObject )"
 date:   2022-04-10
-categories: UE4 UnrealEngine4 ComputerScience
+categories: UE UnrealEngine ComputerScience
 ---
 
 중요도가 떨어지는 코드는        

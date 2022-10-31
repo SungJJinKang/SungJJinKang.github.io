@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "UE4 모바일 최적화 관련 자료 스크랩"
+title:  "언리얼 엔진4 모바일 최적화 관련 자료 스크랩"
 date:   2022-04-29
-categories: UnrealEngine4 UE4 ComputerScience ComputerGraphics
+categories: UE UnrealEngine ComputerScience ComputerGraphics
 ---
 
 [https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Rendering/MobileOptimization/OptimizationandDevelopmentBestPracticesforMobile/](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Rendering/MobileOptimization/OptimizationandDevelopmentBestPracticesforMobile/),            
