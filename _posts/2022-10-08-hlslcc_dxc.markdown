@@ -5,7 +5,7 @@ date:   2022-10-09
 categories: ComputerScience ComputerGraphics UE4
 ---         
                
-최근에 UE5.1에 올라간 모바일용 AMD FSR을 우리팀 Inhouse UE4.27로 백포팅하는 작업을 하고 있는데 언리얼쪽에서 UE4에 대한 지원을 안하다 보니 쉐이더 컴파일부터 문제가 생겼다.        
+최근에 UE5.1에 올라간 모바일용 AMD FSR을 UE4.27로 백포팅하는 과정에서 언리얼쪽에서 UE4에 대한 지원을 안하다 보니 쉐이더 컴파일부터 문제가 생겼다.        
 OpenGL ES 사용시 DXC 컴파일러를 요구하여 ForceDXC 옵션을 켜서 쉐이더 컴파일을 하면 "Push constant block cannot be expressed as neither std430 nor std140. ES-targets do not support GL_ARB_enhanced_layouts."라는 에러를 뿜어내고, 기존의 hlslcc 컴파일러 사용시 "min16float2"와 같은 명시적 Half precision floating-point 타입의 사용에 대해 에러를 뿜어냈다. 현재 리서치 중이라서 자세한 내용은 모른다.                               
 어쨌든 이 쪽 코드는 처음 보는거라서 최근에서야 hlslcc, ShaderConductor 것의 존재도 알았다.                 
 그래서 이에 관해 간단한 분석 글을 써보려한다.              
