@@ -22,9 +22,12 @@ OpenGL ES 사용시 DXC 컴파일러를 요구하여 ForceDXC 옵션을 켜서 �
 <img width="697" alt="Shader" src="https://user-images.githubusercontent.com/33873804/194740197-e2e416d6-7b1e-4ae2-b1d3-87159b50b553.png">                 
 <img width="386" alt="Shader2" src="https://user-images.githubusercontent.com/33873804/194740200-1238aa24-4235-4f93-8fdc-2b9dbb65763f.png">                 
 <img width="648" alt="Shader3" src="https://user-images.githubusercontent.com/33873804/194740202-901832f3-42b9-4ef2-8fc1-133694b7b5f1.png">                    
-            
+               
 -----------------------------             
-           
+                     
+언리얼 엔진 매터리얼 에디터로 붙인 여러 매터리얼 노드들을 HLSLMaterialTranslator를 통해 위에서 말한 템플릿 코드와 조합하여 최종적은 HLSL 코드를 만들어낸다.           
+이렇게 만들어진 쉐이더 코드는 매터리얼 에디터에서 확인해볼 수 있다.                       
+                         
 이렇게 만들어진 최종적인 hlsl 쉐이더 코드를 이제는 목표로 하는 타깃 그래픽 API의 쉐이더 코드로 변환하여야 한다.          
 언리얼 엔진에서는 크게 두 가지 방법을 사용한다. [hlslcc](https://github.com/EpicGames/UnrealEngine/tree/ue5-main/Engine/Source/ThirdParty/hlslcc/hlslcc)를 사용하는 방법과 [ShaderConductor](https://github.com/EpicGames/UnrealEngine/tree/ue5-main/Engine/Source/ThirdParty/ShaderConductor/ShaderConductor)를 사용하는 방법이다.               
 hlslcc를 사용하는 방법은 현재 UE5에서는 대부분의 그래픽 API에서 deprecated되었고 UE5에서는 대부분 ShaderConductor를 활용하는 방법을 사용한다.            
