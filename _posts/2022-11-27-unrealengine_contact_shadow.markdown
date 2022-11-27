@@ -9,7 +9,7 @@ categories: ComputerScience ComputerGraphics UE UnrealEngine
 라이팅 연산 대상의 픽셀의 WS 원점을 라이트를 기준으로 Project한 후 그 Z값을 ShadowMap에서 샘플링한 Depth 값과 비교하여, 값이 더 큰 경우 다른 오브젝트에 의해 가려졌다고(Occlude) 판단하여 Shadow 값을 라이팅 연산에 포함시킴.                 
                    
 Contact Shadow :                      
-일반적인 Shadow Map을 활용한 쉐도우 연산은 ShadowMap과 단 한번만 비교하여 Shadow 여부를 판단하는데 비해, Contact Shadow는 라이트 원점에서 라이팅 대상 픽셀의 원점으로 RayMarching을 수행하여 더 정밀한 쉐도우 연산을 수행. 다만 RayMarching에서 사용하는 Depth 값도 스크린 스페이스를 기준으로 ShadowMap에서 샘플링해서 가져오기 때문에 아티팩트 가능성 존재.                           
+일반적인 Shadow Map을 활용한 쉐도우 연산은 ShadowMap과 단 한번만 비교하여 Shadow 여부를 판단하는데 비해, Contact Shadow는 라이트 원점에서 라이팅 대상 픽셀의 원점으로 RayMarching을 수행하여 더 정밀한 쉐도우 연산을 수행. 다만 RayMarching에서 사용하는 Depth 값도 스크린 스페이스를 기준으로 ShadowMap에서 샘플링해서 가져오기 때문에 아티팩트 가능성 존재. 쉽게말하면 "일반적인 Shadow Map을 활용한 쉐도우 연산"에서 수행하는 ShadowMap에서 샘플링한 Depth 값 비교 동작을, 라이트 원점에서 라이팅 연산 대상 픽셀 지점 사이의 중간 지점들에 대해서도 수행한다고 생각하면 된다. ( 정확도를 높이기 위해 )                                              
             
 [Contact Shadow - Unreal Engine Documents](https://docs.unrealengine.com/5.0/en-US/contact-shadows-in-unreal-engine/)                  
                  
