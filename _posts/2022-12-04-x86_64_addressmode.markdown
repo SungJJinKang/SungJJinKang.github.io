@@ -1,0 +1,15 @@
+---
+layout: post
+title:  "x86_64 Address Mode, GOD 등등"
+date:   2022-12-04
+categories: ComputerScience
+---            
+
+[https://blog.yossarian.net/2020/06/13/How-x86_64-addresses-memory](https://blog.yossarian.net/2020/06/13/How-x86_64-addresses-memory),         
+                     
+                 
+[Global Offset Table, GOT](https://en.wikipedia.org/wiki/Global_Offset_Table),                 
+[RIP Relative Adrees Mode 1](https://stackoverflow.com/a/66713969),                
+[RIP Relative Adrees Mode 2](https://stackoverflow.com/a/54747788),         
+[PLT와 GOT 자세히 알기 1](https://bpsecblog.wordpress.com/2016/03/07/about_got_plt_1/),          
+[PLT와 GOT 자세히 알기 2](https://bpsecblog.wordpress.com/2016/03/09/about_got_plt_2/),          
