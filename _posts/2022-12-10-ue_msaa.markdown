@@ -8,6 +8,10 @@ categories: ComputerScience ComputerGraphics UE UnrealEngine
 용어 정리 :           
 SceneColor : Color 렌더타겟, 프레임 버퍼 (백버퍼와 다른 개념)        
 
+[MSAA란 1](https://www.gamedev.net/forums/topic/700858-multisampling-anti-aliasing-msaa-how-does-it-influence-the-performance/)       
+[MSAA란 2](https://computergraphics.stackexchange.com/questions/6139/how-does-msaa-performance-scale)                
+[MSAA란 3](https://mynameismjp.wordpress.com/2012/10/24/msaa-overview/)                
+                                 
 ```
 // Verify using both MSAA sample count AND the scene color surface sample count, since on GLES you can't have MSAA color targets,          
 // so the color target would be created without MSAA, and MSAA is achieved through magical means (the framebuffer, being MSAA,            
