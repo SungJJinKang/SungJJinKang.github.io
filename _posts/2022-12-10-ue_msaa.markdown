@@ -1,0 +1,24 @@
+---
+layout: post
+title:  "언리얼 엔진 MSAA"
+date:   2022-12-10
+categories: ComputerScience ComputerGraphics UE UnrealEngine
+---            
+
+용어 정리 :           
+SceneColor : Color 렌더타겟, 프레임 버퍼 (백버퍼와 다른 개념)        
+
+```
+// Verify using both MSAA sample count AND the scene color surface sample count, since on GLES you can't have MSAA color targets,          
+// so the color target would be created without MSAA, and MSAA is achieved through magical means (the framebuffer, being MSAA,            
+// tells the GPU "execute this renderpass as MSAA, and when you're done, automatically resolve and copy into this non-MSAA texture").           
+
+// OpenGLES의 경우 MSAA Color Target(백버퍼)를 지원하지 않기 떄문에 SceneColor(프레임 버퍼)를 MSAA로 생성해서 렌더링을 한 후 해당 SceneColor를 백버퍼로 옮긴다(Resolve)                     
+```
+
+![0](https://user-images.githubusercontent.com/33873804/206870690-f65214f0-46f7-4092-935d-fce9b1e540d6.png)                  
+![1](https://user-images.githubusercontent.com/33873804/206870691-07731bdc-2057-4a27-97de-91bf00a1e135.png)            
+![2](https://user-images.githubusercontent.com/33873804/206870693-3b39a405-89d2-4716-8731-9ac9247cc33a.png)             
+![3](https://user-images.githubusercontent.com/33873804/206870694-679d7c00-ae19-4a1d-9748-9942d601902e.png)              
+![4](https://user-images.githubusercontent.com/33873804/206870685-f19be7f5-ece3-4dde-b6bb-0c9a5abc58ca.png)               
+![6](https://user-images.githubusercontent.com/33873804/206870692-befb934d-2734-4e75-b167-5c3f13fca1a4.png)

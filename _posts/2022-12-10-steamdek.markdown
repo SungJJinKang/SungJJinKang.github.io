@@ -1,0 +1,24 @@
+---
+layout: post
+title:  "스팀덱 쉐이더 캐시, Vulkan"
+date:   2022-12-10
+categories: ComputerScience
+---            
+
+스팀덱은 스팀에서 자체적으로 수집한 쉐이더 바이너리를 받아와서 OS단에서 프리컴파일 해주나보다.         
+앱단에서 직접 프리컴파일을 하는게 아니라..          
+모든 기기가 동일한 gpu, gpu 드라이버를 사용하니 가능한듯 하다.           
+[Valve does what FromSoftware don’t, thanks to Steam Deck’s precaching update](https://arstechnica.com/gaming/2022/03/how-valve-made-steam-deck-the-first-pc-to-smoothly-run-elden-ring/?utm_medium=social&utm_social-type=owned&utm_brand=ars&utm_source=twitter)                
+               
+                             
+          
+그리고 스팀덱이 리눅스 기반이라 들었는데 D3D 그래픽 API만 지원하는 게임도 구동이 가능하다고 한다.       
+[dxvk](https://github.com/doitsujin/dxvk)라고 D3D 그래픽 API를 Vulkan API로 변환해주는 오픈 소스가 있다.      
+스팀덱은 이를 드라이버단에서 D3D 그래픽 API 호출을 Vulkan API로 변환해서 사용한다.          
+즉 D3D만 지원하는 게임을 스팀덱에서 돌리면 내부적으로는 Vulkan API로 돈다는 의미이다.           
+
+"the hardware driver is part of the Linux kernel and the Vulkan implementation is in userspace as part of Mesa. The part that translates Direct3D (9-11) into Vulkan is called DXVK, and is included with Proton - the part of Steam that uses Wine to translate Windows things into Linux things so that you can run Windows games on Linux. Direct3D 12 is translated into Vulkan by VKD3D."           
+              
+![Fjn7HcKaMAYAk1W](https://user-images.githubusercontent.com/33873804/206863441-50cc1de0-aa94-4ac2-91c0-f350b9f984bf.jpg)              
+                  
+[Vulkan Driver on the Steam Deck](https://steamcommunity.com/app/1675200/discussions/0/3424446023726315215/)                   
