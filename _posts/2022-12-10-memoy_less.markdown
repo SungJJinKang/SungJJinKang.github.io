@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "memoryless 모드"
+title:  "Metal memoryless 모드"
 date:   2022-12-10
 categories: ComputerScience
 ---            
