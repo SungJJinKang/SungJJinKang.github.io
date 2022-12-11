@@ -36,8 +36,10 @@ CreateDefaultSubObject 함수의 주석을 보아도 반환되는 오브젝트�
 그리고 **컴포넌트 그 자체를 transient하게 만들지는 않지만, 컴포넌트가 부모 Default의 값을 상속 받아 오는 것을 막는다고 되어 있다.**         
 무슨 말인지 잘 이해가 안되어서 코드를 더 살펴보니 컴포넌트를 붙이는 오브젝트(위의 예제에서는 SampleClass의 인스턴스)의 아키타입(ex. BP 클래스)으로부터 SubObject "SampleComponent"의 데이터를 가져올 것이냐는 것이다. ( 컴포넌트를 붙이는 오브젝트의 아키타입의 해당 컴포넌트 SubObject를 템플릿으로 사용할 것이냐는 것이다. )         
 **컴포넌트를 붙이는 오브젝트(위의 예제에서는 SampleClass의 인스턴스)의 BP 클래스에서 Comp의 여러 변수 값들을 셋팅하였더라도 이 값을 상속 받아오지 않는다는 의미**이다. 그냥 해당 컴포넌트의 CDO로부터 컴포넌트의 프로퍼티들을 초기화하겠다는 의미이다.               
-코드를 보아도 "bTransient"가 true인 경우 오브젝트의 아키타입에서 DefaultSubObject를 가져와서 컴포넌트를 초기화하는(ComponentInits) 부분이 빠지는 것을 볼 수 있다.          
-해당 컴포넌트의 프로퍼티가 전부 0으로 초기화되는건 아니고 CDO에서의 값들로 초기화되는 것 같다.                          
+코드를 보아도 "bTransient"가 true인 경우 오브젝트의 아키타입에서 DefaultSubObject를 가져와서 컴포넌트를 초기화하는(ComponentInits) 부분이 빠지는 것을 볼 수 있다.           
+         
+요약하자면 CreateDefaultSubobject의 매개변수 bTransient에 true를 전달한 경우 **해당 컴포넌트의 프로퍼티 전체가 transient로 처리, 즉 0으로 초기화되는건 아니고, 해당 컴포넌트의 프로퍼티들은 CDO에서의 값들로 초기화**된다.                               
+**CreateDefaultSubobject의 매개변수 bTransient를 false로 전달했을 때와의 차이점**은 **false로 전달하는 경우에는 컴포넌트를 붙이는 오브젝트의 아키타입(BP 클래스)에서 셋팅한 해당 컴포넌트의 프로퍼티 값들을 상속** 받지만, **true로 전달하는 경우에는 해당 컴포넌트 클래스의 CDO를 상속 받는다.**                                                                                 
             
 ```cpp
 /**

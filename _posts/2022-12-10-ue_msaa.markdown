@@ -1,17 +1,31 @@
 ---
 layout: post
-title:  "언리얼 엔진 MSAA"
+title:  "MSAA ( 언리얼 엔진에서의 구현도 함께 살펴보자 )"
 date:   2022-12-10
 categories: ComputerScience ComputerGraphics UE UnrealEngine
 ---            
+           
+용어 정리 :                  
+SceneColor : Color 렌더타겟, 프레임 버퍼 (백버퍼와 다른 개념)                 
+              
+[MSAA란](https://mynameismjp.wordpress.com/2012/10/24/msaa-overview/)                
+                  
+MSAA란 :            
+MSAA는 기본적으로 **픽셀 당 한번만 픽셀 쉐이더 연산**을 한다. ( 슈퍼샘플링과 다르다. 슈퍼 샘플링은 아예 렌더 타겟 사이즈를 샘플링 카운트(N)만큼 늘리기 때문에 픽셀 쉐이더 연산도 N배만큼 늘어난다. 연산해야 하는 픽셀 개수가 N배만큼 늘어난다는 것이다. )                      
+픽셀이 삼각형에 의해 덮혔는지(Covered) 판단(커버리지 테스트)하기 위해 픽셀 안에 여러 샘플(서브 샘플)이 삼각형에 덮혔는지 판단한다.                    
+해당 픽셀이 다른 삼각형에 의해 가려졌는지(Occluded) 판단(차폐 테스트)은 Depth Buffer 사이즈를 N배(샘플링 카운트)만큼 늘려서 판단한다.                  
+**커버리지 테스트로 해당 픽셀의 서브 샘플들 중 삼각형에 의해 덮힌 샘플에 픽셀 연산 결과 값을 저장**한다.                  
+렌더 타겟은 픽셀마다 샘플 카운트 개수만큼의 픽셀 쉐이딩 결과값을 가지고 있는 것이다.                
+이렇게 되면 한 픽셀 내부 서브 샘플들에는 서로 다른 삼각형으로부터 연산된 결과 값이 들어 있을 수 있게 된다.                   
+그래서 **MSAA 렌더타겟은 각 픽셀당 샘플 카운트 개수만큼의 픽셀 쉐이딩 결과 값을 저장하기 위한 메모리를 요구**한다.               
+또한 MSAA는 DepthTest(Occlusion Test)시 Depth 버퍼의 크기를 샘플링 카운트 개수(N) 배수만큼 요구한다.              
+이렇게 모은 서브 샘플들에 대해 리졸브 처리를 하여 픽셀 당 하나의 Output 결과 값을 만들어낸다.              
+리졸브에 사용되는 알고리즘은 다양한데 대표적인 방법으로는 픽셀의 서브 샘플들을 1/N로 평균내어 해당 픽셀의 Output 값을 만들어내기도 한다.            
+             
+![msaa_partial_coverage2](https://user-images.githubusercontent.com/33873804/206895506-4f1e5044-13e4-4bd9-bff9-7982f9ae5c70.png)        
+위 사진에서 픽셀(정사각형)의 중앙 지점에 대해 픽셀 쉐이딩 연산을 하고, 그 결과 값을 삼각형이 Cover하는 샘플에 저장한다.                 
+               
 
-용어 정리 :           
-SceneColor : Color 렌더타겟, 프레임 버퍼 (백버퍼와 다른 개념)        
-
-[MSAA란 1](https://www.gamedev.net/forums/topic/700858-multisampling-anti-aliasing-msaa-how-does-it-influence-the-performance/)       
-[MSAA란 2](https://computergraphics.stackexchange.com/questions/6139/how-does-msaa-performance-scale)                
-[MSAA란 3](https://mynameismjp.wordpress.com/2012/10/24/msaa-overview/)                
-                                 
 ```
 // Verify using both MSAA sample count AND the scene color surface sample count, since on GLES you can't have MSAA color targets,          
 // so the color target would be created without MSAA, and MSAA is achieved through magical means (the framebuffer, being MSAA,            
