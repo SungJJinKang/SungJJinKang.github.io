@@ -23,7 +23,7 @@ categories: ComputerScience ComputerGraphics
              
 결과적으로는... 한 프레임 당 화면에 2번 주사되지 못하고. 세 번째 프레임의 결과물이 화면에 세 번 주사되게 되었다. 한 화면이 길게 화면에 표시되게 된 것이다..            
 이는 유저에게 버벅임으로 느껴질 것이다. 다른 프레임보다 특정 프레임이 화면에 길게 표시되니 말이다.....      
-            
+세 번째 프레임이 비정상적으로 길게 표시되니 Frame Time 수치도 증가한다.              
 
 Frame Pacing은 이를 개선해준다.           
 ![framepacing2](https://user-images.githubusercontent.com/33873804/214901582-3ddbe14e-a97b-4705-8b36-36faa9ebb484.png)            
