@@ -71,11 +71,13 @@ layout: default
           </div>
           <div class="tag-container">
             {% for tag in post.tags %}
-            <a>
-              <span class="tag" data-tag="{{tag}}">
-                {{ site.data.format[tag] }}
-              </span>
-            </a>
+              {% if site.data.tags contains tag %}
+                <a>
+                  <span class="tag" data-tag="{{tag}}">
+                    {{ site.data.format[tag] }}
+                  </span>
+                </a>
+              {% endif %}
             {% endfor %}
           </div>
         </div>
