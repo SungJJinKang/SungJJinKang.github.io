@@ -78,4 +78,8 @@ BOOL ReadFile(
 
 Memory mapped 파일 방식이 항상 더 빠를 것 같지만 그렇지는 않고 파일의 데이터에 접근하는 패턴에 따라 어떤 방식으로 파일을 읽을지 결정해야한다.( [이 글](https://stackoverflow.com/questions/48994329/is-memory-mapped-i-o-worthwhile-for-sequential-processing)에서도 Memory mapped 파일 방식이 항상 빠르지만은 않다는 것을 보여준다. )                     
 
+------------------         
+
+[Linus Torvalds의 글](https://marc.info/?l=linux-kernel&m=95496636207616&w=2)에 Memory mapped 방식의 장단점이 잘 나와있다.         
+            
 [https://stackoverflow.com/questions/57813999/understanding-memory-mapping-conceptually](https://stackoverflow.com/questions/57813999/understanding-memory-mapping-conceptually),  [https://stackoverflow.com/questions/48994329/is-memory-mapped-i-o-worthwhile-for-sequential-processing](https://stackoverflow.com/questions/48994329/is-memory-mapped-i-o-worthwhile-for-sequential-processing),  [https://stackoverflow.com/questions/45972/mmap-vs-reading-blocks](https://stackoverflow.com/questions/45972/mmap-vs-reading-blocks), [https://marc.info/?l=linux-kernel&m=95496636207616&w=2](https://marc.info/?l=linux-kernel&m=95496636207616&w=2)                    
