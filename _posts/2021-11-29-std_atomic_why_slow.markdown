@@ -2,7 +2,7 @@
 layout: post
 title:  "std::atomic 느린 이유"
 date:   2021-11-29
-categories: ComputerScience
+tags: [C++, ComputerScience]
 ---
 
 std::atomic 연산은 mfence 명령어를 동반하는데 이는 CPU의 [Write-Combined 버퍼](https://sungjjinkang.github.io/computerscience/2021/09/28/nonTemporalMemoryHint.html)를 flush 해버린다. ( Cache에만 써도 Cache coherency로 코어간 데이터 동기화가 된다. )                  

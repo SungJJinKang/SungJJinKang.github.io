@@ -2,7 +2,7 @@
 layout: post
 title:  "x86_64 Address Mode, GOD 등등"
 date:   2022-12-04
-categories: ComputerScience
+tags: [ComputerScience]
 ---            
 
 [https://blog.yossarian.net/2020/06/13/How-x86_64-addresses-memory](https://blog.yossarian.net/2020/06/13/How-x86_64-addresses-memory),         

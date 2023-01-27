@@ -2,7 +2,7 @@
 layout: post
 title:  "Batch Rendering"
 date:   2022-05-01
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---
 
 [BatchBatchBatch.pdf](https://www.nvidia.com/docs/IO/8228/BatchBatchBatch.pdf),           

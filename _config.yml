@@ -2,7 +2,7 @@ title: SungJin Kang blog
 author: SungJin Kang
 email: hour30000@gmail.com
 description: about programming, game development
-show_excerpts: true # set to true to show excerpts on the homepage
+show_excerpts: false # set to true to show excerpts on the homepage
 permalink: /:title
 url: "https://sungjjinkang.github.io/"
 

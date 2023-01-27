@@ -2,7 +2,7 @@
 layout: post
 title:  "정적 링킹 라이브러리 ( .lib ) , 동적 링킹 라이브러리 ( .dll )"
 date:   2021-08-28
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 **정적 링킹 라이브러리**는 기본적으로 해당 라이브러리의 코드, 데이터가 실행 파일에 모두 포함된다. 그래서 실행 파일이 무겁고 프로그램 시작과 동시에 모든 정적 링킹 라이브러리들이 메모리에 로드된다.         

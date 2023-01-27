@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 FMobileSceneRenderer 분석 - 4 ( FMobileSceneRenderer::RenderForward )"
 date:   2022-04-24
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---
 
 중요도가 떨어지는 코드는        

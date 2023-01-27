@@ -2,7 +2,7 @@
 layout: post
 title:  "C++ 파일시스템에서 파일 전체를 긁어올 때 실수하는 점 ( vector::reserve()의 중요성 )"
 date:   2021-01-18
-categories: C++
+tags: [C++]
 ---
 
 C++ filsesystem을 사용하다 보면 파일 전체를 한꺼번에 긁어와야하는 일이 생긴다.

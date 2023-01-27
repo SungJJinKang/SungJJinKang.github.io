@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 렌더링 파이프라인 분석"
 date:   2022-02-26
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---
 
 - UE4의 렌더링 파이프라인을 살펴보고 싶으면 **FDeferredShadingSceneRenderer::Render**이나, **FMobileSceneRenderer::Render** ( 모바일용 )을 살펴보아라.  

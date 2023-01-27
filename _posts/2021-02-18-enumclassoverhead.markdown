@@ -2,7 +2,7 @@
 layout: post
 title:  "enum 대신 enum class를 사용할 때 성능 저하가 있을까?"
 date:   2021-02-18
-categories: C++
+tags: [C++]
 ---
 
 과거에는 enum class가 없어 enum 변수에 ineteger 값을 넣을 수 있었는 데 이것은 명시적 타입 캐스팅이 필요 없어 어찌 보면 편리해 보이기도 하지만 사람은 항상 실수를 하는 존재이기 때문에 알 수 없는 버그들을 유발하곤 했다.   

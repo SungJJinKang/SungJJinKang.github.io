@@ -2,7 +2,7 @@
 layout: post
 title:  "왜 heap영역은 stack보다 느릴까?"
 date:   2021-03-07
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 stack영역은 해당 프로그램에 배당된 stack 사이즈가 얼만큼 배당되어 있다.(물론 이것도 나중에 늘릴 수 있다.)

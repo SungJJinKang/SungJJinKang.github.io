@@ -2,7 +2,7 @@
 layout: post
 title:  "부모 클래스 소멸자에서 virtual 안붙이면 어디까지 호출되냐?"
 date:   2021-07-03
-categories: C++
+tags: [C++]
 ---
 
 ```cpp

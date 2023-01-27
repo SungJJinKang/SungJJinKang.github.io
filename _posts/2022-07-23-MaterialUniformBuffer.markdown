@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 매터리얼의 Uniform Buffer 생성, 갱신 과정"
 date:   2022-07-23
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---         
                 
 ![1](https://user-images.githubusercontent.com/33873804/180601109-935e52ef-7e76-42b6-97e9-78b6998fe791.png)                

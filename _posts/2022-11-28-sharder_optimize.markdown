@@ -2,7 +2,7 @@
 layout: post
 title:  "쉐이더 최적화 관련 ( Mali Offline Compiler 가이드 참고 )"
 date:   2022-11-28
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---            
                         
 ![1](https://user-images.githubusercontent.com/33873804/204327979-58dab9b6-0da9-4aa7-9809-2f2601b6e7f8.png)              

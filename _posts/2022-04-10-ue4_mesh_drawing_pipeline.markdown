@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 Mesh Drawing Pipeline, Mesh Auto Instancing 관련 리소스"
 date:   2022-04-17
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---
 
 - UE4 Mesh Drawing Pipeline     

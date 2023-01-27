@@ -2,7 +2,7 @@
 layout: post
 title:  "작업 요구 사항에 맞추어서 작업하기"
 date:   2021-08-24
-categories: COWORK
+tags: [COWORK]
 ---
 
 회사에서 일을 할 때는 요구 사항에 있는대로 그대로 작업물을 만들어야한다.        

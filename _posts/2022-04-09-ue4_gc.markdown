@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 GC"
 date:   2022-04-09
-categories: UE UnrealEngine ComputerScience
+tags: [UE]
 ---
 
 [https://unrealcommunity.wiki/memory-management-6rlf3v4i](https://unrealcommunity.wiki/memory-management-6rlf3v4i),            

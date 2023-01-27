@@ -2,7 +2,7 @@
 layout: post
 title:  "CPU와 GPU의 하드웨어적 관점에서의 차이"
 date:   2021-06-11
-categories: ComputerScience ComputerGraphics
+tags: [ComputerScience, ComputerGraphics]
 ---
 
 가장 큰 차이점은 CPU는 별개의 Instruction을 수행한다는 것이고 GPU는 하나의 Instruction으로 수 많은 각기 다른 데이터를 연산한다는 것이다.    

@@ -2,7 +2,7 @@
 layout: post
 title:  "나누기, 나머지 연산이 느린 이유"
 date:   2021-08-27
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 본격적으로 나누기 연산이 느린 이유에 대해 알아보기 전에 컴퓨터가 곱하기와 나누기 연산을 어떻게 하는지를 알아보자.       

@@ -2,7 +2,7 @@
 layout: post
 title:  "어떻게 언리얼 엔진4는 게임 스레드에서 렌더스레드로 데이터를 안전하게 전송할까?"
 date:   2022-03-27
-categories: ComputerScience ComputerGraphics UnrealEngine UE
+tags: [UE]
 ---
 
 언리얼 엔진4에서는 CPU를 게임 스레드, 렌더링 스레드로 분리하여 렌더링을 수행한다.      

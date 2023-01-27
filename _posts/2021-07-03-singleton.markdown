@@ -2,7 +2,7 @@
 layout: post
 title:  "싱글톤 만들 때 주의해야 할 점"
 date:   2021-07-03
-categories: DesignPattern
+tags: [DesignPattern]
 ---
 
 기본 생성자, 소멸자는 외부로부터 숨기고(private 혹은 protected)             

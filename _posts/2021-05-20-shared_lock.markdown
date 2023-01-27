@@ -2,7 +2,7 @@
 layout: post
 title:  "One Writer, Multiple Reader에서 불필요한 lock을 막기 위해 shared_mutex 사용하기"
 date:   2021-05-20
-categories: C++
+tags: [C++]
 ---
 
 shared_mutex는 쓰레드간 어떠한 공유되는 변수가 있을 때 어떠한 쓰레드들은 그 변수에 write를 수행하고 어떠한 쓰레드들은 read만을 수행할 때 read 쓰레드들이 불필요하게 lock을 수행하는 것을 방지하기 위해 사용된다.      

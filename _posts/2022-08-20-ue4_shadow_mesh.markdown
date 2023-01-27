@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 Shadow Pass에서는 Section 구분 없이 그리기"
 date:   2022-08-20
-categories: ComputerScience ComputerGraphics UE UnrealEngine
+tags: [UE]
 ---         
                     
 생각해보면 당연한거지만, UE4에서는 ShadowPass용 Mesh를 가능하다면 Section 구분 없이 합쳐서 한번만 그린다.                

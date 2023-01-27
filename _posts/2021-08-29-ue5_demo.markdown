@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진5 나나이트라는 기술이 이제서야 등장한 이유 ( LOD, SSD )"
 date:   2021-08-29
-categories: ComputerScience ComputerGraphics UE5
+tags: [ComputerScience, ComputerGraphics, UE5, UE]
 ---
 
 언리얼 엔진5 데모를 PS5에서 구동한 이유는 무엇일까??      

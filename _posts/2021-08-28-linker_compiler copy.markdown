@@ -2,7 +2,7 @@
 layout: post
 title:  "전치, 컴파일러, 링커, 로더에 대한 설명 ( + 동적 라이브러리 )"
 date:   2021-08-28
-categories: ComputerScience C++ 
+tags: [ComputerScience, C++] 
 ---
 컴파일 과정은 크게는 3가지 과정으로 나뉜다.       
 

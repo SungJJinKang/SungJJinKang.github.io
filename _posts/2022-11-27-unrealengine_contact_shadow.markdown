@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진 Contact Shadow"
 date:   2022-11-27
-categories: ComputerScience ComputerGraphics UE UnrealEngine
+tags: [UE]
 ---            
 
 일반적인 Shadow Map을 활용한 쉐도우 연산 :               

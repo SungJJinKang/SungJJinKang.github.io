@@ -2,7 +2,7 @@
 layout: post
 title:  "Why do we need multiple render passes and subpasses?"
 date:   2022-12-10
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---            
 
 [Why do we need multiple render passes and subpasses?](https://stackoverflow.com/a/48304000)

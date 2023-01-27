@@ -2,7 +2,7 @@
 layout: post
 title:  "Copy-on-write"
 date:   2021-09-25
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 Copy-on-write는 간단하게 말하면 어떤 데이터를 복사해야될 일이 생기는 경우 실제로 복사를 하지는 않고 기존의 데이터를 레퍼런스하고 있다고 데이터의 데이터를 변경해야할 경우가 되서야 비로소 실제로 데이터를 복사하는 것이다. 이를 통해 데이터 복사가 필요한 경우 실제로 복사를 하지 않고 자원 낭비를 막을 수 있다.                       

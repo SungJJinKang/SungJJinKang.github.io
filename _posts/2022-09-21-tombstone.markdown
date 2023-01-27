@@ -2,7 +2,7 @@
 layout: post
 title:  "안드로이드 Tombstone에서 함수의 이름을 찾는법?"
 date:   2022-09-21
-categories: ComputerScience
+tags: [ComputerScience]
 ---         
 
 이슈 진행 중 안드로이드 기기에서 가져온 Tombstone에서 콜스택 중 우리 프로젝트쪽 함수 이름이 드러나 있었다.       

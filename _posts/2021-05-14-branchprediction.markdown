@@ -2,7 +2,7 @@
 layout: post
 title:  "Branch Prediction에 대한 아주 구체적인 예시( virtual function call )"
 date:   2021-05-14
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 [CPPCON 영상](https://youtu.be/BP6NxVxDQIs)을 보다 Branch Prediction에 대해 알게되어 글을 적어보겠다.     

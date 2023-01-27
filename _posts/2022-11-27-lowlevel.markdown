@@ -2,7 +2,7 @@
 layout: post
 title:  "Low-level Thinking in High-level Shading Languages"
 date:   2022-11-27
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---            
 
 [Low-level Thinking in High-level Shading Languages](https://www.humus.name/Articles/Persson_LowLevelThinking.pdf)           

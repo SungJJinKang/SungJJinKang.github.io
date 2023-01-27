@@ -2,7 +2,7 @@
 layout: post
 title:  "캐시 일관성에 대해 ( 번역 )"
 date:   2021-04-08
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 이 글은 [Cache coherency에 대한 글](https://fgiesen.wordpress.com/2014/07/07/cache-coherency/)의 번역본이다.     

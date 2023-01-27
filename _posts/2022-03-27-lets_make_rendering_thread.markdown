@@ -2,7 +2,7 @@
 layout: post
 title:  "자체 게임 엔진에서 게임 스레드, 렌더 스레드 분리하기."
 date:   2022-03-27
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics, InHouseEngine]
 ---
 
 [얼마 전 작성한 글](https://sungjjinkang.github.io/computerscience/computergraphics/ue4/unrealengine4/2022/03/27/ue4_rendering_thread.html)에서 어떻게 언리얼 엔진4가 게임 스레드에서 렌더스레드로 데이터를 안전하게 전송하는지에 대해 다루어보았다.               

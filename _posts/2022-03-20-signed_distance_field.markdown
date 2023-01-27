@@ -2,7 +2,7 @@
 layout: post
 title:  "Signed Distance Field"
 date:   2022-03-20
-categories: ComputerGraphics
+tags: [ComputerGraphics]
 ---
 
 [Signed Distance Fields](http://bytewrangler.blogspot.com/2011/10/signed-distance-fields.html)                    

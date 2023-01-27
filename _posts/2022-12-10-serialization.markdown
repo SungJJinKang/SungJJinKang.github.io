@@ -2,7 +2,7 @@
 layout: post
 title:  "Serialization 관련 재밌는 아이디어"
 date:   2022-12-10
-categories: ComputerScience
+tags: [ComputerScience, C++]
 ---            
 
 [https://github.com/SergeyMakeev/Zmeya](https://github.com/SergeyMakeev/Zmeya),          

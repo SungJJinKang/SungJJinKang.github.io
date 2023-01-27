@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4에 대한 풍부한 이해를 돕는 영상들"
 date:   2022-03-20
-categories: UnrealEngine4 UnrealEngine UE
+tags: [UE]
 ---
 
 [The Unreal Engine Game Framework: From int main() to BeginPlay](https://youtu.be/IaU2Hue-ApI)                    

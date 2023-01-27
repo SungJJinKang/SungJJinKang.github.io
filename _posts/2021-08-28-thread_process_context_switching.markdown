@@ -2,7 +2,7 @@
 layout: post
 title:  "Process Context Switching vs Thread Context Switching"
 date:   2021-08-28
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 **프로세스**는 쉽게 말하면 현재 실행 중인 프로그램을 말한다. 이 프로세스는 **스택, 힙, 데이터, 코드 영역의 데이터들을 메모리에 가지고 있다.**               

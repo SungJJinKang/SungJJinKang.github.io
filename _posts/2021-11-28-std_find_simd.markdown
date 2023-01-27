@@ -2,7 +2,7 @@
 layout: post
 title:  "SIMD 명령어를 활용한 std::find"
 date:   2021-11-28
-categories: ComputerScience GameEngine
+tags: [C++, InHouseEngine]
 ---
 
 구현 중인 게임 엔진에서는 많은 개수의 item을 가진 std::vector 중 중간에 어떤 아이템을 삭제해주기 위해 간단한 트릭을 사용한다.       

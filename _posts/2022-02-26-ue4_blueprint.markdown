@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine 블루프린트가 상대적으로 느린 이유?"
 date:   2022-02-26
-categories: UnrealEngine4 UnrealEngine UE ComputerScience ComputerGraphics
+tags: [UE]
 ---
 
 ~~C++ 네이티브 코드의 경우 컴파일러단에서 최적화 ( 인라이닝, 레지스터 재할당, SIMD 레지스터 활용 등등..... )가 많이 들어감. CPU는 그 기계어를 곧바로 실행~~          

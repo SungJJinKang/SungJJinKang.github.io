@@ -2,7 +2,7 @@
 layout: post
 title:  "Swizzling ( GPU )"
 date:   2022-11-08
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---          
                  
 

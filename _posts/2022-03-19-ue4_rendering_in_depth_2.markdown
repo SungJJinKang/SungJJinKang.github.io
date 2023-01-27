@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 실시간 렌더링 심화 2"
 date:   2022-03-19
-categories: UE UnrealEngine ComputerGraphics
+tags: [UE]
 ---
               
  reference : [https://www.unrealengine.com/ko/onlinelearning-courses/an-in-depth-look-at-real-time-rendering](https://www.unrealengine.com/ko/onlinelearning-courses/an-in-depth-look-at-real-time-rendering)             

@@ -2,7 +2,7 @@
 layout: post
 title:  "condition_variable 작동 원리와 Hurry Up And Wait,  Spurious wakeups(가짜 Wake up) 문제"
 date:   2021-05-20
-categories: C++
+tags: [C++, ComputerScience]
 ---
 
 이 글에서는 condition_variable의 기본적인 작동 원리와 그와 관련된 두 문제인 Hurry Up And Wait, Spurious wakeups에 대해 알아보겠다.       

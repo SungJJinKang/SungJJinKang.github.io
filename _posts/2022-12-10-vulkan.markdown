@@ -2,7 +2,7 @@
 layout: post
 title:  "vulkan_best_practice_for_mobile_developers"
 date:   2022-12-10
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---            
 
 되게 좋은 내용들이 많다.      

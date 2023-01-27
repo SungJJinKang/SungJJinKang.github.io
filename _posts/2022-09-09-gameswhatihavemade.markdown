@@ -2,7 +2,7 @@
 layout: post
 title:  "지금까지 개발해온 게임, 작업물들 간단 정리"
 date:   2022-09-09
-categories: ComputerScience
+tags: [Life]
 ---         
                         
 추석 때 심심해서 적는 지금까지 개발해 온 게임, 작업물들 정리..            

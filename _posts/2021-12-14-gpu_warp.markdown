@@ -2,7 +2,7 @@
 layout: post
 title:  "GPU Warp ( 워프 ) ( GPU 하드웨어 관점에서 SoA 방식이 더 빠른 이유 )"
 date:   2021-12-14
-categories: ComputerScience ComputerGraphics
+tags: [ComputerScience, ComputerGraphics]
 ---
 
 이 글에서는 GPU로 데이터를 전송할 때 SoA형태로 데이터를 전송하는 것이 더 빠른 하드웨어적인 이유에 대해 알아보겠다.         

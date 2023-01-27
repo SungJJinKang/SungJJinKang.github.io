@@ -2,7 +2,7 @@
 layout: post
 title:  "string에서 특성 character를 다른 character로 교체하기"
 date:   2021-05-20
-categories: C++ Algorithm
+tags: [C++, Algorithm]
 ---
 
 얼마 전 코딩 테스트를 보다가 재밌는 문제를 풀었다.       

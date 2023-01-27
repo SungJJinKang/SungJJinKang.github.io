@@ -2,7 +2,7 @@
 layout: post
 title:  "Scalar Replacement of Aggregates"
 date:   2022-10-14
-categories: ComputerScience
+tags: [ComputerScience]
 ---         
                
 대충 설명하면 구조체나 Array 같은 Aggregate들의 멤버, Element 각각을 별개의 Scalar 데이터로 본다.         

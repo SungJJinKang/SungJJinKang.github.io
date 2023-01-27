@@ -2,7 +2,7 @@
 layout: post
 title:  "C++ Array Size"
 date:   2022-09-03
-categories: ComputerScience C++
+tags: [C++]
 ---         
                                                                
 <img width="497" alt="array size1" src="https://user-images.githubusercontent.com/33873804/188258611-7c8daa4b-781d-406f-a608-87cd796cd299.png">                 

@@ -2,7 +2,7 @@
 layout: post
 title:  "free된 메모리에 접근하기?? ( Free Block List )"
 date:   2021-05-23
-categories: C++ ComputerScience
+tags: [C++, ComputerScience]
 ---
 
 ```cpp

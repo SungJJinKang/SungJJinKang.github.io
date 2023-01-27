@@ -2,7 +2,7 @@
 layout: post
 title:  "reflection 시스템을 이용한 C++ 가비지 컬렉터"
 date:   2021-12-01
-categories: ComputerScience
+tags: [ComputerScience, InHouseEngine, C++]
 ---
 
 [지난번 만든 reflection 시스템](https://sungjjinkang.github.io/computerscience/gameengine/2021/11/12/reflection.html)을 이용하여 C++ 가비지 컬렉터를 만들 것이다.             

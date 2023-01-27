@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 CPU, GPU 둘 중 어느 곳이 병목되는지 찾기"
 date:   2022-04-10
-categories: UE UnrealEngine ComputerScience
+tags: [UE]
 ---
 
 <img width="532" alt="1" src="https://user-images.githubusercontent.com/33873804/162600451-5242b8f0-068f-4228-bc47-2ad3bd8dae63.png">              

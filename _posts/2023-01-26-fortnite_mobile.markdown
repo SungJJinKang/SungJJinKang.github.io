@@ -2,7 +2,7 @@
 layout: post
 title:  "A Year in a Fortnite"
 date:   2023-01-26
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---
                
 OpenGLES에서 적용할 수(도움이 될만한) 있을만한 것들만 정리해보면..              

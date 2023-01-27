@@ -2,7 +2,7 @@
 layout: post
 title:  "Arm Manga"
 date:   2023-01-26
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---            
 
 [https://interactive.arm.com/story/the-arm-manga-guide-to-the-mali-gpu/](https://interactive.arm.com/story/the-arm-manga-guide-to-the-mali-gpu/)

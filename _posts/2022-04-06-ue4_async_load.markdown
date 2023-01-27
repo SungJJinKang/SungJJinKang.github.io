@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 Asynchronous 에셋 로드 코드 분석"
 date:   2022-04-06
-categories: ComputerScience UnrealEngine UE
+tags: [UE]
 ---
 
 불필요한 코드 ( 여러 코멘트들, SHIPPING 빌드에서 빠지는 코드들, 디버깅용 코드들.... )들은 제거하였으니 풀 코드는 실제 소스 코드를 참고하세요.              

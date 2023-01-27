@@ -2,7 +2,7 @@
 layout: post
 title:  "열심이나 신뢰는 기본이지 장점이 아닙니다."
 date:   2022-04-09
-categories: Life
+tags: [Life]
 ---
 
 ![KakaoTalk_20220409_153345214](https://user-images.githubusercontent.com/33873804/162559895-798e73ff-cb94-4044-b3fa-5ea10ce24170.jpg)            

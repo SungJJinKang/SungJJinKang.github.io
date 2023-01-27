@@ -2,7 +2,7 @@
 layout: post
 title:  "함수 호출 전 스택 포인터를 16바이트에 Align 되게 만드는 이유"
 date:   2022-08-27
-categories: ComputerScience
+tags: [ComputerScience]
 ---         
 
 함수에서 SSE 레지스터를 활용한 SIMD 명령어를 수행할 가능성이 있으니 함수 호출 전 SSE 레지스터 사이즈에 Align 시켜주는 것.                        

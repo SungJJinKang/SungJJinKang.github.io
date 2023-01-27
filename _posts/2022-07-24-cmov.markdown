@@ -2,7 +2,7 @@
 layout: post
 title:  "Conditional Mov ( movc ), Branch, GPU"
 date:   2022-07-24
-categories: ComputerScience ComputerGraphics
+tags: [ComputerScience, ComputerGraphics]
 ---         
             
 ![1](https://user-images.githubusercontent.com/33873804/180638052-dae85a11-642f-4122-a431-ba05ee818699.png)            

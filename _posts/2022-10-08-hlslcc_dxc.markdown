@@ -1,16 +1,9 @@
 ---
 layout: post
-title:  "언리얼 엔진4 쉐이더 변환 도구 ( hlslcc, ShaderConductor )"
+title:  "언리얼 엔진 쉐이더 변환 도구 ( hlslcc, ShaderConductor )"
 date:   2022-10-09
-categories: ComputerScience ComputerGraphics UE4
+tags: [UE]
 ---         
-               
-최근에 UE5.1에 올라간 모바일용 AMD FSR을 UE4.27로 백포팅하는 과정에서 언리얼쪽에서 UE4에 대한 지원을 안하다 보니 쉐이더 컴파일부터 문제가 생겼다.        
-OpenGL ES 사용시 DXC 컴파일러를 요구하여 ForceDXC 옵션을 켜서 쉐이더 컴파일을 하면 "Push constant block cannot be expressed as neither std430 nor std140. ES-targets do not support GL_ARB_enhanced_layouts."라는 에러를 뿜어내고, 기존의 hlslcc 컴파일러 사용시 "min16float2"와 같은 명시적 Half precision floating-point 타입의 사용에 대해 에러를 뿜어냈다. 현재 리서치 중이라서 자세한 내용은 모른다.                               
-어쨌든 이 쪽 코드는 처음 보는거라서 최근에서야 hlslcc, ShaderConductor 것의 존재도 알았다.                 
-그래서 이에 관해 간단한 분석 글을 써보려한다.              
-           
------------------------------------------------------------------
                     
 언리얼 엔진은 기본적으로 hlsl ( D3D의 쉐이더 언어 )로 작성된 우버 쉐이더 코드를 필요에 따라 여러 전처리 매크로들을 On, Off하여 사용한다. 여기서 우버 쉐이더란 필요한 기능이 전부 들어 있는 하나의 쉐이더 코드로 필요한 기능을 하나의 쉐이더 코드에 다 때려 넣고 전처리 매크로로 필요한 기능한 포함시켜 컴파일하는 것을 의미한다. ( 자세한건 [여기](https://www.slideshare.net/blindrendererkr/3ds-max-26700918)를 참고하시길 바랍니다... )                
                  

@@ -2,7 +2,7 @@
 layout: post
 title:  "CPU Pipelining ( 번역 )"
 date:   2021-06-15
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 **CPU Pipelining이 작동하는 원리**        

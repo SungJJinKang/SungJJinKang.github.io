@@ -2,7 +2,7 @@
 layout: post
 title:  "GPU는 어떻게 Mip-map 레벨을 정하나?"
 date:   2022-02-08
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---
 
 아주 아주 간단하다. 그냥 삼각형을 가지고 화면상에 점 하나를 그려보면 된다.           

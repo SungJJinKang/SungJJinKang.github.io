@@ -2,7 +2,7 @@
 layout: post
 title:  "Adreno GPU 관련 정보"
 date:   2022-05-01
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---
       
 [Adreno GPU Overview](https://developer.qualcomm.com/sites/default/files/docs/adreno-gpu/developer-guide/gpu/overview.html),           

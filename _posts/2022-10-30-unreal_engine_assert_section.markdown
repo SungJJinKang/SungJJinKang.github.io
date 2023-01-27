@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진의 assert 코드들은 별개의 섹션으로 구분되어 있다?"
 date:   2022-10-30
-categories: ComputerScience UE UnrealEngine
+tags: [ComputerScience, UE, C++]
 ---          
                  
 assert 코드에서 앱을 죽이는 코드들은 어차피 실행되어서도 안되고, 실행되면 앱이 죽는 코드이기 때문에 프로그램의 생명 주기가 끝나기 직전까지 실행될 가능성이 없다.        

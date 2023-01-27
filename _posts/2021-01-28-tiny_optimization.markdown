@@ -2,7 +2,7 @@
 layout: post
 title:  "vector의 중간에 있는 element 빠르게 제거하기 ( swap_erase )"
 date:   2021-01-28
-categories: C++
+tags: [C++]
 ---
 
 현재 Doom 프로젝트에서 기본 밑바탕을 차지하는 Entity나 Component System을 만들고 있는 데 사소하지만 게임의 규모가 커지면 성능에 많은 영향을 미치는 최적화 방법을 하나 소개하고자 한다.   

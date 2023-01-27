@@ -2,7 +2,7 @@
 layout: post
 title:  "현대 GPU 아키텍쳐 이해하기 1 ( Graphics API에서 GPU로의 여정 )"
 date:   2021-09-04
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---
 
 이 글은 현대 GPU의 아키텍쳐와 동작원리를 대략적으로 설명하는  [A trip through the Graphics Pipeline 2011 - 1](https://fgiesen.wordpress.com/2011/07/01/a-trip-through-the-graphics-pipeline-2011-part-1/), [A trip through the Graphics Pipeline 2011 - 2](https://fgiesen.wordpress.com/2011/07/02/a-trip-through-the-graphics-pipeline-2011-part-2/)의 번역본입니다. 발번역이니 이해해주세요. ( 대충 이해는 가능 )             

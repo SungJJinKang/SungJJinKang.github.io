@@ -2,7 +2,7 @@
 layout: post
 title:  "OpenGL과 DirectX 차이"
 date:   2021-09-27
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---
 
 OpenGL과 DirectX 둘은 무엇이 다를까?           

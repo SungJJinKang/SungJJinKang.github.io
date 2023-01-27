@@ -2,7 +2,7 @@
 layout: post
 title:  "What is RSS and VSZ in Linux memory management"
 date:   2022-08-15
-categories: ComputerScience
+tags: [ComputerScience]
 ---         
                        
 [https://stackoverflow.com/a/21049737](https://stackoverflow.com/a/21049737)                       

@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 렌더링 최적화 관련"
 date:   2022-07-23
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---         
                 
 [Shadow Pass 전용 LOD Bias](https://www.reddit.com/r/unrealengine/comments/7stjf7/show_offshadow_lod_biasing/)                              

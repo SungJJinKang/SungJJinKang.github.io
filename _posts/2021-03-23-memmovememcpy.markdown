@@ -2,7 +2,7 @@
 layout: post
 title:  "memcpy vs memmove"
 date:   2021-03-23
-categories: C++
+tags: [C++]
 ---
 
 간단히 설명하면 memcpy는 데이터를 그대로 WORD단위로 복사한다.     

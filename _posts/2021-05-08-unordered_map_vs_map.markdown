@@ -2,7 +2,7 @@
 layout: post
 title:  "std::map vs std::unordered_map ( MSVC STL )"
 date:   2021-05-08
-categories: C++
+tags: [C++]
 ---
 
 **std::map은 트리 형태로 데이터를 배치하여 찾으려는 key값과 현재 위치한 node의 key값을 비교하여 그 비교 함수의 결과에 따라 트리의 왼쪽 자식 노드로 갈지 오른쪽 자식 노드로 갈지를 결정하여 이를 반복해 원하는 key값의 node를 찾는 방식이다.** 시간 복잡도로는 O(n)의 시간 복잡도를 가진다.                     

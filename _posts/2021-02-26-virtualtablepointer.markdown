@@ -2,7 +2,7 @@
 layout: post
 title:  "문뜻 발견한 virtual table pointer의 존재"
 date:   2021-02-26
-categories: C++ ComputerScience
+tags: [C++]
 ---
 
 예전에 virtual 함수를 찾을 때는 각 클래스가 가지고 있는 virtual table을 look up하여 오브젝트 타입에 맞는 virtual function을 찾는 다는 것을 배웠었다. 또한 이 virtual table를 look up을 위해서는 virtual table pointer라는 것을 모든 virtual class의 오브젝트들이 가지고 있다.     

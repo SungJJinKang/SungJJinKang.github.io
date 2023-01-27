@@ -2,7 +2,7 @@
 layout: post
 title:  "스팀덱 쉐이더 캐시, Vulkan"
 date:   2022-12-10
-categories: ComputerScience
+tags: [ComputerScience]
 ---            
 
 스팀덱은 스팀에서 자체적으로 수집한 쉐이더 바이너리를 받아와서 OS단에서 프리컴파일 해주나보다.         

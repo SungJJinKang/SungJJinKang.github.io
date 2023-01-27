@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine에서 Mesh의 LOD를 계산하고 렌더링에 반영하는 과정"
 date:   2022-07-24
-categories: UE UnrealEngine ComputerScience ComputerGraphics
+tags: [UE]
 ---         
           
           

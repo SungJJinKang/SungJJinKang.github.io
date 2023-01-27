@@ -2,7 +2,7 @@
 layout: post
 title:  "zero cost abstractions"
 date:   2022-12-14
-categories: ComputerScience ComputerGraphics
+tags: [ComputerScience]
 ---            
       
 [https://reviews.llvm.org/D99893](https://reviews.llvm.org/D99893),             

@@ -2,7 +2,7 @@
 layout: post
 title:  "x64 Shadow Space ( Spill space, Home space 라고도 부름)"
 date:   2022-12-04
-categories: ComputerScience
+tags: [ComputerScience]
 ---            
 
 x64의 기본 calling convention인 fast call에서는 함수의 파라미터를 기본적으로 레지스터로 전달함 ( 파라미터 4개까지는 레지스터로, 그 외는 스택에. )        

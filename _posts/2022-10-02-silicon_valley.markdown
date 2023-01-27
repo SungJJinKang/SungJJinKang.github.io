@@ -2,7 +2,7 @@
 layout: post
 title:  "책 리뷰 - 이기적 직원들이 만드는 최고의 회사"
 date:   2022-10-02
-categories: Book
+tags: [Book]
 ---         
                   
 느낀 점 :                      

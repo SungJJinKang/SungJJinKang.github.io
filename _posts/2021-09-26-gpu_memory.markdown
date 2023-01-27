@@ -2,7 +2,7 @@
 layout: post
 title:  "GPU 메모리 이해하기 ( NVIDEA )"
 date:   2021-09-26
-categories: ComputerScience ComputerGraphics
+tags: [ComputerGraphics]
 ---
 
 이 글에서는 GPU에 있는 메모리 종류부터 어떻게 DRAM에서 GPU로 데이터가 전송되는지 등 GPU의 메모리와 관련해서 포괄적으로 많은 내용들을 다룰 것이다.          

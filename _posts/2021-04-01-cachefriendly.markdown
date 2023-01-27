@@ -2,7 +2,7 @@
 layout: post
 title:  "캐시 친화적 코드란? (번역)"
 date:   2021-04-01
-categories: ComputerScience
+tags: [ComputerScience]
 ---
 
 게임과 같은 극한의 성능이 요구되는 환경에서는 캐시 hitting률을 높이는 것이 중요하다. 그래서 data - oriented design같이 data들을 configous하게 배치해서 캐시 히트를 높이고자 한다.       
