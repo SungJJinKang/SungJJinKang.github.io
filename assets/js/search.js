@@ -4,7 +4,7 @@ window.onload = function () {
     var sjs = SimpleJekyllSearch({
         searchInput: document.getElementById('searchbar'),
         resultsContainer: document.getElementById('search-results'),
-        json: '{{site.baseurl}}/search.json',
+        json: '{{site.url}}/search.json',
         searchResultTemplate: '<a href="{url}">{title}</a>',
         noResultsText: ''
     });
