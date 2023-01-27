@@ -1,0 +1,24 @@
+.tag {
+    border-radius: 5px;
+    padding: 5px;
+    margin: 2px;
+    font-size: 0.75rem;
+    color: #fff;
+    background-color: #426cb4;
+    opacity: 0.6;
+    cursor: pointer;
+    line-height: 2;
+    transition: 0.5s
+}
+
+.tag:hover {
+    opacity: 1
+}
+
+.tag.selected {
+    opacity: 1
+}
+
+a {
+    text-decoration: none;
+}
