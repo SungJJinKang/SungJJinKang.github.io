@@ -37,7 +37,7 @@ Decode 단계에서는 현재 명령어 레지스터(CIR)에 저장되어 있는
 
 **유효한 주소 읽기 단계** :    
 이 단계를 이해하기 위해서는 주소 모드에 대한 이해가 필요하다.            
-[이 글](https://sungjjinkang.github.io/computerscience/2021/06/09/addressing_mode.html)을 읽어보기 바란다.         
+[이 글](https://sungjjinkang.github.io/addressing_mode)을 읽어보기 바란다.         
 유효한 주소란 실제 명령어가 필요로 하는 데이터가 저장되어 있는 주소를 말한다.       
 
 디코딩 된 명령어가 메모리 명령어(메모리와 레지스터 사이의 데이터를 읽거나 쓰는 명령어)라면 Execute 단계는 다음 CPU 클락에 수행된다.    

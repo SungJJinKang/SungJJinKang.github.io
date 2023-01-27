@@ -12,7 +12,7 @@ references : [언리얼 엔진 4 모바일 렌더링 개요](https://youtu.be/qv
 - 모바일 환경은 파편화가 심함 ( 어떤 휴대폰은 OpenGL ES3.1을 지원하는데 어떤 휴대폰은 지원 안함.... )                 
 - **Unified Shader Architecture** : GPU 내부의 쉐이더 코어가 어떤 종류의 쉐이더든 처리 가능. ( Vertex Shader Bound하든, Pixel Shader Bound하든 쉐이더 코어를 전부 활용 )           
 <img width="573" alt="20220226181500" src="https://user-images.githubusercontent.com/33873804/155837536-0fcb3748-cdae-4291-b0ac-03231edcbe13.png">          
-- **Unified Memory Architure** : CPU와 GPU가 물리 메모리를 공유. CPU와 GPU의 MMU ( 가상 주소를 물리적 주소로 변환해주는 하드웨어 장치. [참고](https://sungjjinkang.github.io/computerscience/2021/03/05/virtualmemoryaddress.html) ) 가 같은 물리적 주소 공간을 사용. CPU -> GPU로의 메모리 복사가 필요없음. 그냥 GPU에서 바로 주소 참조해서 접근하면 된다.          
+- **Unified Memory Architure** : CPU와 GPU가 물리 메모리를 공유. CPU와 GPU의 MMU ( 가상 주소를 물리적 주소로 변환해주는 하드웨어 장치. [참고](https://sungjjinkang.github.io/virtualmemoryaddress) ) 가 같은 물리적 주소 공간을 사용. CPU -> GPU로의 메모리 복사가 필요없음. 그냥 GPU에서 바로 주소 참조해서 접근하면 된다.          
 - 배터리 : 메모리 사용량 높아지면 그 만큼 배터리도 많이 사용 -> 배터리 많이 사용하면 발열로 인한 쓰로틀링이 걸림 -> CPU, GPU 성능 저하.      
 
 --------------------------------

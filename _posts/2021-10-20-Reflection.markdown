@@ -8,7 +8,7 @@ tags: [ComputerScience, C++, InHouseEngine]
 이 글은 C++ 리플랙션 시스템을 직접 구현하기 위한 여러 시도들을 포함하고 있습니다.          
 
 그러나 매크로, 템플릿을 사용하는 방법의 한계를 깨닫고 [clReflect](https://github.com/Celtoys/clReflect)라는 clang의 컴파일러 내부 데이터 ( Compliatation Database )를 활용하는 방식으로 대체를 할 예정입니다.         
-[이에 대한 글](https://sungjjinkang.github.io/computerscience/2021/11/12/reflection.html)을 참고해주세요.          
+[이에 대한 글](https://sungjjinkang.github.io/reflection)을 참고해주세요.          
 
 
 ----------

@@ -283,7 +283,7 @@ bool ULevelStreaming::RequestLevel(UWorld* PersistentWorld, bool bAllowLevelLoad
 
             // ⭐⭐⭐⭐⭐⭐⭐
             // ASync로 패키지를 로드! 
-			// [참고 자료](https://sungjjinkang.github.io/ue4/unrealengine4/computerscience/2022/04/06/ue4_async_load.html)
+			// [참고 자료](https://sungjjinkang.github.io/ue4_async_load)
 			LoadPackageAsync
             (
                 DesiredPackageName.ToString(), 

@@ -15,7 +15,7 @@ tags: [ComputerScience, ComputerGraphics]
 그리고 마찬가지로 CPU 또한 외장 GPU가 가지고 있는 GPU 전용 램(VRAM)에 DMA를 통해 접근할 수 있다.
 각각 메모리 버스 통제권을 얻을 수 있다. 버스 마스터가 될 수 있는 주변장치는 필요에 따라 메모리 주소와 제어 신호를 제공 받아 CPU를 거치지 않고 DMA를 통해 시스템 메모리(DRAM)로 데이터를 전송할 수 있다.                   
 
-추가적으로 DMA에 대한 깊은 이해를 하고 싶으면 [이 글](https://sungjjinkang.github.io/computerscience/2021/09/26/IO_System.html)을 읽기바란다.            
+추가적으로 DMA에 대한 깊은 이해를 하고 싶으면 [이 글](https://sungjjinkang.github.io/IO_System)을 읽기바란다.            
 [메모리 맵 IO와 DMA의 차이](https://stackoverflow.com/questions/3851677/what-is-the-difference-between-dma-and-memory-mapped-io)        
 [GPU에서 주소 공간 관리](https://nemoux00.wordpress.com/2014/09/09/wayland-gpu-%EB%8F%99%EC%9E%91-%EC%9B%90%EB%A6%AC-%EB%A9%94%EB%AA%A8%EB%A6%AC-%EC%A3%BC%EC%86%8C-%EA%B3%B5%EA%B0%84-%EA%B4%80%EB%A6%AC/)
 

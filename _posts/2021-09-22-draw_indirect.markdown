@@ -59,7 +59,7 @@ for(shader))
 이는 Draw Indirect 방식이 어떤 Mesh, 어떤 Material을 가지고 몇번을 그릴 지 등의 모든 **데이터들이 CPU에서 GPU로 매번 전송하는 것이 아니라 VRAM에 미리 그러한 데이터들을 가져다두고 GPU에게 그 VRAM에 전송해둔 데이터를 가지고 그리라고 명령을 내리는 방식**이기 때문에 1번의 Draw Call을 가지고 렌더링하는 것이 가능한 것이다.           
 
 이 Draw Indirect 방법은 심지어는 특정 Mesh를 몇번 그릴지가 ( Instance 수 ) 바뀌지 않으면 그냥 GPU가 가지고 있는 Instance 수를 그대로 사용하면 되기 때문에 매번 CPU가 Instance 개수를 GPU에 전송해줄 필요도 없다. 그냥 Draw Indirect 커맨드만 달랑 전송하면 된다. CPU에서 GPU로 가는 데이터의 양이 획기적으로 줄었다.               
-CPU에서 GPU로 가는 데이터, 커맨드의 수가 줄었다는 것은 DRAM - VRAM간의 Memory Latency로 인한 속도 저하 뿐만 아니라 **CPU - GPU 간의 동기화가 줄었다는 것을 의미한다. 이 동기화가 주는데서 오는 성능 향상은 매우 크다.** ( GPU가 CPU에 Interrupt를 날리면 CPU는 이 Interrupt를 처리하기 위해 많은 시간을 소모한다. ) ( CPU - GPU간의 동기화에 대해 잘 모르겠다면 [이 글](https://sungjjinkang.github.io/computerscience/computergraphics/2021/09/04/gpu_architecture.html)을 읽어보기 바란다. )        
+CPU에서 GPU로 가는 데이터, 커맨드의 수가 줄었다는 것은 DRAM - VRAM간의 Memory Latency로 인한 속도 저하 뿐만 아니라 **CPU - GPU 간의 동기화가 줄었다는 것을 의미한다. 이 동기화가 주는데서 오는 성능 향상은 매우 크다.** ( GPU가 CPU에 Interrupt를 날리면 CPU는 이 Interrupt를 처리하기 위해 많은 시간을 소모한다. ) ( CPU - GPU간의 동기화에 대해 잘 모르겠다면 [이 글](https://sungjjinkang.github.io/gpu_architecture)을 읽어보기 바란다. )        
 
 어찌되었든 **핵심은 CPU와 GPU간의 상호작용 ( 데이터 전송, 동기화.... )을 최소화하는 것**이다.        
 

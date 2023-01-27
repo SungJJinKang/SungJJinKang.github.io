@@ -8,7 +8,7 @@ tags: [UE]
 [https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Rendering/MobileOptimization/OptimizationandDevelopmentBestPracticesforMobile/](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Mobile/Rendering/MobileOptimization/OptimizationandDevelopmentBestPracticesforMobile/),            
 [https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/),          
 [https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/TipsAndTricks/](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Mobile/Performance/TipsAndTricks/),               
-[https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/ue4_unreal_insights.html](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/ue4_unreal_insights.html),                  
+[https://sungjjinkang.github.io/ue4_unreal_insights](https://sungjjinkang.github.io/ue4_unreal_insights),                  
 [https://docs.unity3d.com/Packages/com.unity.adaptiveperformance@4.0/manual/user-guide.html#boost-mode](https://docs.unity3d.com/Packages/com.unity.adaptiveperformance@4.0/manual/user-guide.html#boost-mode),          
 [https://blog.unity.com/kr/technology/higher-fidelity-and-smoother-frame-rates-with-adaptive-performance](https://blog.unity.com/kr/technology/higher-fidelity-and-smoother-frame-rates-with-adaptive-performance),             
 [https://www.gdcvault.com/play/1022386/Unreal-Engine-4-Mobile-Graphics](https://www.gdcvault.com/play/1022386/Unreal-Engine-4-Mobile-Graphics),            

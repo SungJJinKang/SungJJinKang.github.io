@@ -11,7 +11,7 @@ tags: [ComputerGraphics]
 GPU내에는 수백개의 SP ( Scalar Processor )로 구성되어 있다. 이 SP는 쉽게 생각하면 CPU 코어라고 생각하면 된다.      
 그리고 이 SP는 여러개의 쓰레드로 구성되어 있다.                       
 그리고 이 **쓰레드들을 32개 ( 혹은 64개 ) 모은 것을 Warp**라고 한다. 그리고 이 Warp를 여러개 ( 48개~64개 ) 모아 하나의 SM ( Streaming Multiprocessor )을 구성한다.       
-자세한 것은 [이 글](https://sungjjinkang.github.io/computerscience/computergraphics/2021/09/09/gpu_architecture2.html)을 참고하기 바란다.            
+자세한 것은 [이 글](https://sungjjinkang.github.io/gpu_architecture2)을 참고하기 바란다.            
 
 본론으로 들어가서 **하나의 Warp ( 쓰레드 그룹 ) 내의 쓰레드들은 반드시 동일한 종류의 연산을 수행해야한다.**              
 이 말은 Warp 내의 쓰레드들은 동시점에 동일한 연산을 수행해야하기 때문에 분기점을 만났을 때 해당 분기가 자신 ( 쓰레드 )은 연산을 할 필요가 없는 분기이더라도 다른 쓰레드를 따라서 같이 연산을 해야한다는 뜻이다. ( 이것이 GPU가 SIMT 연산을 한다고 알려진 이유이다. ) ( Volta 아키텍쳐부터는 Warp 내의 쓰레드간의 독립된 스케줄링이 가능하다고는 하나 추가적인 코드 작성이 필요한 것 처럼 보인다. 자세한 것은 [이 글](https://docs.nvidia.com/cuda/volta-tuning-guide/index.html#sm-independent-thread-scheduling)을 참고하기 바란다 )            

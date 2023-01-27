@@ -20,7 +20,7 @@ GPU까지 해서 **CPU의 게임 스레드, 렌더 스레드(Draw 스레드), GP
                     
 D3D12, Vulkan에 와서는 RHI 스레드라는 것을 만들어서 렌더 스레드에서는 플랫폼 독립적인 커맨드 큐를 CPU쪽에 생성해두었다가, RHI 스레드에서 목표로 하는 플랫폼(Graphics API)에 맞는 그래픽 API를 호출해준다. 그러나 필자의 게임 엔진은 D3D11, OpenGL만을 지원하기 때문에 그래픽 API를 호출하는 부분도 렌더 스레드에 넣을 생각이다.             
                 
-참고 자료 : [언리얼 엔진4 렌더링 파이프라인 분석 - SungJJinKang](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/ue4_rendering.html), [그래픽 프로그래밍 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/Overview/), [스레디드 렌더링](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ThreadedRendering/), [병렬 렌더링 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/)            
+참고 자료 : [언리얼 엔진4 렌더링 파이프라인 분석 - SungJJinKang](https://sungjjinkang.github.io/ue4_rendering), [그래픽 프로그래밍 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/Overview/), [스레디드 렌더링](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ThreadedRendering/), [병렬 렌더링 개요](https://docs.unrealengine.com/4.27/ko/ProgrammingAndScripting/Rendering/ParallelRendering/)            
             
 ----------------------------------------------------           
             
@@ -182,7 +182,7 @@ void FScene::AddPrimitiveSceneInfo_RenderThread(FPrimitiveSceneInfo* PrimitiveSc
 이후 렌더 스레드는 게임 스레드에서 전송된 Task(람다)를 처리하며 "Scene::AddPrimitiveSceneInfo_RenderThread" 함수를 호출하여 게임 스레드의 "UPrimitiveComponent"와 관련된 데이터를 반영한다.             
 "FPrimitiveSceneInfo" 데이터는 임시로 "FScene::AddedPrimitiveSceneInfos"에 저장이 되었다가, 다음 프레임에 "FScene::UpdateAllPrimitiveSceneInfos" 함수가 호출되며 렌더링에 반영된다.               
 "FSceneRenderer::Render" 함수에서 "FScene::UpdateAllPrimitiveSceneInfos"를 호출한다.         
-FScene::UpdateAllPrimitiveSceneInfos의 코드에 대한 분석은 [이 글](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)에서 자세히 다루었다.                                       
+FScene::UpdateAllPrimitiveSceneInfos의 코드에 대한 분석은 [이 글](https://sungjjinkang.github.io/FMobileSceneRenderer_1)에서 자세히 다루었다.                                       
 
 
 비슷하게 SceneComponent의 Transform 데이터 ( 위치, 회전, 스케일 )가 변경되었을 때도 이를 렌더스레드에 반영한다.         
@@ -488,7 +488,7 @@ void UActorComponent::DoDeferredRenderUpdates_Concurrent()
 ------------------------------------------------------
            
 이 글에서는 언리얼 엔진4가 렌더링과 관련된 데이터를 어떻게 게임스레드에서 렌더스레드로 안전하게, 성능을 해치지 않고 전달하는지에 대해 알아보았다.                          
-그럼 다음에는 게임 스레드로부터 전송된 데이터들을 가지고 렌더스레드가 어떻게 렌더링을 수행하는지에 대해 [이 글](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/02/26/FMobileSceneRenderer.html)에서 알아보겠다.           
+그럼 다음에는 게임 스레드로부터 전송된 데이터들을 가지고 렌더스레드가 어떻게 렌더링을 수행하는지에 대해 [이 글](https://sungjjinkang.github.io/FMobileSceneRenderer)에서 알아보겠다.           
 여러 SceneRenderer 중에서 모바일 플랫폼에서 사용되는 "FMobileSceneRenderer"에 대해 집중적으로 탐구를 해볼 예정이다.            
                
 -------------------------------------------------------          

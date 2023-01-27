@@ -5,9 +5,9 @@ date:   2021-12-01
 tags: [ComputerScience, InHouseEngine, C++]
 ---
 
-[지난번 만든 reflection 시스템](https://sungjjinkang.github.io/computerscience/gameengine/2021/11/12/reflection.html)을 이용하여 C++ 가비지 컬렉터를 만들 것이다.             
+[지난번 만든 reflection 시스템](https://sungjjinkang.github.io/reflection)을 이용하여 C++ 가비지 컬렉터를 만들 것이다.             
 
-이전에도 [메모리 누수를 방지하기 위한 구조](https://sungjjinkang.github.io/computerscience/gameengine/2021/09/25/dangling_pointer.html)가 존재했지만 이 방법은 씬이 끝나거나 특수한 상황에서 임의로 모든 DObject들을 한꺼번에 회수해주는 기능이라 엄연히 참조가 되지 않은 오브젝트를 주기적으로 회수해주는 가비지 컬렉터와는 역할이 다르다.               
+이전에도 [메모리 누수를 방지하기 위한 구조](https://sungjjinkang.github.io/dangling_pointer)가 존재했지만 이 방법은 씬이 끝나거나 특수한 상황에서 임의로 모든 DObject들을 한꺼번에 회수해주는 기능이라 엄연히 참조가 되지 않은 오브젝트를 주기적으로 회수해주는 가비지 컬렉터와는 역할이 다르다.               
 
 **언리얼 엔진의 가비지 컬렉터**를 생각하면 된다.       
 가비지 컬렉터는 루트 오브젝트부터 프로퍼티들을 순회하면서 ( 리플렉션 데이터 이용 ) 최종적으로 **참조되지 않은 오브젝트를 회수**한다.          
@@ -29,7 +29,7 @@ tags: [ComputerScience, InHouseEngine, C++]
 **동작 원리**           
 
 - Unreachability 플래그 셋팅 단계 ( 1 단계 )                 
-**프로그램 내의 모든 DObject ( 게임 내 거의 모든 클래스들의 조상 클래스 [참고](https://sungjjinkang.github.io/computerscience/gameengine/2021/09/25/dangling_pointer.html) )들의 Unreachability 플래그를 1로 셋팅**한다. 이 플래그도 캐시 극대화를 위해 연속되게 배치하였다. ( SOA!! )                       
+**프로그램 내의 모든 DObject ( 게임 내 거의 모든 클래스들의 조상 클래스 [참고](https://sungjjinkang.github.io/dangling_pointer) )들의 Unreachability 플래그를 1로 셋팅**한다. 이 플래그도 캐시 극대화를 위해 연속되게 배치하였다. ( SOA!! )                       
 
 
 - Mark 단계 ( 2 단계 )              
@@ -68,7 +68,7 @@ tags: [ComputerScience, InHouseEngine, C++]
 일단은 False Sharing과 같은 문제들을 차치해두고 단순히 **멀티스레드로 구현을 해보니 Mark 단계의 성능이 3배가 빨라졌다.**                 
 매우 만족하는 결과이다.            
 
-Marking 중인 오브젝트 개수와 Marking이 끝난 오브젝트 개수를 카운팅하기 std::atomic을 사용하는데 엔티티 개수가 많아질 수록 카운팅 연산 횟수가 늘어나면서 인접한 atomic 변수들간의 **[false sharing](https://sungjjinkang.github.io/computerscience/2021/05/14/cachecohrencyAndFalsesharing.html)**이 우려되어서 중간에 padding을 넣어주었다.                   
+Marking 중인 오브젝트 개수와 Marking이 끝난 오브젝트 개수를 카운팅하기 std::atomic을 사용하는데 엔티티 개수가 많아질 수록 카운팅 연산 횟수가 늘어나면서 인접한 atomic 변수들간의 **[false sharing](https://sungjjinkang.github.io/cachecohrencyAndFalsesharing)**이 우려되어서 중간에 padding을 넣어주었다.                   
 
 
 ```cpp

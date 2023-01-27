@@ -23,13 +23,13 @@ UGameViewportClient::Draw -> FRendererModule::BeginRenderingViewFamily -> Render
 
 주요 코드들 위주로 챕터를 나누어서 소개할 것이다.         
 
-1. [FScene::UpdateAllPrimitiveSceneInfos](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_1.html)            
+1. [FScene::UpdateAllPrimitiveSceneInfos](https://sungjjinkang.github.io/FMobileSceneRenderer_1)            
             
-2. [FMobileSceneRenderer::InitViews](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_2.html)          
+2. [FMobileSceneRenderer::InitViews](https://sungjjinkang.github.io/FMobileSceneRenderer_2)          
           
-3. [FSceneRenderer::RenderCustomDepthPass](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_3.html)         
+3. [FSceneRenderer::RenderCustomDepthPass](https://sungjjinkang.github.io/FMobileSceneRenderer_3)         
         
-4. [FSceneRenderer::RenderForward](https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/24/FMobileSceneRenderer_4.html)             
+4. [FSceneRenderer::RenderForward](https://sungjjinkang.github.io/FMobileSceneRenderer_4)             
 
 
 
@@ -282,7 +282,7 @@ void FMobileSceneRenderer::Render(FRHICommandListImmediate& RHICmdList)
 	// 모바일 GPU의 경우에는 Depth Pre Pass가 불필요 하다고 한다.
 	// 오히려 성능에 해가된다고....
 	// reference : 
-	// https://sungjjinkang.github.io/computerscience/computergraphics/2022/04/24/mobile_gpu_hidden_surface_removal.html
+	// https://sungjjinkang.github.io/mobile_gpu_hidden_surface_removal
 	//
 	// EarlyZPassMode가 DDM_AllOpaque인 경우. 
 	if (bIsFullPrepassEnabled)

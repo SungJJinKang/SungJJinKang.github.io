@@ -9,12 +9,12 @@ tags: [ComputerScience, ComputerGraphics]
 
 GPU는 원래 그래픽 어플리케이션의 연산을 위해 개발되었다. 그래픽 어플리케이션에서는 많게는 수 만개의 서로 다른 데이터들에 똑같은 하나의 연산을 수행한다.(예를 들면 곱셈을 100번 하거나 덧셈을 100번 하거나...) 그래서 GPU는 SIMD(Single Instruction, Multiple Datas)나 SIMT(Single Instruction, Multiple Threads) 연산을 사용하여 여러개의 명령어를 실행하는 대신 하나의 명령어만을 사용하여 오버헤드를 줄인다.      
 이후 이렇게 똑같은 연산을 수 만번 해야하는 그래픽 분야 외에도 그러한 연산이 필요한 분야에서 널리 쓰이게 되었다. ( GPGPU )    
-요약하자면 **GPU의 주된 특징은 여러 수 많은(많으면 수 백만) 데이터들에 대해 간단한 연산(!!)을 동시에(Pararrel하게!) 수행한다는 것이다.** ( [참고](https://sungjjinkang.github.io/computerscience/computergraphics/2021/09/04/gpu_architecture.html) )       
+요약하자면 **GPU의 주된 특징은 여러 수 많은(많으면 수 백만) 데이터들에 대해 간단한 연산(!!)을 동시에(Pararrel하게!) 수행한다는 것이다.** ( [참고](https://sungjjinkang.github.io/gpu_architecture) )       
 이렇게 똑같은 연산을 고도로 병렬화한다하여 GPU는 SIMT ( Single Instruction, Multi Threads ) 연산에 장점이 있다고 알려져있다.                    
 
-반면에 **CPU는 연속된(!) 여러 복잡한 연산을 가능하면 빠르게 수행하는 것에 최적화**되어 있다. 그러니깐 서로 다른 연속된 명령어(연산)들을 가능한 빠르게 수행하는 것이 목적인 것이다. 이를 위해 CPU는 [파이프라이닝](https://sungjjinkang.github.io/computerscience/2021/06/09/cpu_pipelining.html)이나 [캐싱](https://sungjjinkang.github.io/computerscience/2021/04/01/cachefriendly.html), [분기 예측](https://sungjjinkang.github.io/computerscience/2021/05/14/branchprediction.html), [Out-of-Order Execution](https://sungjjinkang.github.io/computerscience/2021/05/13/MemoryReordering.html) 등을 활용한다. CPU에서 하나의 연산을 수행하기 위해 사용되는 컴퓨터 자원(전력)은 대부분 파이프라인을 활용하여 명령어를 관리하는데 사용된다. 그러니깐 예를들면 곱셈 연산을 한다고치면 실제로 컴퓨터가 곱셈을 하는데 필요한 컴퓨터 자원보다 파이프라이닝을 관리하는데 더 많은 컴퓨팅 자원이 사용된다는 것이다.        
+반면에 **CPU는 연속된(!) 여러 복잡한 연산을 가능하면 빠르게 수행하는 것에 최적화**되어 있다. 그러니깐 서로 다른 연속된 명령어(연산)들을 가능한 빠르게 수행하는 것이 목적인 것이다. 이를 위해 CPU는 [파이프라이닝](https://sungjjinkang.github.io/cpu_pipelining)이나 [캐싱](https://sungjjinkang.github.io/cachefriendly), [분기 예측](https://sungjjinkang.github.io/branchprediction), [Out-of-Order Execution](https://sungjjinkang.github.io/MemoryReordering) 등을 활용한다. CPU에서 하나의 연산을 수행하기 위해 사용되는 컴퓨터 자원(전력)은 대부분 파이프라인을 활용하여 명령어를 관리하는데 사용된다. 그러니깐 예를들면 곱셈 연산을 한다고치면 실제로 컴퓨터가 곱셈을 하는데 필요한 컴퓨터 자원보다 파이프라이닝을 관리하는데 더 많은 컴퓨팅 자원이 사용된다는 것이다.        
 
-또 다른 주 된 차이점으로는 CPU는 코어(Processing Unit)간의 [Cache coherent](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)를 가지고 있지만 GPU는 그렇지 않다. GPU의 캐시는 Write - Through 방식 ( 캐시에도 쓰고 VRAM에도 곧 바로 쓰는 )이기 때문에 Cache Coherent가 필요가 없는 것이다.            
+또 다른 주 된 차이점으로는 CPU는 코어(Processing Unit)간의 [Cache coherent](https://sungjjinkang.github.io/cachecoherency)를 가지고 있지만 GPU는 그렇지 않다. GPU의 캐시는 Write - Through 방식 ( 캐시에도 쓰고 VRAM에도 곧 바로 쓰는 )이기 때문에 Cache Coherent가 필요가 없는 것이다.            
 
 캐시 사이즈도 차이가 큰데 **GPU는 엄청난 수의 코어(SP, Scalar Processor)를 가지고 있기 때문에 그 만큼 코어의 레이스터의 개수도 엄청 많이 필요하다.** ( GPU의 SM당 보통 6.5만 개의 레지스터를 가진다. 또한 이러한 SM은 SM에서 실행되는 여러 스레드의 Context 정보를 저장하기 위해서 큰 레지스터를 가진다. ) 이 때문에 상대적으로 GPU의 캐시(L1..) 사이즈는 매우 작다. 그래서 심지어는 90%까지도 캐시 미스가 발생할 수 있다고 한다.      
 반면 **CPU는 코어 개수가 적으니 다이에 상대적으로 큰 사이즈의 캐시를 Die에 넣을 수 있다.**                 

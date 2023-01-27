@@ -115,7 +115,7 @@ lockingVersion    5229011 ns       250000 ns         1000
 ```
 
 놀랍게도 lockingVersion이 훨씬 더 빠르다. 이 이유는 Cache coherency 때문이다.     
-MESI 프로토콜 ( 뭔지 모르면 [이 글](https://sungjjinkang.github.io/computerscience/2021/04/06/cachecoherency.html)을 참고하라 )로 인해 atomicVersion는 직전에 a++을 한 thread와 현재 a++를 할 thread가 다른 코어(물리적 코어)에 속해 있으면 직전의 a++을 한 thread가 Cache를 flush하기를 기다려야한다.(MESI 상태에서는 E상태를 놓아줘야한다)      
+MESI 프로토콜 ( 뭔지 모르면 [이 글](https://sungjjinkang.github.io/cachecoherency)을 참고하라 )로 인해 atomicVersion는 직전에 a++을 한 thread와 현재 a++를 할 thread가 다른 코어(물리적 코어)에 속해 있으면 직전의 a++을 한 thread가 Cache를 flush하기를 기다려야한다.(MESI 상태에서는 E상태를 놓아줘야한다)      
 그렇다면 atomicVersion는 4개의 thread가 동시에 a++를 수 없이 하는 데 이 경우 엄청난 횟수의 Cache flush가 발생한다. 대걔 L1캐쉬는 코어 전용으로 있으니 L2캐시에 현재 L1캐시의 데이터를 옮기는 작업을 수 없이 수행해야한다. 이렇게 Cache를 flush하는 동작은 느릴 수 밖에 없다.         
 
 반면 lockingVersion은 Cache flush를 3번만 수행하면 되니 multi threading의 이점을 전혀 활용하지 못함에도 불구하고 atomicVersion 보다 훨씬 빠른 것이다.      
@@ -258,7 +258,7 @@ ThreadCount에 따라 엄청난 실행 시간 차이를 보인다.
 왜 이런 결과가 나왔을까??    
 바로 False sharing 때문이다.    
 간단히 설명하면 같은 Cache line에 속해 있는 데이터를 write 했을 때는 서로 다른 영역의 데이터 임에도 불구하고 Cache Coherency(Cache flush)가 작동한다는 것이다.      
-False sharing에 대해 자세히 알고 싶다면 [이 글](https://sungjjinkang.github.io/computerscience/2021/04/01/falsesharing.html)을 보기 바란다.      
+False sharing에 대해 자세히 알고 싶다면 [이 글](https://sungjjinkang.github.io/falsesharing)을 보기 바란다.      
 
 그럼 이 코드들을 개선해보자.        
 
@@ -292,7 +292,7 @@ static void ThreadCount2_Aligned(benchmark::State& state)
 }
 ```
 
-aligned_atomic_int라는 새로운 struct를 만들었는 데 이 struct는 std::atomic<int>를 멤버변수로 가지고 alignas(64)를 통해 변수를 캐시라인(64 byte)에 align되게 만들었다. ( memory alignment에 대해 모른다면 [이 글](https://sungjjinkang.github.io/computerscience/2021/03/28/memoryalignment.html)을 읽어보기 바란다. )      
+aligned_atomic_int라는 새로운 struct를 만들었는 데 이 struct는 std::atomic<int>를 멤버변수로 가지고 alignas(64)를 통해 변수를 캐시라인(64 byte)에 align되게 만들었다. ( memory alignment에 대해 모른다면 [이 글](https://sungjjinkang.github.io/memoryalignment)을 읽어보기 바란다. )      
 이렇게 하면 thread가 증감하는 변수 a, b, c, d는 서로 다른 캐시 라인에 속해있으므로 서로 다른 코어에 속한 thread가 증감을 하여도 Cache flush가 필요없다.      
 
 벤치마크 결과를 보자.      

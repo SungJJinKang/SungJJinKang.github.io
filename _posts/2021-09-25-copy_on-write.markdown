@@ -21,4 +21,4 @@ Copy-on-write는 간단하게 말하면 어떤 데이터를 복사해야될 일�
 
 --------------
 
-이 글의 내용이 약간 부정확할 수도 있다. 정확한 내용은 [이 글](https://sungjjinkang.github.io/computerscience/2021/09/29/Window_Memory.html)을 읽으라.        
+이 글의 내용이 약간 부정확할 수도 있다. 정확한 내용은 [이 글](https://sungjjinkang.github.io/Window_Memory)을 읽으라.        

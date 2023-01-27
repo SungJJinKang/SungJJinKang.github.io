@@ -1005,7 +1005,7 @@ static void BeginOcclusionTests(
 		// 미리 저장해둔 Occlusion Query들에 대한 Query 수행 커맨드를 RHI 스레드로 전송한다.
 		//
 		// GroupedOcclusionQueries와 IndividualOcclusionQueries는 이전 InitViews 단계에서 저장을 해두었었다.      
-		// 참고 : https://sungjjinkang.github.io/unrealengine4/ue4/computerscience/computergraphics/2022/04/16/FMobileSceneRenderer_2.html
+		// 참고 : https://sungjjinkang.github.io/FMobileSceneRenderer_2
 		if (ViewQuery.bFlushQueries)
 		{
 			VertexShader->SetParameters(RHICmdList, View);

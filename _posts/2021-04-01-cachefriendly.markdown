@@ -84,7 +84,7 @@ M[0][0] (DRAM) + M[1][0] (DRAM) + M[0][1] (DRAM) + M[1][1] (DRAM)
 
 **예측 불가능 한 분기(if)는 피하라**
 
-현대 아키텍쳐 특징인 파이프라인과 컴파일로는 메모리 접근으로 인한 지연을 최소하 하기 위한 코드 재배치에 매우 능숙하다. 너의 핵심 코드가 예측 불가능한 분기를 가지고 있을 때 데이터를 미리 가져오는 것[Cache Prefetch](https://sungjjinkang.github.io/computerscience/2021/05/14/CachePrefetcher.html)을 거의 불가능하다. 이것은 더 많은 캐시 미스로 이끌 것이다.             
+현대 아키텍쳐 특징인 파이프라인과 컴파일로는 메모리 접근으로 인한 지연을 최소하 하기 위한 코드 재배치에 매우 능숙하다. 너의 핵심 코드가 예측 불가능한 분기를 가지고 있을 때 데이터를 미리 가져오는 것[Cache Prefetch](https://sungjjinkang.github.io/CachePrefetcher)을 거의 불가능하다. 이것은 더 많은 캐시 미스로 이끌 것이다.             
 
 아래의 링크가 이에 대해 잘 설명하고 있다 : [Why is processing a sorted array faster than processing an unsorted array?](https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-an-unsorted-array)          
 

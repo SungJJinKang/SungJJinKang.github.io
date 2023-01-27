@@ -45,7 +45,7 @@ condition_variable을 사용하면서 주의해야할 것이 있다.
 
 그래서 이를 해결하기 위해서는 쓰레드 B에서 조건 변수를 수정하고 notify하기 전 반드시 쓰레드 A가 condition_variable에서 lock하는 mutex를 lock한 후 수정, notify하여야 한다.     
 이렇게 하면 조건 변수를 수정하고 notify하는 코드 블록과 Predicate를 검사하고 다시 waiting하는 코드 블록이 동시에 진행될 수 없기 때문에 위와 같은 문제를 막을 수 있다.       
-자세한건 [이 글](https://sungjjinkang.github.io/computerscience/2021/03/28/condtionvariable_atomic.html)을 참고하라.              
+자세한건 [이 글](https://sungjjinkang.github.io/condtionvariable_atomic)을 참고하라.              
   
 condition_variable의 사용 방법은 아래와 같다.     
 

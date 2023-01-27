@@ -178,4 +178,4 @@ namespace ConstructorHelpersInternal
 }
 ```
 
-CDO를 생성하는 코드는 [이 글](https://sungjjinkang.github.io/ue4/unrealengine4/computerscience/2022/04/10/ue4_cdo_construction_load.html)을 참고하라.
+CDO를 생성하는 코드는 [이 글](https://sungjjinkang.github.io/ue4_cdo_construction_load)을 참고하라.

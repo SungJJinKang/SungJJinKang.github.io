@@ -41,7 +41,7 @@ Culing의 종류로는 View Frustum Culling과 Occlusion Culling이 있다.
 
 우선 1번째 요소에 대해 살펴보자.    
 SIMD 사용에 최적화된 형태로 데이터들을 Linear하게 배치한 후 SIMD 연산을 통해 연산속도를 최대한으로 끌어내는 방법이다.      
-SIMD에 대해서는 [내가 쓴 글](https://sungjjinkang.github.io/c++/2021/03/22/SIMD.html)을 참고해보기 바란다.    
+SIMD에 대해서는 [내가 쓴 글](https://sungjjinkang.github.io/SIMD)을 참고해보기 바란다.    
 SIMD 명령어는 적게는 128bit의 데이터가 연속되어 있어야 하는 데 float형(4byte)으로는 4개의 float 데이터가 연속되어 있어야 한다.     
 
 그 중에서도 Frostbite의 View Frustum Culling의 핵심 연산부분을 소개해 보겠다. 

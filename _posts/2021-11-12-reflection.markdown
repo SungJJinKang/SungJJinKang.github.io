@@ -93,7 +93,7 @@ output : 94025612332728(!!!) 94025612332720
 그러므로 위의 경우 포인터 a는 실제 클래스 C의 오브젝트에서 포인터 사이즈 ( virtual table pointer )를 더한 주소를 가리키고 있게 된다.        
 이는 클래스 C에서 상속을 할 때 클래스 DObject를 두 번째로 상속하였기 때문이다.        
 
-이는 현재 필자의 엔진에서 사용 중인 타입 캐스팅에서 큰 문제가 된다. 길게는 설명하지 않겠고 필자의 엔진에서는 런타임 타입 캐스팅에서 reinterpret_cast를 사용한다. ( 자세한건 [이 글](https://sungjjinkang.github.io/computerscience/c++/2021/10/24/fast_dynamic_cast.html)을 읽어보라. )           
+이는 현재 필자의 엔진에서 사용 중인 타입 캐스팅에서 큰 문제가 된다. 길게는 설명하지 않겠고 필자의 엔진에서는 런타임 타입 캐스팅에서 reinterpret_cast를 사용한다. ( 자세한건 [이 글](https://sungjjinkang.github.io/fast_dynamic_cast)을 읽어보라. )           
 
 즉 virtual table pointer의 offset을 고려하지 않는다는 것이다.....     
 
