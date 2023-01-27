@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Library design: allow user to decide between "header-only" and dynamically linked?"
+title:  "Library design: allow user to decide between header-only and dynamically linked?"
 date:   2022-08-28
 tags: [ComputerScience]
 ---         
