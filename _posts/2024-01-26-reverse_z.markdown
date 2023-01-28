@@ -1,0 +1,12 @@
+---
+layout: post
+title:  "Reverse Depth Buffer"
+date:   2023-01-26
+tags: [ComputerGraphics]
+---            
+
+GPU가 Depth Buffer를 Write하는 동작을 생각했을 때, 거리에 따라 Near Plane에서 Far Plane 사이의 Depth 값을 0~1로 Linear하게 mapping한다고 생각할 수 있지만 실제로 GPU는 그렇게 동작하지 않는다.                                    
+실제로는 1/z(거리 값)을 Depth Buffer에 쓴다. 왜 이렇게 동작을 할까? 
+
+[Depth Precision Visualized](https://developer.nvidia.com/content/depth-precision-visualized),            
+[Reverse Depth Buffer in OpenGL](https://www.danielecarbone.com/reverse-depth-buffer-in-opengl/)
