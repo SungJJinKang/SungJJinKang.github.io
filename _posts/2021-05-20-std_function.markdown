@@ -24,14 +24,14 @@ callable object의 함수 길이가 짧은 경우에는(3~5 instruction) lamba�
 
 template <typename F>
 void __attribute__((noinline)) use_lambda(F const & f) { // !!!!!!!!!!!!!!
-    auto volatile a = f(13); // call f
+    auto volatile a = f(13); // call f <- f의 내용을 컴파일 타임에 안다.
     // ....
     auto volatile b = f(7); // call f again
 }
 
 void __attribute__((noinline)) use_func(
         std::function<int(int)> const & f) {
-    auto volatile a = f(11); // call f
+    auto volatile a = f(11); // call f <- f의 내용을 컴파일 타임에 모른다.
     // ....
     auto volatile b = f(17); // call f again
 }
@@ -50,6 +50,6 @@ int main() {
                    
 ----------------------                
                        
-나중에 알게된 것은 이 이유 말고도 힙할당의 문제가 있다. 흔히 람다를 사용할 때 Capture를 하는데 이 Capture한 오브젝트를 std::function에 저장하기 위해서는 결국 힙할당이 필요한데 여기 드는 비용이 큰 것이다. 물론 std::string 처럼 Small Size 버퍼가 내부적으로 있어서 일정 사이즈보다 작은 경우 힙할당을 하지는 않지만 그 버퍼 사이즈가 크지 않다. 그래서 [협업에서는 이 Small Size 버퍼를 늘려서 자제 std::function을 사용한다.](https://youtu.be/tD4xRNB0M_Q?t=1725)         
+나중에 알게된 것은 이 이유 말고도 힙할당의 문제가 있다. 흔히 람다를 사용할 때 Capture를 하는데 이 Capture한 오브젝트를 std::function에 저장하기 위해서는 결국 힙 할당이 필요한데 여기 드는 비용이 큰 것이다. 물론 std::string 처럼 Small Size 버퍼가 내부적으로 있어서 일정 사이즈보다 작은 경우 힙할당을 하지는 않지만 그 버퍼 사이즈가 크지 않다. 그래서 [Small Size 버퍼를 늘린 버전의 std::function을 만들어서 사용하기도 한다.](https://youtu.be/tD4xRNB0M_Q?t=1725)         
 
 references : [https://stackoverflow.com/questions/18453145/how-is-stdfunction-implemented](https://stackoverflow.com/questions/18453145/how-is-stdfunction-implemented), [https://stackoverflow.com/questions/5057382/what-is-the-performance-overhead-of-stdfunction](https://stackoverflow.com/questions/5057382/what-is-the-performance-overhead-of-stdfunction), [https://stackoverflow.com/questions/18608888/c11-stdfunction-slower-than-virtual-calls](https://stackoverflow.com/questions/18608888/c11-stdfunction-slower-than-virtual-calls), [https://stackoverflow.com/questions/67615330/why-stdfunction-is-too-slow-is-cpu-cant-utilize-instruction-reordering](https://stackoverflow.com/questions/67615330/why-stdfunction-is-too-slow-is-cpu-cant-utilize-instruction-reordering), 
