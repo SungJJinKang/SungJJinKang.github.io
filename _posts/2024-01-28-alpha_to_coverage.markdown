@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Alpha To Coverage"
-date:   2023-01-28
+date:   2024-01-28
 tags: [ComputerGraphics]
 ---            
 
