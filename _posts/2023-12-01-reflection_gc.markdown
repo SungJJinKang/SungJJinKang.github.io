@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "reflection 시스템을 이용한 C++ 가비지 컬렉터"
-date:   2021-12-01
+date:   2023-12-01
 tags: [ComputerScience, InHouseEngine, C++]
 ---
 
