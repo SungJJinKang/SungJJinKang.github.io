@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "ViewFrustum Culling(렌더링 빨리 하기)"
+title:  "SIMD 명령어를 활용한 ViewFrustum Culling 구현"
 date:   2021-04-02
 tags: [ComputerGraphics, InHouseEngine]
 ---
