@@ -9,7 +9,7 @@ tags: [ComputerScience]
 
 ( 이 글의 모든 벤치마크는 x64 msvc 컴파일러에서 연산된 결과이다. )        
 
-프로그램의 성능을 하락시키는 주 원인은 무엇일까? 바로 메모리 Fetch이다. 그래서 CPU는 캐시와 같은 더 빠른 메모리를 도입하였는데 Cache는 사이즈가 작아 Cache에 데이터가 없을 경우 메인 메모리에서 데이터를 가져와야하는데 이를 Memory Stall이라 하며 매우 매우 느리다.       
+프로그램의 성능을 하락시키는 주 원인은 무엇일까? 바로 메모리 Fetch이다. 그래서 CPU는 캐시와 같은 더 빠른 메모리를 도입하였는데 Cache는 사이즈가 작아 Cache에 데이터가 없을 경우 메인 메모리에서 데이터를 가져와야하는데 이때 CPU가 메모리로부터 데이터를 읽어오는 것을 기다리게 되는 것을 Memory Stall이라 하며 캐시에 접근하는 경우에 비해 상대적으로 매우 오래 걸린다.                     
 그래서 CPU가 어떤 데이터를 필요로 할 때 그 데이터가 캐시에 있을 확률을 높이는 것이 프로그램의 성능과 직결된다.       
 이러한 목표로 나온 것이 Cache Prefetch이다.       
 Cache Prefetcher는 어떠한 데이터가 필요하기 전 미리 메인 메모리에서 캐시로 가져오는 것을 말한다.     
@@ -75,4 +75,4 @@ void Randomly()
 Randomly 방식이 ColumnFirst 방식보다 훨씬 느리다.     
 더 중요한 것은 ColumFirst 방식과 RowFirst 방식의 성능상 큰 차이가 없다는 점이다.           
 이는 위에서 배운 Cache Prefetch 때문이다.       
-ColumnFirst 함수는 일정한 stride(간격)마다 데이터에 접근한다는 것을 CPU가 인지하고 다음 Column의 데이터를 미리 fetch하였기 때문에 Randomly 함수에 비해 훨씬 빠른 것이다.      
+ColumnFirst 함수에서 일정한 stride(간격)마다 데이터에 접근한다는 것을 CPU가 인지하고 다음 Column의 데이터를 미리 fetch하였기 때문에 Randomly 함수에 비해 훨씬 빠른 것이다.      
