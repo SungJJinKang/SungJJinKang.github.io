@@ -9,7 +9,7 @@ tags: [ComputerScience]
 그리고 가상 메모리 덕분에 한 프로그램이 굳이 Physical address 내에 데이터들을 연속되게 가질 필요없다. Physical memory에서 데이터들이 파편화 되어 있어도 어차피 우리는 연속된 virtual address만 신경쓰면 되기 때문이다.      
 또한 virtual address의 사이즈가 실제 physical address보다 클 수 있는 데 이건 실제 physicla 메모리 사이즈보다 메모리를 더 많이 활용하게 해준다. 이건 후에 서술할 virtual memory(disk) 덕분이다.         
 프로그램(프로세스)마다 virtual address space가 각각 자신의 것을 가지고 있는 데 이 virtual address가 같다고 physical address도 같은건 아니다.    
-또한 virtual address는 연속되어 있는 것 처럼 보이지만 이 virtual address가 가리키는 physical address는 연속되어 있지 않고 파편화 되어있는 경우가 많다.          
+또한 virtual address는 연속되어 있는 것 처럼 보이지만 이 virtual address가 가리키는 physical address는 연속되어 있지 않고 파편화 되어있는 경우가 많다.(한 페이지 내의 연속된 주소는 physical한 메모리에서도 연속되어있다.)          
 
 1. X86 OS환경 내에서는 가상 메모리 주소 32비트로 구성되어 있다. 상위 20비트는 페이지의 physical address를 찾는 데 사용하고 하위 12비트는 페이지 내의 우리가 찾는 정확한 physical address를 찾는 데 사용된다.    
 
@@ -17,15 +17,16 @@ tags: [ComputerScience]
 Page Direcotry는 페이지 테이블의 base address들을 가지고 있다. 그럼 최상위 10비트를 가지고 이 Page Direcotry 내의 index를 찾아간다. 그럼 그 위치에는 페이지 테이블의 base address를 가지고 있다.     
 
 3. 그럼 이 주소를 따라가면 페이지 테이블이 나오는 데 이 페이지 테이블은 페이지 테이블 엔트리들로 구성되어 있다. 여기서 다음 10비트가 index로 사용되어 페이지 테이블 엔트리를 찾게된다.         
-이 index를 따라가면 Page Table Entry를 발견하는 데 이 Page Table Entry는 Physical 메모리 내에 페이지의 base 주소를 가진다. 이 페이지가 우리가 비로소 찾아왔던 실제 데이터들의 묶음(페잊, 4KB)이다(왜 묶음이냐? 페이징 기법이 뭔지를 찾아봐라). 드디어 Physical Memory 주소로 왔다. 현재 까지 아는 것은 Physical Memory 내의 페이지의 base address이다.     
+이 index를 따라가면 Page Table Entry를 발견하는 데 이 Page Table Entry는 Physical 메모리 내에 페이지의 base 주소를 가진다. 이 페이지가 우리가 비로소 찾아왔던 실제 데이터들의 묶음(페이지, 4KB)이다(왜 묶음이냐? 페이징 기법이 뭔지를 찾아봐라). 드디어 Physical Memory 주소로 왔다. 현재 까지 아는 것은 Physical Memory 내의 페이지의 base address이다.     
 
 밑에서 배우겠지만 이 Physical address에 내가 찾는 Page가 없을 수도 있다.     
 
 4. 그리고 마지막 12비트는 이 페이지내에서의 base 주소로 부터의 offset을 가리킨다. 이 offset을 따라가면 비로소 원하는 virtual address에 대한 physical address 주소를 가질 수 있다.      
-TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20비트를 가지고 찾은 페이지(페이지 프레임)의 physical address를 저장하고 이 값을 가지고 나중에 offset과 합쳐서 실제 페이지 내의 원하는 주소의 physical address를 찾는다.          
-
-위에 나온 Page Direcotry, Page Table, Page는 모두 Physical memory 내에 위치해 있다. TLB는 MMU에 있다.  
-
+TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20비트를 가지고 찾은 페이지(페이지 프레임)의 physical address를 저장하고 이 값을 가지고 나중에 offset과 합쳐서 실제 페이지 내의 원하는 주소의 physical address를 찾는다. ( virtual address와 physical address간의 매핑 정보를 가지고 있는 일종의 캐시라고 생각하면 된다. 페이지 테이블은 메모리 상에 위치해 있으니 상대적으로 CPU 코어에 가까운(더 빠른) TLB에 캐싱을 해두는 것이다. )                 
+          
+TLB는 MMU의 구성 요소 중 하나이다.               
+Page Table은 Physical memory(RAM)에 위치한다. ( Page Table은 page swap out되지 않는다고 한다. )                   
+        
 실제 page가 어떤 physical address의 주소에 존재하든 프로그래머는 신경쓸 필요없다. 그냥 virtual address만 보면 되니깐.....        
 
  
@@ -37,7 +38,7 @@ TLB라는 개념이 여기서 나오는 데 TLB는 virtual address의 상위 20�
 자 그럼 가상 메모리 주소를 어떻게 Physical한 주소로 변환할까?       
 
 1. CPU에 있는 MMU(memory management unit)이라는 장치가 이 작업을 하는 데 우선 MMU는 MMU 내에 TLB(Translation lookaside buffer)라는 메모리 캐시를 먼저 탐색한다.    
-TLB내에는 최근에 변환했던 virtual address와 그 physical address가 저장되어 있다.      
+TLB내에는 최근에 변환했던 virtual address와 그 physical address( 정확히는 Physical 메모리 상의 페이지의 Base 주소, Base 주소만 알면 virtual address의 하위 12비트 offset만 더해주면 되니.. )            
 그럼 MMU는 우선 이 TLB를 먼저 탐색한다.      
 만약 TLB에 원하는 virtual address가 있으면 바로 거기 저장된 physical address를 반환하면 된다. (후술하지만 정확히는 TLB가 (virtual address)와 (physical address page의 base address)를 저장하고 이 address에서 하위 offset비트로 이 엔트리에서 실제 physical memory address로 접근한다.)    
 즉 MMU는 메모리의 paged memory를 관리하고 virtual address를 physical address로 변환하는 작업을 한다.           
@@ -63,6 +64,12 @@ virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부
 
 -----------------------------
 
+아래 사진은 페이지가 swap out되어 해당 페이지 접근시 disk io가 필요한 경우, 메인 메모리에서 바로 데이터를 읽는 경우, 캐시에서 읽는 경우의 속도 비교표이다.        
+![Slide21](https://user-images.githubusercontent.com/33873804/218319244-f505d0db-e280-4233-8b5e-c912adcc71c9.png)
+
+
+-----------------------------         
+
 페이지 테이블내의 각각의 페이지 테이블 엔트리는 페이지의 physical address말고도 추가적인 정보를 가지고 있는 데 그 종류는 아래와 같다.     
 
 Reference bit(페이지에 접근이 있었는지, page out할 블록을 정할 떄 사용함. 가장 접근),      
@@ -74,7 +81,7 @@ Process ID information(예전에는 모든 프로세스가 하나의 페이지 �
 [페이지 테이블 종류](https://en.wikipedia.org/wiki/Page_table#Page_table_types)
 
 
----------------------------       
+---------------------------      
 
 페이징 기법란???       
 
