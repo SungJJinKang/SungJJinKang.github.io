@@ -118,7 +118,7 @@ lockingVersion    5229011 ns       250000 ns         1000
 MESI 프로토콜 ( 뭔지 모르면 [이 글](https://sungjjinkang.github.io/cachecoherency)을 참고하라 )로 인해 atomicVersion는 직전에 a++을 한 thread와 현재 a++를 할 thread가 다른 코어(물리적 코어)에 속해 있으면 직전의 a++을 한 thread가 Cache를 flush하기를 기다려야한다.(MESI 상태에서는 E상태를 놓아줘야한다)      
 그렇다면 atomicVersion는 4개의 thread가 동시에 a++를 수 없이 하는 데 이 경우 엄청난 횟수의 Cache flush가 발생한다. 대걔 L1캐쉬는 코어 전용으로 있으니 L2캐시에 현재 L1캐시의 데이터를 옮기는 작업을 수 없이 수행해야한다. 이렇게 Cache를 flush하는 동작은 느릴 수 밖에 없다.         
 
-반면 lockingVersion은 Cache flush를 3번만 수행하면 되니 multi threading의 이점을 전혀 활용하지 못함에도 불구하고 atomicVersion 보다 훨씬 빠른 것이다.      
+반면 lockingVersion은 Cache flush를 각 스레드가 loop에 들어갈 때마다 한번씩 총 3번만 수행하면 되니 multi threading의 이점을 전혀 활용하지 못함에도 불구하고 atomicVersion 보다 훨씬 빠른 것이다.      
 
 
 ------------------------------------------------
