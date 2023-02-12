@@ -7,14 +7,14 @@ tags: [ComputerScience]
 
 Fasle Sharing이란??
 
-대다수의 CPU 아키텍쳐가 채용하는 캐시 시스템은 N-Way associate로 64byte로 나뉘는 n개의 address 세트가 한 캐시 라인을 사용한다. N개의 서로 다른 64byte의 데이터가 하나의 캐시 라인을 공유한다. 그럼 한 address가 캐시에 접근하려면 기존에 cache에 있던 데이터를 main memory로 옮기고(dirty한 경우에) 그 자리에 캐시를 쓴다.    
+대다수의 CPU 아키텍쳐가 채용하는 캐시 시스템은 N-Way associate로 64byte로 나뉘는 n개의 address 세트가 한 캐시 라인을 사용한다. N개의 서로 다른 64byte의 데이터가 하나의 캐시 라인을 공유한다. 그럼 한 address가 캐시에 접근하려면 기존에 cache에 있던 데이터를 main memory(혹은 코어간 공유되는 캐시)로 옮기고(dirty한 경우에) 그 자리에 캐시를 쓴다.    
 이러한 캐시 시스템은 속도면에서 매무 매우 효율적인 데 필요한 데이터를 main memory에 접근할 필요없이 CPU에 가까이 있는 캐시에 매우 매우 빠르게 접근할 수 있기 때문이다.   
-그런데 이러한 캐시 시스템이 multithreading 환경에서 문제가 된다. multithreading 환경에서 다수의 코어(프로세서)가 한 데이터에 접근하려 할때 각각의 코어는 자신만의 cache를 가지고 있다. 이 말은 각 코어 cache를 main memory와 동기화 시켜주지 않으면 같은 address에 접근함에도 각 코어가 서로 다른 값을 볼 수 있다는 의미이다. 그래서 
+그런데 이러한 캐시 시스템이 multithreading 환경에서 문제가 된다. multithreading 환경에서 다수의 코어(프로세서)가 한 데이터에 접근하려 할때 각각의 코어는 자신만의 cache를 가지고 있다. 이 말은 각 코어 cache를 main memory와 [동기화](https://sungjjinkang.github.io/cachecoherency) 시켜주지 않으면 같은 address에 접근함에도 각 코어가 서로 다른 값을 볼 수 있다는 의미이다. 그래서 
 
 ```cpp
 // 예제가 이상해도 그냥 상황설명을 위한 예제이니 이해해주시기 바랍니다.
 
-struct foo {
+alignas(CacheLineSize) struct foo {
     int a[5]
     int b[5]
 };
