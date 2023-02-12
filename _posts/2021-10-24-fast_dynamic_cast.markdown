@@ -232,4 +232,9 @@ ToPtr CastTo(FromPtr castedObject)
 
 --------------------------------
 
-기존에는 위와 같이 매크로로 일일이 클래스명과 상속받는 클래스 명을 써주어야 했지만 이후 리플랙션 기능을 이용해서 리플랙션 매크로 하나만 추가하면 알아서 BaseChain 데이터가 생성이 되게 구현하였다. 자세한건 [이 글](https://sungjjinkang.github.io/fast_dynamic_cast)을 읽어보면 된다.                  
+기존에는 위와 같이 매크로로 일일이 클래스명과 상속받는 클래스 명을 써주어야 했지만 이후 리플랙션 기능을 이용해서 리플랙션 매크로 하나만 추가하면 알아서 BaseChain 데이터가 생성이 되게 구현하였다. 자세한건 [clang을 이용한 Reflection 시스템]([https://sungjjinkang.github.io/fast_dynamic_cast](https://sungjjinkang.github.io/reflection))을 읽어보면 된다.         
+         
+-------------------------------- 
+   
+사실 dynamic_cast의 대안이 필요한 진짜 이유는 일부 플랫폼의 컴파일러가 RTTI를 지원하지 않기 때문이다.           
+언리얼 엔진이 RTTI 옵션을 기본적으로 꺼둔 이유도 언리얼 엔진이 멀티 플랫폼을 목표로 개발되었기 때문이다.       
