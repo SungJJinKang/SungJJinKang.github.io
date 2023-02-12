@@ -74,4 +74,8 @@ _NODISCARD static _CONSTEXPR17 int compare(_In_reads_(_Count) const _Elem* _Firs
 
 아래의 이미지는 문자열이 긴 경우 다른 문자가 문자열의 처음에 등장하는 경우, 마지막에 등장하는 경우를 std::map과 std::unordered_map의 경우를 비교한 성능 비교도이다. ( 그래프 막대가 짧을 수록 더 빠르다는 의미이다. ) 
 주목해야할 점은 긴 문자열의 첫 문자가 다른 std::string을 key로 사용한 경우 look-up 성능이 std::map이 std::unordered_map에 비해 더 좋다는 것이다.
-![comparison](https://user-images.githubusercontent.com/33873804/117540476-a8250900-b04a-11eb-9434-a2d5476f902b.png)
+![comparison](https://user-images.githubusercontent.com/33873804/117540476-a8250900-b04a-11eb-9434-a2d5476f902b.png)                       
+
+----------------     
+
+사실 예시로 든건 아주 예외적인 케이스이고 대부분의 케이스에서 해시 테이블 기반의 std::unordered_map이 훨씬 빠르다.        
