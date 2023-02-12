@@ -68,7 +68,11 @@ virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부
 ![Slide21](https://user-images.githubusercontent.com/33873804/218319244-f505d0db-e280-4233-8b5e-c912adcc71c9.png)
 
 
------------------------------         
+-----------------------------   
+
+이 글에서는 페이지 사이즈는 4KB로 가정하였지만 Windows 같은 경우 4KB 이상의 [Large Page](https://learn.microsoft.com/en-us/windows/win32/memory/large-page-support)를 지원하기도 한다.     
+
+-------------------------
 
 페이지 테이블내의 각각의 페이지 테이블 엔트리는 페이지의 physical address말고도 추가적인 정보를 가지고 있는 데 그 종류는 아래와 같다.     
 
