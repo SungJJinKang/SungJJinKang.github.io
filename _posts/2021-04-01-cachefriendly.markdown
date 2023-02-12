@@ -10,7 +10,7 @@ tags: [ComputerScience]
 그래서 스택오버플로우를 검색하던 중 좋은 글을 발견해서 번역해보자한다.   
 
 Cache - Friendly 코드란 무엇일까?      
-https://stackoverflow.com/questions/16699247/what-is-a-cache-friendly-code ( Marc Claesen )
+[https://stackoverflow.com/questions/16699247/what-is-a-cache-friendly-code](https://stackoverflow.com/questions/16699247/what-is-a-cache-friendly-code) ( Marc Claesen )             
 
 
 기초 지식 :      
@@ -84,7 +84,7 @@ M[0][0] (DRAM) + M[1][0] (DRAM) + M[0][1] (DRAM) + M[1][1] (DRAM)
 
 **예측 불가능 한 분기(if)는 피하라**
 
-현대 아키텍쳐 특징인 파이프라인과 컴파일로는 메모리 접근으로 인한 지연을 최소하 하기 위한 코드 재배치에 매우 능숙하다. 너의 핵심 코드가 예측 불가능한 분기를 가지고 있을 때 데이터를 미리 가져오는 것[Cache Prefetch](https://sungjjinkang.github.io/CachePrefetcher)을 거의 불가능하다. 이것은 더 많은 캐시 미스로 이끌 것이다.             
+현대 아키텍쳐 특징인 파이프라인과 컴파일로는 메모리 접근으로 인한 지연을 최소하 하기 위한 코드 재배치에 매우 능숙하다. 너의 핵심 코드가 예측 불가능한 분기를 가지고 있을 때 데이터를 미리 가져오는 것 [Cache Prefetch](https://sungjjinkang.github.io/CachePrefetcher)을 거의 불가능하다. 이것은 더 많은 캐시 미스로 이끌 것이다.             
 
 아래의 링크가 이에 대해 잘 설명하고 있다 : [Why is processing a sorted array faster than processing an unsorted array?](https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-an-unsorted-array)          
 
@@ -95,9 +95,10 @@ C++에서 가상함수는 캐시 미스와 관련해 논란이 될만한 문제�
 
 **흔한 문제들**      
 
-멀티 코어 캐시들을 가지는 현대 CPU 아키텍쳐에서 가장 흔한 문제는 가짜 공유(False sharing)이다. 이것은 각각의 cpu 코어가 서로 다른 위치의 메모리의 데이터를 사용하고 그것을 같은 캐시 라인에 저장할 때 발생한다. 이것은 캐시 라인이 계속해서 덮어 씌어지게 해 성능 하락을 유발한다. 여러 스레드들이 이 상황에서 캐시 미스를 발생시켜 서로를 기다리게 만든다. 이 링크 또한 참고하라 [어떻게 그리고 언제 캐시 라인 사이즈에 align하는가](https://stackoverflow.com/questions/8469427/how-and-when-to-align-to-cache-line-size).        
+멀티 코어 캐시들을 가지는 현대 CPU 아키텍쳐에서 가장 흔한 문제는 가짜 공유(False sharing)이다. 이것은 각각의 cpu 코어가 서로 다른 위치의 메모리의 데이터를 사용하고 그것을 같은 캐시 라인에 저장할 때 발생한다. 이것은 캐시 라인이 계속해서 덮어 씌어지게 해 성능 하락을 유발한다. 여러 스레드들이 이 상황에서 캐시 미스를 발생시켜 서로를 기다리게 만든다. 이 링크 또한 참고하라 [어떻게 그리고 언제 캐시 라인 사이즈에 align하는가](https://stackoverflow.com/questions/8469427/how-and-when-to-align-to-cache-line-size).      
+( 역주 : 각 코어가 서로 다른 주소에 데이터를 쓰더라도, 두 주소가 physical memory 상의 동일한 캐시 라인에 속해 있다면 두 코어간의 캐시 동기화가 필요하다. 이를 False Sharing이라고 한다. 추가로 [이 글](https://sungjjinkang.github.io/falsesharing)을 읽어보세요. )
 
-DRAM 메모리에서 최악의 캐싱을 지칭하는 thrasing이라는 개념도 잇다. 이것은 프로그램이 계속해서 page faults(찾고자 하는 데이터가 캐시에도 없고 DRAM에도 없는 경우, 이 경우 virtual memory 즉 HDD에 저장되어 있다)를 발생시켜서 디스크에 접근해야하는 경우를 말한다.    
+DRAM 메모리에서 최악의 캐싱을 지칭하는 thrashing이라는 개념도 잇다. 이것은 프로그램이 계속해서 page faults(찾고자 하는 데이터가 캐시에도 없고 DRAM에도 없는 경우, 이 경우 virtual memory 즉 HDD에 저장되어 있다)를 발생시켜서 디스크에 접근해야하는 경우를 말한다.      
 
 ---------------------
 
