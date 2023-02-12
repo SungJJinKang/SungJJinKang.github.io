@@ -56,7 +56,7 @@ Sorted 함수 즉 vector를 정렬한 경우 그렇지 않은 NorSorted에 비�
 ( 이 부분에 대해서는 [이 글](https://en.wikipedia.org/wiki/Branch_predictor)을 꼭 읽어보기 바란다. Branch Predition은 CPU Pipeline과 연관되어 있다. )
 
 Branch Prediction은 virtual 함수를 호출할 때도 사용한다.    
-보통 virtual function 호출을 할 때 드는 cost가 virtual table에서 적합한 virtual function을 찾는 비용이 크다고 생각하는 데 그렇지 않다. virtual table에서 virtual function을 찾는 작업 후 virtual function을 실행하는데 CPU 파이프라인상 CPU는 어떤 virtual function이 호출될지를 미리 예측(Branch Prediction)하고 그 함수의 호출 명령어를 미리 CPU 파이프라인에 올려둔다. 그런데 여기서 Branch Prediction이 틀린 경우 CPU는 실제 호출할 virtual function call 명령어를 다시 CPU Instruction에 넣어야 되고 이때 생각보다 큰 cost가 발생하는 것이다.
+보통 virtual function 호출을 할 때 드는 cost가 virtual table에서 적합한 virtual function을 찾는 비용이 크다고 생각하는 데 그렇지 않다. virtual table에서 virtual function을 찾는 작업 후 virtual function을 실행하는데 CPU 파이프라인상 CPU는 어떤 virtual function이 호출될지를 미리 예측(Branch Prediction)하고 그 함수의 호출 명령어를 미리 CPU 파이프라인에 올려둔다. 그런데 여기서 Branch Prediction이 틀린 경우 CPU는 미리 예측하여 CPU 파이프라인에 올려둔 명령어를 flush한 후 실제 호출할 virtual function call을 기준으로 다시 파이프라인을 채워 넣어야 되고 이때 생각보다 큰 cost가 발생하는 것이다.                
 ( [참조 글](https://stackoverflow.com/questions/667634/what-is-the-performance-cost-of-having-a-virtual-method-in-a-c-class/667680) )        
 
 그럼 벤치마크를 한번 보자.       
