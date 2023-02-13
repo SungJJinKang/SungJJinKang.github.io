@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "std::atomic의 숨겨진 동작 원리 ( Atomicity, Volatile )"
-date:   2021-09-24
+date:   2023-09-24
 tags: [ComputerScience, C++]
 ---
 
