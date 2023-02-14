@@ -5,6 +5,10 @@ date:   2021-10-18
 tags: [ComputerScience]
 ---
 
+[참고하면 좋은 글](https://mkblog.co.kr/nvidia-gpu-memory-coalescing-coalesced-memory-access/)            
+
+----------------      
+
 ChatGPT의 도움을 받아 내용을 보충하였습니다.(2023/02/13)
 
 -------------------         
@@ -72,4 +76,3 @@ By accessing the arrays a, b, and c in a contiguous manner, this code can benefi
           
 Note that the exact behavior of memory coalescing can vary depending on the specific memory architecture and memory controller implementation. However, accessing arrays in a contiguous manner is generally a good practice for optimizing memory performance.          
 
-references : [https://mkblog.co.kr/2016/12/01/nvidia-gpu-memory-coalescing-coalesced-memory-access/](https://mkblog.co.kr/2016/12/01/nvidia-gpu-memory-coalescing-coalesced-memory-access/)
