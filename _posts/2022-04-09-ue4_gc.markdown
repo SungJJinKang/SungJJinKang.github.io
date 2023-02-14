@@ -1,9 +1,0 @@
----
-layout: post
-title:  "언리얼 엔진4 GC"
-date:   2022-04-09
-tags: [UE]
----
-
-[https://unrealcommunity.wiki/memory-management-6rlf3v4i](https://unrealcommunity.wiki/memory-management-6rlf3v4i),            
-[https://ikrima.dev/ue4guide/engine-programming/memory/tracking-references/](https://ikrima.dev/ue4guide/engine-programming/memory/tracking-references/)                 
