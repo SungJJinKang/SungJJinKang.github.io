@@ -17,10 +17,11 @@ Early Depth Test 단계를 통과하여 새롭게 FPK FIFO 버퍼에 추가 될 
 FPK는 Early Depth Test에서 걸러지지 못한(Overdraw될 것임을 확정하지 못해 Early Depth Test를 통과한) 픽셀들을 추가로 걸러준다.            
 다만 이러한 FIFO 버퍼도 저장할 수 있는 Quad 데이터의 개수가 한정되어 있기 때문에 이 FIFO 버퍼가 꽉 찬다면 맨 앞에 있는 Quad는 Fragment Shading 처리해주어 새로운 Quad가 들어올 공간을 마련해주어야 한다.(FPK의 효과를 극대화하기 위해서는 FIFO 버퍼 사이즈가 충분히 커야한다.)            
           
-흔히 Early Depth Test(Early Z Kill)의 효과를 극대화하기 위해 카메라로부터 가까운 오브젝트부터 먼저 그리는데, 이 FPK 기술은 FIFO 버퍼를 충분한 크기로 확보한다면 오브젝트의 카메라로부터의 거리를 고려하지 않고(Sorting하지 않고) 렌더링을 수행하여도 Sorting을 했을 때 못지 않은 퍼포먼스를 보여준다고 ARM에서는 설명한다.(먼 거리의 오브젝트부터 그려도 해당 오브젝트의 픽셀들이 곧 바로 Fragment Shading 처리되지 않고 FIFO 버퍼에 대기하기 때문에 이후 보다 가까운 오브젝트를 처리할 때 FPK의 효과로 FIFO 버퍼에 대기 중이던 먼 거리의 오브젝트의 픽셀들을 Kill할 수 있기 때문이다..) ( 필자의 생각을 조금 덧붙여보자면 이렇게 FIFO 버퍼에 픽셀을 대기시켜두면 GPU가 그 만큼 놀게(Idle)되어 오히려 성능 저하가 발생할 수 있지 않을까 하는 생각도 해본다.. 그 부분까지 고려를 했으려나... ) 다만 ARM에서도 단서를 붙인 것이 그럼에도 불구하고 Early-Z Test가 FPK에 비해 전력 효율이 좋고, 오래된 Mali GPU에서도 동작하기 때문에(9년 전 나온 Samsung Exynos5420에도 FPK가 적용되어 있는걸 보면, 최신 Mali GPU에서는 왠만하면 다 적용되어 있을 듯.) 오브젝트 Sorting을 수행하는 것은 여전히 퍼포먼스를 위해 필수적이라고 말한다.           
+흔히 Early Depth Test(Early Z Kill)의 효과를 극대화하기 위해 카메라로부터 가까운 오브젝트부터 먼저 그리는데, 이 FPK 기술은 FIFO 버퍼를 충분한 크기로 확보한다면 오브젝트의 카메라로부터의 거리를 고려하지 않고(Sorting하지 않고) 렌더링을 수행하여도 Sorting을 했을 때 못지 않은 퍼포먼스를 보여준다고 ARM에서는 설명한다.(먼 거리의 오브젝트부터 그려도 해당 오브젝트의 픽셀들이 곧 바로 Fragment Shading 처리되지 않고 FIFO 버퍼에 대기하기 때문에 이후 보다 가까운 오브젝트를 처리할 때 FPK의 효과로 FIFO 버퍼에 대기 중이던 먼 거리의 오브젝트의 픽셀들을 Kill할 수 있기 때문이다..) 다만 ARM에서도 단서를 붙인 것이 그럼에도 불구하고 Early-Z Test가 FPK에 비해 전력 효율이 좋고, 오래된 Mali GPU에서도 동작하기 때문에(9년 전 나온 Samsung Exynos5420에도 FPK가 적용되어 있는걸 보면, 최신 Mali GPU에서는 왠만하면 다 적용되어 있을 듯.) 오브젝트 Sorting을 수행하는 것은 여전히 퍼포먼스를 위해 필수적이라고 말한다.           
                
                  
-ARM쪽 설명에 의하면 기존 Frame Buffer 의 값을 활용하거나(Blending하거나), Alpha Test를 사용하거나 삼각형의 크기가 너무 작거나, 프레임 버퍼를 공유하는 경우 FPK가 적용되지 않는다고 한다.          
+ARM쪽 설명에 의하면 기존 Frame Buffer 의 값을 활용하거나(Blending하거나), Alpha Test를 사용하거나, 삼각형의 크기가 너무 작거나, 프레임 버퍼를 공유하는 경우 FPK가 적용되지 않는다고 한다.          
          
+( 역주 : 추가적으로 [Arm Mali GPU의 Tile Based Rendering](https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/the-mali-gpu-an-abstract-machine-part-2---tile-based-rendering)에 관한 글도 읽어보면 좋을 듯 하다.
            
 references : [https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/killing-pixels---a-new-optimization-for-shading-on-arm-mali-gpus](https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/killing-pixels---a-new-optimization-for-shading-on-arm-mali-gpus), [https://www.cnblogs.com/timlly/p/15546797.html](https://www.cnblogs.com/timlly/p/15546797.html), [https://zhuanlan.zhihu.com/p/464337040](https://zhuanlan.zhihu.com/p/464337040)                   
