@@ -34,6 +34,8 @@ MSAA는 기본적으로 **픽셀 당 한번만 픽셀 쉐이더 연산**을 한�
 // OpenGLES의 경우 MSAA Color Target(백버퍼)를 지원하지 않기 떄문에 SceneColor(프레임 버퍼)를 MSAA로 생성해서 렌더링을 한 후 해당 SceneColor를 백버퍼로 옮긴다(Resolve)                     
 ```
 
+추가로 언리얼 엔진4 IOS Metal MSAA 구현에서는 [Memory Less 모드](https://sungjjinkang.github.io/tile_memory_memory_less)를 통해 MSAA 샘플링에 사용된 렌더 타겟을 Tile Memory에서 비디어 메모리로 옮기지 않고 그냥 버리는 최적화를 수행한다.(MSAA 리졸브된 렌더타겟만 비디오 메모리로 옮겨준다.)        
+          
 ![0](https://user-images.githubusercontent.com/33873804/206870690-f65214f0-46f7-4092-935d-fce9b1e540d6.png)                  
 ![1](https://user-images.githubusercontent.com/33873804/206870691-07731bdc-2057-4a27-97de-91bf00a1e135.png)            
 ![2](https://user-images.githubusercontent.com/33873804/206870693-3b39a405-89d2-4716-8731-9ac9247cc33a.png)             
