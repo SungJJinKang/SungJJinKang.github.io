@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "모바일 GPU에서 Depth Pre Pass의 유용성? ( Hidden Surface Removal )"
-date:   2023-04-24
+date:   2022-04-24
 tags: [ComputerGraphics]
 ---
 
