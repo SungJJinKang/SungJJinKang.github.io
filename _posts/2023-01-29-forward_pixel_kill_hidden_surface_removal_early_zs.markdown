@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Forward Pixel Kill(FPK)"
+title:  "Forward Pixel Kill(Hidden Surface Removal)"
 date:   2023-01-29
 tags: [ComputerGraphics]
 ---            

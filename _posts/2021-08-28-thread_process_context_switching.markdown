@@ -33,7 +33,8 @@ tags: [ComputerScience]
 
 또한 멀티 스레딩의 경우 스레드의 생성 비용이 적은데 쓰레드 생성을 할 때 단순히 해당 쓰레드를 관리하는 자료구조 ( 스레드 상태에 대한 )만 Kernel에 추가하면 된다. 프로그램의 코드와 데이터 영역 데이터들은 이미 메모리에 올라와있으니 추가적인 리소스 복사가 필요없는 것이다.       
 반면 멀티 프로세싱의 경우에는 프로세스를 생성하는데 해당 프로그램에 대한 코드, 데이터 영역을 메모리에 올려야하니 시간이 오래걸린다.           
-
+                          
+------------------        
 
 
 references : [https://hoony-gunputer.tistory.com/entry/Thread-Context-Switching-vs-Process-Context-Switching](https://hoony-gunputer.tistory.com/entry/Thread-Context-Switching-vs-Process-Context-Switching)     
