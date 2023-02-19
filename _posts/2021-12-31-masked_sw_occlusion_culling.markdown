@@ -162,7 +162,7 @@ Masked SW ( CPU ) Occlusion Culling를 통해 성능 향상을 이룰 수 있었
           
 **GPU Bound한 상황에서는 성능 향상이 매우 크다.**                 
 필자가 가지고 있는 PC 중 GPU 성능이 좋지 않은 PC로 테스트하였을 때 SW Occlusion Culling을 킨 상태에서 큰 성능 향상을 얻을 수 있었다.         
-반면 **GPU Bound가 심하지 않은 상황에서는 오히려 SW Occlusion Culling을 끈 경우에 프레임이 더 잘 나온다.**                                 
+반면 **GPU Bound한 정도가 미미하거나 CPU Bound한 상황에서는 오히려 SW Occlusion Culling을 끄면 프레임이 더 잘 나오기도 한다.**                                 
            
 SW Occlusion Culling의 비용이 생각보다 큰 것이 원인인데 특히 레스터라이즈 단계의 비용이 꽤 크다. 이유는 여러 가지인데...        
                      
