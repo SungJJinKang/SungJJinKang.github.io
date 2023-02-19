@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "책 리뷰 - 이기적 직원들이 만드는 최고의 회사"
-date:   2022-10-02
+date:   2025-10-02
 tags: [Book]
 ---         
                   
