@@ -156,7 +156,19 @@ Masked SW ( CPU ) Occlusion Culling를 통해 성능 향상을 이룰 수 있었
 현재 프레임에서 Occluder Bin 단계만을 수행하면, 그 다음 프레임에 이전 프레임의 Bin 결과를 가지고 Rasterize 단계를 수행하는 것이다.        
 결과적으로는 Depth Buffer에 1 프레임 딜레이가 발생하여서 Occludee 테스트시 약간의 오차가 발생할 수 있다.           
 **이를 통한 얻어지는 성능 향상을 생각하면 1 프레임의 오차는 용인 가능**하다 생각한다.                       
+     
+------------------------------------------        
 
-
-
+**GPU Bound한 상황에서는 성능 향상이 매우 크다.**                 
+필자가 가지고 있는 PC 중 GPU 성능이 좋지 않은 PC로 테스트하였을 때 SW Occlusion Culling을 킨 상태에서 큰 성능 향상을 얻을 수 있었다.         
+반면 **GPU Bound가 심하지 않은 상황에서는 오히려 SW Occlusion Culling을 끈 경우에 프레임이 더 잘 나온다.**                                 
+           
+SW Occlusion Culling의 비용이 생각보다 큰 것이 원인인데 특히 레스터라이즈 단계의 비용이 꽤 크다. 이유는 여러 가지인데...        
+                     
+일단 Occluder로 사용되는 Mesh들의 삼각형 개수가 너무 많아 **레스터라이즈 비용이 매우 크다.** 이는 차후에 Occluder 레스터라이즈용 Mesh LOD 기능을 도입해서 완화 시킬 예정이다.        
+                      
+두 번째 이유는 **오브젝트들의 Bounding Box가 실제 해당 오브젝트의 부피보다 훨씬 크다는 것**이다. 오브젝트의 Bounding Box를 스크린 스페이스로 옮겨서 화면상에서 차지하는 비율에 따라 Occluder로 선정을 하는데, 실제 화면상에 차지하는 비율이 작은 오브젝트들도 바운딩 박스가 커 Occluder로 선정되면서 Occluder로서 가치가 적은(다른 오브젝트를 가릴 가능성이 적은) 오브젝트들에 대해 값 비싼 레스터라이즈 비용을 지불하고 있다.           
+이외에도 [TO-DO 리스트](https://github.com/SungJJinKang/EveryCulling/blob/main/TODO.md)에 여러 최적화 아이디어들을 적어두었다.         
+             
+             
 reference : [https://www.intel.com/content/dam/develop/external/us/en/documents/masked-software-occlusion-culling.pdf](https://www.intel.com/content/dam/develop/external/us/en/documents/masked-software-occlusion-culling.pdf), [https://www.slideshare.net/IntelSoftware/masked-occlusion-culling](https://www.slideshare.net/IntelSoftware/masked-occlusion-culling), [https://www.slideshare.net/IntelSoftware/masked-software-occlusion-culling](https://www.slideshare.net/IntelSoftware/masked-software-occlusion-culling)         
