@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "쉐이더 ( GPU )에서 분기점( if )이 나쁜(느린) 이유"
+title:  "쉐이더 ( GPU )에서 분기점( if )이 나쁜(느린) 이유 ( + BRANCH, FLATTEN, Quad, Derivates, ddx, ddy )"
 date:   2021-09-09
 tags: [ComputerGraphics]
 ---
@@ -35,20 +35,88 @@ else
 Fragment의 위치 값 x가 0.5보다 큰 경우 분기점 A를 실행해야하고, 그 외의 경우에는 분기점 B를 실행한다.          
 이렇게 분기점이 있을 때 GPU Warp는 분기점 A, B 모두를 연산해야한다. 왜냐면 Warp 내의 모든 쓰레드가 동시에 똑같은 연산을 수행해야하기 때문에 자신 ( 쓰레드 )의 분기가 아닌 분기에도 들어가야한다.        
 
-그런데 간혹 두 분기 모두를 실행하지 않아도 되는 경우가 있다.           
-바로 **Warp내의 Thread들이 모두 동일한 분기를 채택한 경우**이다.          
-이를 "다이나믹 브랜칭"이라고 부르는데 Warp 내의 Thread들이 모두 동일한 분기를 선택한다고 판단이 되면 해당 분기만 연산을 하고 다른 분기는 연산을 하지 않는 것이다.         
-이렇게 Warp내의 쓰레드이 동일한 분기를 채택하는 경우가 많을 때 "응집성"이 좋다고 표현하고 모든 쓰레드가 동일한 분기를 채택하면 다른 분기는 연산을 수행하지 않는다.       
-물론 이 경우가 흔하지는 않을 것 같다.              
+CPU와 같이 IF문의 결과에 따라 런타임에 한쪽 분기만을 수행하는 것을 "다이나믹 브랜칭"이라고 부른다.       
+다이나믹 브랜칭 수행시 Warp 내의 일부 스레드가 한쪽 분기를 타게 되는 다른쪽 분기를 타게된 스레드들은 아무런 연산을 하지 않고 대기를 하게 된다. 한쪽 분기의 연산이 끝나고 다른 분기의 연산을 수행할 때는 첫번째 분기를 탄 스레드들이 놀게된다.              
+![GPU-branching-768x458](https://user-images.githubusercontent.com/33873804/233838621-859b40c2-e73a-44e5-bd69-a8aecb008794.png)              
+만약 Warp내의 쓰레드들이 모두 같은 분기를 타게되는 경우 해당 Warp는 다른 한쪽 분기 연산을 생략하게 된다.         
+이렇게 arp내의 쓰레드이 동일한 분기를 채택하는 경우가 많을 때 "응집성"이 좋다고 표현하고 모든 쓰레드가 동일한 분기를 채택하면 다른 분기는 연산을 수행하기 때문에 불필요한 비용 낭비를 줄일 수 있다.                
+물론 이 경우가 흔하지는 않을 것 같다.               
 
+[유니폼 변수(상수 버퍼)를 기반으로한 "다이나믹 브랜칭"의 경우(유니폼 변수의 값에 따라 분기가 나뉘는 경우)가 상대적으로 다른 런타임 변수에 기반한 "다이나믹 브랜칭"보다 빠르다고 한다.](https://docs.unity3d.com/Manual/shader-branching.html#dynamic-branching)      
+왜냐면 유니폼 변수는 해당 드로우 콜 동안은 값이 변하지 않음이 보장되기 때문이다.           
+유니폼 변수가 아닌 런타임 변수에 기반을 한 분기의 경우 "한 분기를 먼저 처리하고 다른 분기를 처리(Warp 내의 해당 분기를 타지 않는 다른 스레드들은 놀고 있음)"하던가 "분기를 Flatten하여 양쪽 분기를 모두 수행하고 한쪽 결과는 버려야"한다. 유니폼 변수를 기반으로한 분기의 경우 GPU는 반드시 Flattten하여야 한다.          
+그리고 유니폼 변수를 기반으로 하든, 그렇지 않든가와는 관계 없이 "다이나믹 브랜칭" 최악의 경우 레지스터 공간을 할당해야 하는데, 만약 한쪽 분기가 다른쪽 분기보다 더 비용이 큰 경우 GPU는 불필요하게 레지스터 공간을 낭비하게 되고 이는 쉐이더 프로그램의 더 낮은 Invocation으로 이끌어 성능을 하락시킨다.            
+            
 그래서 GPU 코드를 작성할 때는 분기점을 최대한 줄이기 위해 노력해야하고 분기들 내에 공통된 연산은 분기 밖에서 한번만 연산하는 것이 좋다.        
 ( 공통된 연산을 두 분기 모두에 넣어버리면 결국 해당 연산은 공통된 연산임에도 불구하고 모든 쓰레드가 두 번 연산해야한다. )       
 혹은 위와 같이 분기가 생기는 경우에는 아예 별개의 쉐이더로 분리해서 두 분기가 필요한 Fragment들은 두 번의 쉐이딩 ( 2 Pass )을 하는 방법도 있다.              
 하나의 쉐이더에서 분기점을 나누기 위해 두개의 쉐이더를 직접 만들 필요 없이 Shader Permutation을 통해서 하나의 쉐이더로 두개의 쉐이더 프로그램을 만들 수 있다. ( Shader Permutation은 쉽게 생각하면 하나의 쉐이더에 #ifdef와 같은 전처리문들을 여러개 넣어서 하나의 쉐이더로 전처리 개수만큼 각기 다른 쉐이더를 각각 만든다고 생각하면 된다. ) ( 다만 이러한 Shader Permutation의 과도한 사용은 쉐이더 컴파일 시간, 메모리 사용량을 높이니 적절히 사용할 필요가 있다. )           
+( 또한 언리얼 엔진 같은 경우 다이나믹 인스턴싱을 지원하기 때문에 Shader Permutation으로 별도 쉐이더로 분리하지 말고 분기로 인한 비용을 감수하고 인스턴싱을 하는 것이 성능에 더 도움이 될 수도 있다 )        
 
 마지막으로 **다시 정리를 해보면 GPU에서 분기 ( if문 )이 나쁜 ( 느린 ) 이유는 조건문을 연산하는 것 자체가 느린 것이 아니라 GPU의 Warp단위 쓰레드들이 분기점에서 두 개의 분기 모두를 연산해야하기 때문이다.**              
-( 여담으로 CPU의 분기가 느린 이유도 조건문 연산 자체가 느린 것이 아닌 분기 예측 실패에 따라 예측한 분기의 연산 결과,파이프라인(!) 내 명령어들을 비우고 새롭게 올바른 분기의 명령어들로 연산을 해야하기 때문이다. )
+( 여담으로 CPU의 분기가 느린 이유도 조건문 연산 자체가 느린 것이 아닌 분기 예측 실패에 따라 예측한 분기의 연산 결과,파이프라인(!) 내 명령어들을 비우고 새롭게 올바른 분기의 명령어들로 연산을 해야하기 때문이다. )              
+
+---------------------------             
+
+언리얼 엔진 쉐이더 코드를 보면 if문 앞에 "FLATTEN"나 "BRANCH"가 붙어 있는 것을 볼 수 있다.          
+"FLATTEN"은 다이나믹 브랜칭을 활용하지 않고 항상 양쪽 분기의 코드 모두를 실행하라는 의미이다. 양쪽 분기 모두를 실행하고 if문의 결과에 따라 둘 중 하나를 선택한다.    
+반면 "BRANCH"는 IF문의 결과에 따라 다이나믹 브랜칭을 하라고 명시해주는 코드이다. ( "FLATTEN"과 "다이나믹 브랜칭"은 정반대의 개념이다 )            
+이러한 "FLATTEN", "BRANCH"는 HLSL 쉐이더 컴파일러에서만 존재하는 개념이다.      
+( 현재 UE5의 대부분의 플랫폼은 HLSL로 작성된 쉐이더 코드를 [DXC](https://github.com/microsoft/DirectXShaderCompiler)를 통해 DXIL로 변환하거나 HLSL ->(DXC) SPIR-V ->(SPIRV-CROSS) D3D외의 타겟 언어로 변환하기 때문이 HLSL이 DXC를 거치는 과정에서 "FLATTEN", "BRANCH" Attribute를 고려하여 쉐이더 코드를 변환해준다. )       
+그리고 쉐이더 컴파일러에 힌트를 주는 것일뿐이지 강제성은 없다.                 
+그럼 다이나믹 브랜치를 수행하는 "BRANCH"가 "FLATTEN"에 비해 항상 더 빠른 것일까?        
+정답은 "그렇지 않다"이다.              
+다이나믹 브랜칭을 하는데 추가적인 비용이 있기 때문에 분기 내에서 수행하는 연산이 매우 값 싼 경우 "FLATTEN"을 사용해 그냥 양쪽 분기 연산을 모두 수행하고 lerp로 둘 중 하나를 선택해주는 것이 다이나믹 브랜칭을 하는 것보다 더 빠를 수 있다.                       
+반면 분기 내의 연산량이 많고(비용이 크고), Warp 내의 스레드들이 모두 한쪽 분기만을 탈 가능성이 큰 경우에는 "BRANCH"("다이나믹 브랜칭")를 사용하는 것이 좋아보인다.                          
+현대 쉐이더 컴파일러는 "BRANCH"와 "FLATTEN" 중 어떤 것이 성능에 더 좋은지를 매우 잘 알기 때문에 쉐이더 컴파일시 최적의 선택을 해 기계어로 번역을 해준다.        
+           
+[참고](https://forum.unity.com/threads/correct-use-of-unity_branch.476804/)          
+
+-------------------------                        
+
+"FLATTEN"이 유용한 또 다른 이유는 Derivates(한 픽셀에서 바로 옆 픽셀까지의 거리, EX. ddx, ddy ) 값을 다이나믹 브랜칭("BRANCH")을 사용하는 분기 내에서 사용할 수 없기 때문이다(ddx, ddy가 다이나믹 브랜치을 사용하는 분기 내에 존재할시 쉐이더 컴파일이 안됨)             
+[Derivates는 GPU가 2x2 픽셀의 Quad 단위로 연산을 수행하며 바로 옆 픽셀과의 값의 차이](http://www.aclockworkberry.com/shader-derivative-functions/)를 말하는데 만약 다이나믹 브랜칭을 수행하면 한쪽 분기에서 Quad 내의 일부 픽셀은 연산을 수행하고 다른 일부 픽셀은 연산을 수행하지 않는 경우가 있을 수 있고 이로 인해 결국 Derivates를 구할 수 없게 된다. 그래서 Derivates를 구하기 위해서는 반드시 Quad 내의 모든 픽셀들이 if문의 결과와 관계 없이 반드시 양쪽 분기 내의 연산을 수행함을 보장되어야 한다.          
+( Quad에 대해 조금 더 설명해보자면... GPU의 Scalar 연산은 2x2 픽셀의 블록(Quad)을 위한 4개의 값의 벡터를 포함하는 레지스터를 기반으로 SIMD 아키텍처를 통해 연산이 수행된다. 이것은 연산의 모든 스텝, 과정에서 각 2x2 블록(Quad)에 속하는 쉐이더 인스턴스(스레드)들은 서로 동기화되어 하드웨어단에서 빠르게 Derivative를 계산해낼 수 있다. Quad내의 각 픽셀이 SIMD 아키텍처로 동시에 연산될 때 사용하는 벡터 레지스터 내의 각 픽셀의 값들간의 단순 빼기가 Derivate이기 때문이다. Quad 내의 각 픽셀은 SIMD 아키텍처로 하나의 벡터 레지스터를 함께 사용해 연산되고 그 연산 결과도 벡터 레지스터에 함께 저장되기 때문에 단일 벡터 레지스터에 저장된 2x2 픽셀의 4개의 결과 값들간의 빼기 연산의 결과가 Derivates인 것이다 )             
+               
+예를 들어보자.          
+```c++
+float4 color = float(0,0,0,0);
+BRANCH
+if (screenPos.x > 0.5) 
+{
+    float2 uv = screenPos * 2.0;
+    color = tex2D(_MyTex, uv);
+}
+```
+위의 코드는 쉐이더 컴파일 에러를 발생시킨다. "tex2D" 함수는 샘플링할 텍스처 밉맵을 결정하기 위해 내부적으로 UV의 Derivates를 사용하는데, if문 "screenPos.x > 0.5"의 결과에 따라 Quad 내의 일부 픽셀이 분기 내의 연산을 수행하지 않고 놀아 Derivates를 구할 수 없는 경우가 발생할 수도 있기 때문에(Derivates 값이 구해지는 것을 보장할 수 없어) 컴파일 에러가 발생하는 것이다.                 
+아래 사진은 언리얼 엔진에서 다이나믹 브랜칭되는 분기("BRANCH")내에 Derivates(ddx)를 사용하여 쉐이더 컴파일 에러가 발생한 사진이다.                
+![UE4-branch-1-768x385](https://user-images.githubusercontent.com/33873804/233838759-967e2f56-2dec-467f-94ae-f0ec3337709d.png)                  
+
+그래서 "BRANCH" 대신 "FLATTEN"을 사용해주면 if문의 결과와 상관 없이 반드시 Quad 내의 스레드들이 분기 내 연산들을 처리하게 되고 정상적으로 Derivates 값을 생성함이 보장되기 때문에 쉐이더 컴파일에 성공하게 된다.          
+   
+--------------------------           
+
+언리얼 엔진 쉐이더 코드를 보면 종종 "UNROLL"이라는 것을 볼 수 있는데 이는 반복문의 반복 횟수가 상수인 경우 반복문을 풀어서 쉐이더 코드를 작성하라는 의미이다. for문도 결국 매 loop마다 분기이니 이 분기를 없애주려는 것이 목적이다.        
+
+```c++
+float4 result = 0.0;
+
+UNROLL
+for(uint i = 0 ; i < 3 ; i++)
+{
+   result += GetColorFromTexture(i, uv);
+}
+```
+위의 쉐이더 코드의 for문은 쉐이더 컴파일 과정에서 아래와 같이 변환된다.      
+```c++
+float4 result = 0.0;
+
+result += GetColorFromTexture(0, uv);
+result += GetColorFromTexture(1, uv);
+result += GetColorFromTexture(2, uv);
+```
+ 
 
 추가로 볼만한 글 : [Branches in mobile shaders](https://solidpixel.github.io/2021/12/09/branches_in_shaders.html)           
                                        
-references : [https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-34-gpu-flow-control-idioms](https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-34-gpu-flow-control-idioms),  [https://mkblog.co.kr/2019/01/09/gpgpu-series-7-warp-execution/](https://mkblog.co.kr/2019/01/09/gpgpu-series-7-warp-execution/),  [https://mkblog.co.kr/2019/02/01/gpgpu-series-8-branch-divergence/](https://mkblog.co.kr/2019/02/01/gpgpu-series-8-branch-divergence/),  [https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader](https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader)
+references : [https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-34-gpu-flow-control-idioms](https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-34-gpu-flow-control-idioms),  [https://mkblog.co.kr/2019/01/09/gpgpu-series-7-warp-execution/](https://mkblog.co.kr/2019/01/09/gpgpu-series-7-warp-execution/),  [https://mkblog.co.kr/2019/02/01/gpgpu-series-8-branch-divergence/](https://mkblog.co.kr/2019/02/01/gpgpu-series-8-branch-divergence/),  [https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader](https://blog.hybrid3d.dev/2020-12-21-reason-for-slow-of-if-statement-in-shader), [https://forum.unity.com/threads/branches-how-expensive-are-they.152411/#post-1044475](https://forum.unity.com/threads/branches-how-expensive-are-they.152411/#post-1044475)
