@@ -18,7 +18,7 @@ tags: [ComputerGraphics]
                
 [버텍스 캐시 재방문. 현대 GPU에서 버텍스 처리 이해 및 최적화 - 2018년 논문](https://arbook.icg.tugraz.at/schmalstieg/Schmalstieg_351.pdf)             
 [버텍스 캐시 최적화 여전히 유효한가?](https://www.reddit.com/r/opengl/comments/js9a9t/is_vertex_cache_optimization_still_a_thing/)              
-현대 GPU에는 버텍스 캐시라는 개념이 존재하지 않는다고 한다. 그러나 GPU가 여러 버텍스를 묶고(Batch), 그 묶음 내에서는 중복 연산을 없애 버텍스 캐시와 비슷한 효과를 낸다고 한다(Batch 내에서는 동일한 버텍스를 중복 연산하지 않는다 ).           
+현대 GPU에는 버텍스 캐시라는 개념이 존재하지 않는다고 한다. 그러나 GPU가 여러 버텍스를 묶고(Batch), 그 묶음 내에서는 중복된 인덱스를 없애 버텍스 캐시와 비슷한 효과를 낸다고 한다(Batch 내에서는 동일한 버텍스를 중복 연산하지 않는다 ).           
                  
 ---------------------               
            
