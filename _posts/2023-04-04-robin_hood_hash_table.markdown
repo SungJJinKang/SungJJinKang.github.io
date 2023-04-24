@@ -9,4 +9,4 @@ tags: [ComputerScience]
 언리얼 엔진4에서도 TRobinHoodHashMap, TRobinHoodHashSet라는 이름으로 구현되어 있다.      
 다만 언리얼 엔진의 TMap, TSet도 Element를 TSparseArray로 Element들이 Linear하게 메모리상에 배치하기 때문에 역시 캐시 친화적이기는 하다.                   
                   
-[알고리즘 설명](https://programming.guide/robin-hood-hashing.html)             
+[알고리즘 설명](https://programming.guide/robin-hood-hashing.html), [알고리즘 설명2](https://study.com/academy/lesson/robin-hood-hashing-concepts-algorithms.html)            
