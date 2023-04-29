@@ -2,7 +2,7 @@
 layout: post
 title:  "Draw Indirect 기법 ( GPU Instancing )"
 date:   2021-09-22
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 Draw Indirect는 쉽게 말하면 그릴 Mesh들의 버텍스, 쉐이더, 텍스쳐, 트랜스폼 등등의 오브젝트를 그리기 위한 데이터들을 왕창 GPU에 다 옮겨두고 GPU에게 Mesh들을 그리는 것을 전적으로 맡기는 것이다.        

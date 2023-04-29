@@ -2,7 +2,7 @@
 layout: post
 title:  "Write Combined Optimization - _mm_stream ( Non Temporal momory hint ( NT ) )"
 date:   2021-09-28
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 얼마전 인터뷰에서 SIMD 중에 "_mm_stream_pd"에 대한 질문을 받았다. 여러 SIMD 명령어를 사용해보았지만 이건 처음 들어본 명령어다. 그래서 공부해보았고 새롭게 알게 된 내용에 대해 글을 써보겠다.       

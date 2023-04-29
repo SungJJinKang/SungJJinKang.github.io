@@ -2,7 +2,7 @@
 layout: post
 title:  "std::atomic의 숨겨진 동작 원리 ( Atomicity, Volatile )"
 date:   2021-09-24
-tags: [ComputerScience, C++]
+tags: [ComputerScience, C++, Recommend]
 ---
 
 우선 atomicity라는 개념에 대해 알아보자.        

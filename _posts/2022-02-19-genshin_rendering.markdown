@@ -2,7 +2,7 @@
 layout: post
 title:  "원신 콘솔 플랫폼 개발 경험 및 렌더링 파이프라인 기술 소개 해설"
 date:   2022-02-19
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 이 글은 [유나이트 서울 2020 - 원신 콘솔 플랫폼 개발 경험 및 렌더링 파이프라인 기술 소개](https://youtu.be/00QugD5u1CU) 영상에 나온 여러 내용들에 대한 해설이다.            

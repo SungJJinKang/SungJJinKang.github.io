@@ -2,7 +2,7 @@
 layout: post
 title:  "부동소수점"
 date:   2021-08-26
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 본격적으로 부동소수점에 들어가기전 유리수를 이진수로 변환하는 방법을 먼저 알아보자.

@@ -2,7 +2,7 @@
 layout: post
 title:  "Guard Band Clipping (번역)"
 date:   2023-02-18
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---          
 
 이 글은 [A trip through the Graphics Pipeline 2011, part 5](https://fgiesen.wordpress.com/2011/07/05/a-trip-through-the-graphics-pipeline-2011-part-5/)의 Guard Band Clipping 부분을 번역한 글입니다.                      

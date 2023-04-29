@@ -2,7 +2,7 @@
 layout: post
 title:  "Tile Memory, Memory Less 모드"
 date:   2022-04-14
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 모바일 GPU는 일반적으로 **Tile Memory**를 가지고 있다.         

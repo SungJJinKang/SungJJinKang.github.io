@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 Masked vs Translucent ( 모바일 GPU에서의 Alpha Test, Alpha Blend )"
 date:   2022-04-30
-tags: [UE]
+tags: [UE, Recommend]
 ---
 
 [Translucent vs Masked Rendering in Real-Time Applications](https://developer.oculus.com/blog/translucent-vs-masked-rendering-in-real-time-applications/?locale=ko_KR)        

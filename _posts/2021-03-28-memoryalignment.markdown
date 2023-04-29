@@ -2,7 +2,7 @@
 layout: post
 title:  "Memory Alignment"
 date:   2021-03-28
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 **컴퓨터가 메모리에서 데이터를 가져오는 데 한번에 워드 단위로(64비트 환경에서는 8바이트, 32비트 환경에서는 4바이트)만 가져올 수 있다.**         
 ("워드 사이즈"는 CPU가 한번에 처리 가능한 비트의 수를 말하는데 오늘 날에는 일반적으로 4바이트 혹은 8바이트다. Data 버스 사이즈, 명령어 사이즈, 주소 사이즈도 일반적으로 워드 사이즈의 배수인 경우가 많다. Windows API에서는 WORD를 16비트, DWORD를 32비트라고 부르는데 이는 CPU의 워드 사이즈와 아무런 관계가 없다. )                

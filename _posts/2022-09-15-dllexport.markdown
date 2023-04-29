@@ -2,7 +2,7 @@
 layout: post
 title:  "__declspec(dllexport) vs extern ( 번외로 어떻게 런타임에 export된 함수를 찾을까? )"
 date:   2022-09-15
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---         
                                  
 갑자기 헷갈려서 기록해두는 글...                 

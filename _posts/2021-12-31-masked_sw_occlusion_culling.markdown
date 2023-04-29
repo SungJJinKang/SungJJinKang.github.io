@@ -2,7 +2,7 @@
 layout: post
 title:  "Masked SW ( CPU ) Occlusion Culling 구현기"
 date:   2021-12-31
-tags: [ComputerGraphics, InHouseEngine]
+tags: [ComputerGraphics, InHouseEngine, Recommend]
 ---
 
 미루고 미루다가 드디어 Masked SW ( CPU ) Occlusion Culling 구현을 끝냈다..         

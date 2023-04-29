@@ -2,7 +2,7 @@
 layout: post
 title:  "이미 Lock된 Critical Section을 Acquire 시도할시 항상 커널 모드로 전환(Sleep)되나?"
 date:   2023-04-09
-tags: [ComputerScience, UE]
+tags: [ComputerScience, UE, Recommend]
 ---          
              
 이미 Lock된 Critical Section을 Acquire 시도할시 항상 커널 모드로 전환(Sleep)되나?          

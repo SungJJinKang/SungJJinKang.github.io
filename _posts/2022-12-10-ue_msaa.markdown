@@ -2,7 +2,7 @@
 layout: post
 title:  "MSAA ( 언리얼 엔진에서의 구현도 함께 살펴보자 )"
 date:   2022-12-10
-tags: [UE, ComputerGraphics]
+tags: [UE, ComputerGraphics, Recommend]
 ---            
            
 용어 정리 :                  

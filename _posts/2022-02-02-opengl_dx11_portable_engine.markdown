@@ -2,7 +2,7 @@
 layout: post
 title:  "OpenGL, D3D11 Portable한 게임 엔진 만들기"
 date:   2022-02-02
-tags: [ComputerGraphics, InHouseEngine]
+tags: [ComputerGraphics, InHouseEngine, Recommend]
 ---
 
 개발 중인 DoomsEngine은 원래는 OpenGL을 기반으로 코드를 짯다.            

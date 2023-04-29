@@ -2,7 +2,7 @@
 layout: post
 title:  "std::function은 왜 느릴까?"
 date:   2021-05-20
-tags: [C++]
+tags: [C++, Recommend]
 ---
 
 우선 std::function을 왜 사용하는지를 알아야한다.    

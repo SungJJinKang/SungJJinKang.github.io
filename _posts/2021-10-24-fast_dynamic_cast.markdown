@@ -2,7 +2,7 @@
 layout: post
 title:  "고속 dynamic_cast"
 date:   2021-10-24
-tags: [C++]
+tags: [C++, Recommend]
 ---
 
 

@@ -2,7 +2,7 @@
 layout: post
 title:  "Quad Overdraw ( Over Shading ) ( 한 Fragment 보다 작은 삼각형이 성능면에서 문제가 되는 이유 )"
 date:   2022-03-03
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 ![viewmode_quad_overdraw](https://user-images.githubusercontent.com/33873804/156515043-c367689f-b287-4735-9e64-90195cd3192f.jpg)        

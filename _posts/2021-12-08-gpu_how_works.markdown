@@ -2,7 +2,7 @@
 layout: post
 title:  "DRAM의 데이터가 어떻게 GPU로 전달될까? ( Pinned Memory )"
 date:   2021-12-08
-tags: [ComputerScience, ComputerGraphics]
+tags: [ComputerScience, ComputerGraphics, Recommend]
 ---
 
 이 글은 어떻게 데이터가 디스크에서 GPU, VRAM으로 전달되는지에 대한 동작 원리를 설명하는 글이다.        

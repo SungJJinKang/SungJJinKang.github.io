@@ -2,7 +2,7 @@
 layout: post
 title:  "Cache Coherency와 False sharing에 대한 구체적 예시"
 date:   2021-05-14
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 [CPPCON 영상](https://youtu.be/BP6NxVxDQIs)을 보다 얻은 Cache Coherency, False sharing에 대한 구체적인 예시를 들어보겠다.      

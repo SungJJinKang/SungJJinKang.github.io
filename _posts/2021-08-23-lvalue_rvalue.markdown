@@ -2,7 +2,7 @@
 layout: post
 title:  "lvalue, rvalue의 정확한 개념적 이해"
 date:   2021-08-23
-tags: [C++]
+tags: [C++, Recommend]
 ---
 
 **lvalue는 메모리에서 식별할 수 있는 공간을 차지하고 있는 오브젝트**이다.       

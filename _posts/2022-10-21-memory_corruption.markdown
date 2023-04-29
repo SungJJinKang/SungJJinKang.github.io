@@ -2,7 +2,7 @@
 layout: post
 title:  "Stomp Allocator"
 date:   2022-10-21
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---         
 
 언리얼 엔진 할당자 공부하다 알게된 Stomp Allocator           

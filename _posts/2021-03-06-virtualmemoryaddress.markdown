@@ -2,7 +2,7 @@
 layout: post
 title:  "가상 메모리 주소, 메모리 페이징에 대한 나의 이해"
 date:   2021-03-05
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 우선 가상 메모리 주소를 왜 사용할까?? Physical한 메모리 주소를 사용하려면 프로그램(프로세스) 단에서 일일이 관리해야하는데 이걸 OS단에서 대신 해주어서 프로그램은 자신의 virtual address space만 신경 쓰면된다. 프로그램에서는 프로그램에 배정된 virtual address만 접근할 수 있으니 다른 프로그램의 physical address에 접근할 수 없어져서 안정성이 더 높아짐.          

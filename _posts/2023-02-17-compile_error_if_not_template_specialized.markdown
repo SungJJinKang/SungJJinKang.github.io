@@ -2,7 +2,7 @@
 layout: post
 title:  "템플릿 특수화 되지 않은 템플릿 함수/타입 사용(인스턴스화)시 컴파일 에러 띄우기"
 date:   2023-02-17
-tags: [C++]
+tags: [C++, Recommend]
 ---          
 
 아래 코드의 경우 특수화 되지 않은 함수의 static_assert의 condtion 코드("!std::is_same<T, T>::value") 평가가 템플릿 인스턴스화 이전에는 가능하지 않기 때문에(condition 코드의 평가가 템플릿 매개변수 T에 의존적이다) 특수화 되지 않은 버전의 함수를 호출(인스턴스화)하기 이전에는 컴파일 에러가 뜨지 않는다. ( 어떤 타입 T에 대한 "std::is_same"를 특수화하여 value 값이 "false"가 나오게 만들 수 있다. )        

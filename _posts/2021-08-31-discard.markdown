@@ -2,7 +2,7 @@
 layout: post
 title:  "왜 Fragment Shader에서의 discard는 안좋을까?"
 date:   2021-08-31
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 discard는 Fragment Shader 단계에서 해당 픽셀을 그리지 않는다는 의미이다.      

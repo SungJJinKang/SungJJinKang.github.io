@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine 블루프린트가 상대적으로 느린 이유?"
 date:   2022-02-26
-tags: [UE]
+tags: [UE, Recommend]
 ---
 
 아래의 사진은 왼쪽의 블루프린트 바이트코드에서, 오른쪽 위의 블루프린트와 C++ 네이티브 코드( MakeVector 함수 ) 사이의 중간 Helper 함수를 거쳐서, C++ 네이티브 코드 ( MakeVector 함수 )를 호출하는 것을 보여줌.                

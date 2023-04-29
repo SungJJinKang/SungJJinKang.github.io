@@ -2,7 +2,7 @@
 layout: post
 title:  "Windows 메모리 구조, 동작 원리"
 date:   2021-10-10
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 이 글은 "제프리 리처의 Windows Via C/C++" 책 중 Window 플랫폼의 메모리 파트를 정리한 글이다.         

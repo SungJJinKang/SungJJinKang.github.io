@@ -2,7 +2,7 @@
 layout: post
 title:  "Shader Occupancy"
 date:   2023-02-04
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---         
   
 Xcode GPU Frame Capture를 보던 중 Occupancy라는 데이터가 있어 이것이 뭔지 궁금해서 찾아보았다.         

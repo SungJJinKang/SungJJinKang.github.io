@@ -2,7 +2,7 @@
 layout: post
 title:  "SIMD(SSE) 사용하기"
 date:   2021-03-22
-tags: [C++, ComputerScience, InHouseEngine]
+tags: [C++, ComputerScience, InHouseEngine, Recommend]
 ---
 
 렌더링을 하는 데 ModelMatirx나 AABB등에 ModelMatrix를 적용하는 데 너무 많은 부화가 걸린다. 그래픽 API 콜보다 더 많은 부하가 걸려서 이걸 해결해야겠다는 생각이 들었다.    

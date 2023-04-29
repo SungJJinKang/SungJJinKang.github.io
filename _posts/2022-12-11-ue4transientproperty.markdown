@@ -2,7 +2,7 @@
 layout: post
 title:  "Unreal Engine CreateDefaultSubObject 함수의 두 번째 매개 변수 bTransient의 의미 ( FEventLoadNodeArray::GetAddedNodes 크래시 )"
 date:   2022-12-11
-tags: [UE]
+tags: [UE, Recommend]
 ---            
                      
 <img width="421" alt="20221211161302" src="https://user-images.githubusercontent.com/33873804/206891051-f0a08f91-4727-4d1f-a0b7-8776155aa17e.png">              

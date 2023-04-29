@@ -2,7 +2,7 @@
 layout: post
 title:  "파일 읽기 - 블록 읽기 방식 ( 블록 읽기 ) vs File Stream vs Memory mapped 파일 방식"
 date:   2021-09-29
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 이 글에서는 블록 읽기 ( Win32 기준 블록 읽기 ) 방식과 meory mapped 파일 두 방법의 장단점을 비교하려한다.           

@@ -2,7 +2,7 @@
 layout: post
 title:  "IO 시스템 ( 번역 )"
 date:   2021-09-26
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 CPU, GPU, 메모리를 다루면서 어찌보면 마법처럼 이루어져보이는 IO에 대해 공부해야겠다는 생각이 들었다.     

@@ -2,7 +2,7 @@
 layout: post
 title:  "Addressing Mode ( 주소 지정 모드 )"
 date:   2021-06-09
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 Addressing Mode ( 주소 지정 모드 )는 명령어의 연산이 수행되기 전 명령어의 피연산자를 어떻게 해석하고 읽을지에 대한 규칙이다.      

@@ -2,7 +2,7 @@
 layout: post
 title:  "메모리 Reordering에 대한 풍부한 이해를 도와주는 글들"
 date:   2021-05-13
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 기본적으로 메모리 Reordering은 메모리 Stall ( 메모리 Latency )를 줄이기 ( 숨기기 ) 위한 기능이다.    

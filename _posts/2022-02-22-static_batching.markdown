@@ -2,7 +2,7 @@
 layout: post
 title:  "Static Bathcing 구현하기"
 date:   2022-02-22
-tags: [ComputerGraphics, InHouseEngine]
+tags: [ComputerGraphics, InHouseEngine, Recommend]
 ---
 
 **Static Batch는 동일한 매터리얼 사용하는 오브젝트들의 메쉬 버텍스들을 모두 World Space로 Proeject한 후 GPU에 왕창 올려두고 하나의 Draw Call로 그리는 기법이다.**                     

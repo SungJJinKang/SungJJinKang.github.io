@@ -2,7 +2,7 @@
 layout: post
 title:  "메시 버텍스, 인덱스 버퍼 최적화 ( 버텍스 캐시, 대역폭, Post Transform Vertex Cache, GPU 메모리 캐시, 버텍스 재사용 )"
 date:   2022-10-29
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---          
                         
 그래서 버텍스 재사용 관련 내용을 조사하다 여러 가지 지식들을 습득할 수 있었다.                     

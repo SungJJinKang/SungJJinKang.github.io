@@ -2,7 +2,7 @@
 layout: post
 title:  "보조 기억 장치의 데이터를 연속되게 읽는 것(인전합 데이터를 연속해서 읽는 것)이 성능상 유리한 이유"
 date:   2023-02-26
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---          
                                           
 ChatGPT의 도움을 받아...               

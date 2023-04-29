@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진4 FMobileSceneRenderer 분석 - 1 ( FScene::UpdateAllPrimitiveSceneInfos )"
 date:   2022-04-16
-tags: [UE]
+tags: [UE, Recommend]
 ---
 
 중요도가 떨어지는 코드는        

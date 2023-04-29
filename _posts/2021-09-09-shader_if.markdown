@@ -2,7 +2,7 @@
 layout: post
 title:  "쉐이더 ( GPU )에서 분기점( if )이 나쁜(느린) 이유 ( + BRANCH, FLATTEN, Quad, Derivates, ddx, ddy )"
 date:   2021-09-09
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 쉐이더 ( GPU )에서 분기점( if )이 나쁜(느린) 이유는 무엇일까?       

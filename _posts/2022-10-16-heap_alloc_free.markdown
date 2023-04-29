@@ -2,7 +2,7 @@
 layout: post
 title:  "힙 할당, 해제 구현(glibc, 최적화를 위한 여러 기법들..., Arena, Binnning)"
 date:   2022-10-16
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---         
 
 [https://azeria-labs.com/heap-exploitation-part-1-understanding-the-glibc-heap-implementation/](https://azeria-labs.com/heap-exploitation-part-1-understanding-the-glibc-heap-implementation/),              

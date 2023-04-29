@@ -2,7 +2,7 @@
 layout: post
 title:  "텍스쳐 사이즈와 렌더링 성능의 연관성"
 date:   2022-02-09
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---
 
 텍스쳐 사이즈가 크다는 말은 GPU가 텍스쳐를 읽을 때 그만큼 여러 캐시 라인에 걸쳐서 텍스쳐를 읽어야한다는 것을 의미한다.          

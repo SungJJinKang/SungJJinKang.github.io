@@ -2,7 +2,7 @@
 layout: post
 title:  "Frame Pacing"
 date:   2023-01-26
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---            
 
 [Frame Pacing for Mobile Devices](https://docs.unrealengine.com/5.1/en-US/frame-pacing-for-mobile-devices-in-unreal-engine/),        

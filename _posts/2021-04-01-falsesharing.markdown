@@ -2,7 +2,7 @@
 layout: post
 title:  "False Sharing"
 date:   2021-04-01
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 Fasle Sharing이란??

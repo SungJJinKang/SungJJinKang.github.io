@@ -2,7 +2,7 @@
 layout: post
 title:  "언리얼 엔진 쉐이더 변환 도구 ( hlslcc, ShaderConductor )"
 date:   2022-10-09
-tags: [UE]
+tags: [UE, Recommend]
 ---         
                     
 언리얼 엔진은 기본적으로 hlsl ( D3D의 쉐이더 언어 )로 작성된 우버 쉐이더 코드를 필요에 따라 여러 전처리 매크로들을 On, Off하여 사용한다. 여기서 우버 쉐이더란 필요한 기능이 전부 들어 있는 하나의 쉐이더 코드로 필요한 기능을 하나의 쉐이더 코드에 다 때려 넣고 전처리 매크로로 필요한 기능한 포함시켜 컴파일하는 것을 의미한다. ( 자세한건 [여기](https://www.slideshare.net/blindrendererkr/3ds-max-26700918)를 참고하시길 바랍니다... )                

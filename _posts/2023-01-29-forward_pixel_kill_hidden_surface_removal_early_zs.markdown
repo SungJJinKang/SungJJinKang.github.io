@@ -2,7 +2,7 @@
 layout: post
 title:  "Forward Pixel Kill(Hidden Surface Removal)"
 date:   2023-01-29
-tags: [ComputerGraphics]
+tags: [ComputerGraphics, Recommend]
 ---            
 
 **"Forward Pixel Kill(FPK)"**은 일부 ARM Mali GPU에 도입된 기술이다.       

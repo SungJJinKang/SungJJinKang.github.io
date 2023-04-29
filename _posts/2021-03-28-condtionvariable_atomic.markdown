@@ -2,7 +2,7 @@
 layout: post
 title:  "condition variable이 atomic임에도 불구하고 write할 때 mutex로 보호해줘야하는 이유"
 date:   2021-03-28
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 선행 지식 :    

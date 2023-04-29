@@ -2,7 +2,7 @@
 layout: post
 title:  "게임 엔진에서 메모리 누수를 줄이기 위한 전략 ( 게임 엔진의 오브젝트 관리 )"
 date:   2021-09-25
-tags: [ComputerScience, InHouseEngine]
+tags: [ComputerScience, InHouseEngine, Recommend]
 ---
 
 new 할당한 오브젝트의 포인터를 잃어버리게 되면 영원히 해재할 수 없게된다.      

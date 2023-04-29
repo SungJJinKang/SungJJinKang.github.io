@@ -2,7 +2,7 @@
 layout: post
 title:  "팩토리 메소드 패턴"
 date:   2021-07-02
-tags: [DesignPattern]
+tags: [DesignPattern, Recommend]
 ---
 
 "추상 팩토리 패턴"에 대해 알아보기 전에 "팩토리는 무엇인가"??      

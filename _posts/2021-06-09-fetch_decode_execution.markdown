@@ -2,7 +2,7 @@
 layout: post
 title:  "Fetch-Decode-Execute Instruction Cycle"
 date:   2021-06-09
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 흔히 Fetch-Decode-Execute 사이클로 알려진 명렁어 사이클은 CPU가 컴퓨터가 켜지고 꺼질 때 까지 따르는 사이클이다.      

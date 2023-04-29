@@ -2,7 +2,7 @@
 layout: post
 title:  "Memory Coalescing"
 date:   2021-10-18
-tags: [ComputerScience]
+tags: [ComputerScience, Recommend]
 ---
 
 [참고하면 좋은 글](https://mkblog.co.kr/nvidia-gpu-memory-coalescing-coalesced-memory-access/)            
