@@ -100,7 +100,7 @@ DRAM에 데이터를 쓰려면 반드시 메모리 버스를 통해야 하는데
 
 그러니 특별한 이유가 없다면 **절대로 write-combining 메모리를 읽지마라.** 특히 렌더링 관점에서 작성 중인 constant buffers, vertex buffers, index buffers 는 절대 읽지마라. 이 버퍼들은 write combined 타입의 메모리 ( 이 버퍼들은 GPU에서 읽어가야하므로 캐싱을 하지 않고 바로 메모리에 쓰기 동작을 하는 Write-Combined 유형의 데이터들이다 )이기 때문에 읽으려는 것은 최악이다..                 
 
-GPU와 관련해서 Write-Combined 버퍼가 제일 많이 활용되는 것이 GPU와 같은 IO 장치와 대량의 데이터를 주고 받는 **Memory mapped IO 통신을 할 때**이다. 메모리 맵된 IO의 프로세스 가상 주소 공간은 Write-Combined 타입 ( 캐싱이 안되는 )의 메모리 영역으로 non-temporal hint 명령어를 사용해 쓰기 동작을 수행할 때 Write-Combined 버퍼가 활용된다. 그래서 **VRAM으로부터 메모리 맵된 텍스쳐 버퍼에 non-temporal hint로 쓰기 동작을 수행하면 Write-Combined 버퍼가 활용되고 쓸 데이터 크기가 크다면 이 Write-Combined 버퍼를 활용해서 IO 장치에 데이터를 전송함으로서 오는 이득이 매우 클 것**이다.           
+GPU와 관련해서 Write-Combined 버퍼가 제일 많이 활용되는 것이 GPU와 같은 IO 장치와 대량의 데이터를 주고 받는 **Memory mapped IO 통신을 할 때**이다. 메모리 맵된 IO의 프로세스 가상 주소 공간은 Write-Combined 타입 ( 캐싱이 안되는 )의 페이지로 non-temporal hint 명령어를 사용해 쓰기 동작을 수행할 때 Write-Combined 버퍼가 활용된다. 그래서 **VRAM으로부터 메모리 맵된 텍스쳐 버퍼에 non-temporal hint로 쓰기 동작을 수행하면 Write-Combined 버퍼가 활용되고 쓸 데이터 크기가 크다면 이 Write-Combined 버퍼를 활용해서 IO 장치에 데이터를 전송함으로서 오는 이득이 매우 클 것**이다.           
 
 렌더링에서 활용되는 write-combined 버퍼에 대해서는 [이 글](https://fgiesen.wordpress.com/2013/01/29/write-combining-is-not-your-friend/)을 읽어보기 바란다.       
 
