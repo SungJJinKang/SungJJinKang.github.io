@@ -28,7 +28,7 @@ tags: [ComputerScience, ComputerGraphics, UE5, UE, Recommend]
 
 **핵심은 얼마나 빨리 버텍스 데이터를 HDD에서 VRAM으로 가져오느냐**이다.          
 **HDD에서 바로 VRAM으로 데이터 전송이 불가능하고 HDD에서 DRAM으로 버텍스를 전송, DRAM에서 VRAM으로 버텍스를 전송하는 과정을 거쳐야한다.**        
-다행히도 **DRAM에서 VRAM으로의 전송은 생각보다 느리지 않다.** ( [DRAM에서 GPU로의 데이터 전송](https://sungjjinkang.github.io/gpu_memory) ) **문제는 HDD에서 DRAM으로 데이터를 전송하는 것이 매우 느리다는 것이 문제다...** 다행히도 SSD라는 것이 등장하였고 SSD에서 DRAM으로 데이터 전송이 빨라져 이 나나이트라는 기술이 가능하게 된 것이다. ( SSD가 등장하기 전 HDD 시대에는 HHD와 DRAM간의 데이터 전송이 느리기 때문에 나나이트라는 기술이 불가능했다. )           
+다행히도 **DRAM에서 VRAM으로의 전송은 생각보다 느리지 않다.** ( [DRAM에서 GPU로의 데이터 전송](https://sungjjinkang.github.io/gpu_access_to_dram), [DRAM에서 GPU로의 데이터 전송2](https://sungjjinkang.github.io/from_dram_to_gpu) ) **문제는 HDD에서 DRAM으로 데이터를 전송하는 것이 매우 느리다는 것이 문제다...** 다행히도 SSD라는 것이 등장하였고 SSD에서 DRAM으로 데이터 전송이 빨라져 이 나나이트라는 기술이 가능하게 된 것이다. ( SSD가 등장하기 전 HDD 시대에는 HHD와 DRAM간의 데이터 전송이 느리기 때문에 나나이트라는 기술이 불가능했다. )           
 
 그럼 **왜 에픽게임즈는 언리얼 엔진5의 데모를 PS5에서 구동하여 공개**하였는가?    
 

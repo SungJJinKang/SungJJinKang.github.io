@@ -18,7 +18,7 @@ GPU로 데이터를 전송하고, 전송받는 것은 쉽지만, CPU와 GPU가 �
 OpenGL의 스펙의 용어를 사용해보면 우리는 GPU를 디바이스라고 부른다. 그리고 **OpenGL API 함수들을 호출할 때, 드라이버는 그 호출들을 커맨드로 전송한다 그리고 그 호출들을 CPU의 내부 큐**에 추가한다. 이러한 커맨드들은 GPU ( 디바이스 )에 의해 비동기적으로 사용된다. 이러한 큐들을 우리는 이미 "커맨드 큐"라는 용어로 알고 있다. 그렇지만 조금 더 정확한 단어는 **"디바이스 커맨드 큐"**가 맞다.            
 CPU 메모리에서 디바이스 ( GPU ) 메모리로의 데이터 전송은 "업로딩"이라 부르고, 디바이스 ( GPU ) 메모리에서 CPU 메모리로의 전송을 "다운로드"라고 부른다.          
 마지막으로 **"Pinned Memory"**는 GPU가 PCI 버스를 통해 직접적으로 접근할 수 있는 메인 메모리의 일부분이다.             
-( [이 글1](https://sungjjinkang.github.io/gpu_memory), [이 글2](https://sungjjinkang.github.io/IO_System)를 참고해보기 바란다. )               
+( [이 글1](https://sungjjinkang.github.io/gpu_access_to_dram), [이 글2](https://sungjjinkang.github.io/IO_System)를 참고해보기 바란다. )               
               
                
 - **버퍼 오브젝트들**                
