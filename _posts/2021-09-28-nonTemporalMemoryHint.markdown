@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Write Combined Optimization - _mm_stream ( Non Temporal momory hint ( NT ) )"
+title:  "Write Combine(Write Combined 버퍼) - _mm_stream ( Non Temporal momory hint ( NT ) )"
 date:   2021-09-28
 tags: [ComputerScience, Recommend]
 ---
