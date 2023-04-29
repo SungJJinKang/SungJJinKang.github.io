@@ -18,7 +18,7 @@ GPU로 데이터를 전송하고, 전송받는 것은 쉽지만, CPU와 GPU가 �
 OpenGL의 스펙의 용어를 사용해보면 우리는 GPU를 디바이스라고 부른다. 그리고 **OpenGL API 함수들을 호출할 때, 드라이버는 그 호출들을 커맨드로 전송한다 그리고 그 호출들을 CPU의 내부 큐**에 추가한다. 이러한 커맨드들은 GPU ( 디바이스 )에 의해 비동기적으로 사용된다. 이러한 큐들을 우리는 이미 "커맨드 큐"라는 용어로 알고 있다. 그렇지만 조금 더 정확한 단어는 **"디바이스 커맨드 큐"**가 맞다.            
 CPU 메모리에서 디바이스 ( GPU ) 메모리로의 데이터 전송은 "업로딩"이라 부르고, 디바이스 ( GPU ) 메모리에서 CPU 메모리로의 전송을 "다운로드"라고 부른다.                   
                          
-마지막으로 **"Pinned Memory"**(Non-Pagable Memory, 디스크로 Swap out 되지 않는 메모리, Virtual Memory 개념이 적용되지 않는 페이지)는 GPU가 PCI 버스를 통해 직접적으로 접근할 수 있는 메인 메모리의 일부분이다.              
+마지막으로 **"Pinned Memory"**(Locked Memory, Non-Pagable Memory, 디스크로 Swap out 되지 않는 메모리, Virtual Memory 개념이 적용되지 않는 페이지)는 GPU가 PCI 버스를 통해 직접적으로 접근할 수 있는 메인 메모리의 일부분이다.              
 ( [이 글1](https://sungjjinkang.github.io/gpu_access_to_dram), [이 글2](https://sungjjinkang.github.io/IO_System)를 참고해보기 바란다. )                 
                 
 - **버퍼 오브젝트들**                
@@ -35,7 +35,7 @@ GPU로 데이터를 주고 받는데는 두 가지 방법이 있는데 OpenGL �
 
 <img width="399" alt="20211208200616" src="https://user-images.githubusercontent.com/33873804/145198167-a6686566-0bc4-4566-81eb-7490a31d8e07.png">          
 
-위의 사진에서 보이듯이 이 함수들은 우선 유저 모드 메모리 영역 ( DRAM )의 데이터를 **GPU가 직접 접근할 수 있는 DRAM 내부의 Pinned Memory(Non-Pagable Memory, 디스크로 Swap out 되지 않는 메모리, Virtual Memory 개념이 적용되지 않는 페이지)로 데이터를 우선 복사한다. ( DRAM -> DRAM 복사 )** 이러한 과정은 일반적인 **memcpy와 비슷**하다. **일단 완료되면 드라이버는 DMA 전송을 시작**한다. 이 DMA 전송은 위에서 말했듯이 **비동기적**이기 때문에 Pinned Memory로 전송이 끝나고 DMA 전송 커맨드만 전송하면 DMA 전송이 시작되기 전 glBufferData는 반환된다. 데이터 전송의 목적이는 Usage hint, 드라이버 구현에 달려있는데 이는 나중에 설명할 것이다. 몇몇 경우에는 데이터는 그냥 DRAM Pinned 메모리에 머무르고 GPU가 이 메모리에 직접 접근하기도 한다. ( VRAM으로 데이터 전송이 안이루어진다는 것이다. ) ( 결과적으로는 한번의 데이터 이동만 발생한 것이다. ) 데이터를 어떻게 생성하느냐에 따라 이 한번의 데이터 이동 ( DRAM -> DRAM )도 안할 수 있다. ( 처음부터 데이터를 Pinned 메모리에 올리는 것이다. )        
+위의 사진에서 보이듯이 이 함수들은 우선 유저 모드 메모리 영역 ( DRAM )의 데이터를 **GPU가 직접 접근할 수 있는 DRAM 내부의 Pinned Memory(Locked Memory, Non-Pagable Memory, 디스크로 Swap out 되지 않는 페이지, Virtual Memory 개념이 적용되지 않는 페이지)로 데이터를 우선 복사한다. ( DRAM -> DRAM 복사 )** 이러한 과정은 일반적인 **memcpy와 비슷**하다. **일단 완료되면 드라이버는 DMA 전송을 시작**한다. ( **Disk로 Swap Out될 가능성이 있는 Pagable 메모리(페이지)의 경우 DMA로 데이터를 전송할 수 없다. 언제 Swap out될지 모르게 때문에... 그래서 DMA를 통해 데이터를 전송하기 위해 Swap out되지 않는 Pinned Memory로 데이터를 한번 복사하는 과정이 필요한 것이다.** ) 이 DMA 전송은 위에서 말했듯이 **비동기적**이기 때문에 Pinned Memory로 전송이 끝나고 DMA 전송 커맨드만 전송하면 DMA 전송이 시작되기 전 glBufferData는 반환된다. 데이터 전송의 목적이는 Usage hint, 드라이버 구현에 달려있는데 이는 나중에 설명할 것이다. 몇몇 경우에는 데이터는 그냥 DRAM Pinned 메모리에 머무르고 GPU가 이 메모리에 직접 접근하기도 한다. ( VRAM으로 데이터 전송이 안이루어진다는 것이다. ) ( 결과적으로는 한번의 데이터 이동만 발생한 것이다. ) 데이터를 어떻게 생성하느냐에 따라 이 한번의 데이터 이동 ( DRAM -> DRAM )도 안할 수 있다. ( 처음부터 데이터를 Pinned 메모리에 올리는 것이다. )        
 GPU에 데이터를 올리는 더 효과적인 방법은 **glMapBuffer, glUnmapBuffer 함수를 사용해 내부 드라이버의 메모리 영역의 주소를 직접 가져오는 것이다. ( Pinned 메모리에다 그냥 바로 쓰는 것 )** 대부분의 경우 이러한 메모리들은 Pinned 되어 있다. 물론 이 또한 드라이버에 따라 다르다. ( 여기서 **Pinned되어 있다는 것은 해당 메모리 영역이 Disk로 Page out되지 않고, 쓰기 동작을 수행할 때도 캐싱을 하지 않고 항상 DRAM에 쓴다는 것을 의미**한다. ) 우리는 이 주소를 가지고 버퍼를 직접 채울 수 있다. **예를 들면 그냥 디스크에서 텍스쳐, 메쉬 데이터를 읽어 올 때 읽어올 버퍼를 따로 만드는 것이 아니라 그냥 여기 Pinned 메모리 영역으로 곧바로 읽어오는 것이다. 결과적으로 유저 모드 메모리 영역에서 Pinned 메모리로의 복사가 없으니 메모리 복사를 한번 덜할 수 있게 된다. Write Combine 옵션을 붙이면 [Write Combine 버퍼](https://sungjjinkang.github.io/nonTemporalMemoryHint)를 활용할 수도 있다.**             
 
 아래의 사진은 Pinned 메모리를 사용했을 떄의 GPU로의 데이터 전송을 보여준다.           
@@ -44,9 +44,12 @@ GPU에 데이터를 올리는 더 효과적인 방법은 **glMapBuffer, glUnmapB
 
           
 - **Usage Hints**           
-OpenGL 드라이버가 데이터를 저장할 수 있는 장소로 주로 두가지 장소가 있는데 CPU 메모리 ( DRAM ), GPU 메모리 ( VRAM )이 그것이다. DRAM은 **페이지 Locked ( Pinned Memory )**일 수 있다. 페이지 Locked이라는 의미는 **Disk로 Evict 되지 않는다**는 의미이고, **GPU가 직접 접근** 할 수 있다는 ( DMA를 통해 ) 의미이기도 하다. **반면**에 **Paged 메모리**라는 것도 있는데 이 Page 메모리도 마찬가지로 GPU가 접근할 수는 있지만 훨씬 **비효율적**이다. 우리는 드라이버에게 어떤 메모리를 사용할 것인지 힌트를 줄 수 있다. 물론 드라이버가 항상 그 힌트를 따르는 것은 아니다. 드라이버가 어떻게 구현되어 있느냐에 다 달려있다.               
+OpenGL 드라이버가 데이터를 저장할 수 있는 장소로 주로 두가지 장소가 있는데 CPU 메모리 ( DRAM ), GPU 메모리 ( VRAM )이 그것이다. DRAM은 **페이지 Locked ( Pinned Memory )**일 수 있다. 페이지 Locked이라는 의미는 **Disk로 Swap Out 되지 않는다**는 의미이고, **GPU가 직접 접근** 할 수 있다는 ( DMA를 통해 ) 의미이기도 하다. **반면**에 **Paged 메모리**라는 것도 있는데 이 Page 메모리도 마찬가지로 GPU가 접근할 수는 있지만 훨씬 **비효율적**이다. 우리는 드라이버에게 어떤 메모리를 사용할 것인지 힌트를 줄 수 있다. 물론 드라이버가 항상 그 힌트를 따르는 것은 아니다. 드라이버가 어떻게 구현되어 있느냐에 다 달려있다.            
 
 여기까지가 기본적인 DRAM, GPU간 데이터 전송의 얘기이고 이후의 내용은 [이 글](https://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf)을 참고하라.             
+
+
+참고 : [https://stackoverflow.com/a/20591485](https://stackoverflow.com/a/20591485)
 
 --------------------        
            
