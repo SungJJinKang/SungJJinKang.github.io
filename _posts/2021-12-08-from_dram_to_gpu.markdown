@@ -44,7 +44,7 @@ GPU에 데이터를 올리는 더 효과적인 방법은 **glMapBuffer, glUnmapB
 
           
 - **Usage Hints**           
-OpenGL 드라이버가 데이터를 저장할 수 있는 장소로 주로 두가지 장소가 있는데 CPU 메모리 ( DRAM ), GPU 메모리 ( VRAM )이 그것이다. DRAM은 **페이지 Locked ( Pinned Memory )**일 수 있다. 페이지 Locked이라는 의미는 **Disk로 Swap Out 되지 않는다**는 의미이고, **GPU가 직접 접근** 할 수 있다는 ( DMA를 통해 ) 의미이기도 하다. **반면**에 **Paged 메모리**라는 것도 있는데 이 Page 메모리도 마찬가지로 GPU가 접근할 수는 있지만 훨씬 **비효율적**이다. 우리는 드라이버에게 어떤 메모리를 사용할 것인지 힌트를 줄 수 있다. 물론 드라이버가 항상 그 힌트를 따르는 것은 아니다. 드라이버가 어떻게 구현되어 있느냐에 다 달려있다.            
+OpenGL 드라이버가 데이터를 저장할 수 있는 장소로 주로 두가지 장소가 있는데 CPU 메모리 ( DRAM ), GPU 메모리 ( VRAM )이 그것이다. DRAM은 **페이지 Locked**(Pinned Memory)일 수 있다. 페이지 Locked이라는 의미는 **Disk로 Swap Out 되지 않는다**는 의미이고, **GPU가 직접 접근** 할 수 있다는 ( DMA를 통해 ) 의미이기도 하다. **반면**에 **Paged 메모리**라는 것도 있는데 이 Page 메모리도 마찬가지로 GPU가 접근할 수는 있지만 훨씬 **비효율적**이다. 우리는 드라이버에게 어떤 메모리를 사용할 것인지 힌트를 줄 수 있다. 물론 드라이버가 항상 그 힌트를 따르는 것은 아니다. 드라이버가 어떻게 구현되어 있느냐에 다 달려있다.            
 
 여기까지가 기본적인 DRAM, GPU간 데이터 전송의 얘기이고 이후의 내용은 [이 글](https://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf)을 참고하라.             
 
