@@ -98,7 +98,6 @@ references : https://sungjjinkang.github.io/half_precision
 그래서 언리얼 엔진4를 보면 MeshDrawCommandSortKey 생성시 최대한 렌더 스테이트가 변경되지 않도록(PSO기준, Masekd 여부에 따라) Sort를 한다.
 (EarlyZ를 높이기 위해서는 카메라와의 거리에 따라 Sort를 해주는 것이 좋지만, EarlyZ 증가로 오는 성능 개선보다는 "Context rolls"를 통한 성능 개선이 더 크다고 판단되어 이렇게 코드가 작성되어 있는 것으로 추정된다. 모바일은 거리에 따라 Sort를 했던 것으로 기억함.)
 (그리고 언리얼이 이렇게 Sort를 하는 또 다른 이유는 인접한 MeshDrawCommand들을 기준으로 Auto Instancing을 수행하기 때문이기도 하다.)
-
 아래는 PC 플랫폼 기준(다른 플랫폼은 다를 수 있음)
 FMeshDrawCommandSortKey CalculateBasePassMeshStaticSortKey(EDepthDrawingMode EarlyZPassMode, EBlendMode BlendMode, const FMeshMaterialShader* VertexShader, const FMeshMaterialShader* PixelShader)
 {
@@ -127,7 +126,6 @@ Warp 내의 스레드들간의 통신을 활용하라는 의미이다.
 ```
 18. 메모리 대역폭은 쉐이더에서 가장 큰 병목점이다. 캐시 미스를 최소화하고(특히 노이즈로 샘플링할 때), 공간적 지역성을 높이기 위해 [de-interleaving](https://developer.nvidia.com/sites/default/files/akamai/gameworks/samples/DeinterleavedTexturing.pdf)를 고려해라. 이는 레이트레이싱이나 레이마칭과 같이 스레드 divergent 작업시 도움이 될 수 있다.
 ```
-
 ```
 19. Arrays of 텍스처를 인덱싱할 때 [NonUniformIndex](https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index)를 사용하라.(비록 인덱스를 쉐이더 코드에서 생성하더라도 말이다.)      
 ```
