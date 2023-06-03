@@ -41,7 +41,7 @@ VGPR이란 : https://sungjjinkang.github.io/shader_occupancy
 ```
 아마 다른 대부분의 아키텍처에서도 동일하게 레지스터 할당이 없지 않을까 싶다.
 ```
-7. 스케줄링에서의 성능 향상을 위해, 텍스처를 읽을 때 부분적으로 Loop Unroll을 고려하라. ( EX. Loop 횟수를 절반으로 줄이는 대신 한 Iteration에서 두 번의 텍스처 샘플링을 수행하라 )
+7. 스케줄링에서의 성능 향상을 위해, 텍스처를 읽을 때 부분적으로 Loop Unroll을 고려하라. ( EX. Loop 횟수를 절반으로 줄이는 대신 한 Iteration에서 두 번의 텍스처 샘플링을 수행하라 )          
 ```
 for(int i = 0 ; i < 10 ; i++)
 {
