@@ -86,13 +86,13 @@ https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture
 ```
 Packing을 하거나 더 낮은 정밀도를 사용하는 경우 Decompression을 위해 추가적인 ALU 연산이 필요하지만, 높은 대역폭보다는 이것이 더 낫다.
 ```
-14.  [16비트 부동 소수점(FP16)](https://therealmjp.github.io/posts/shader-fp16/) VGPR 사용을 줄이는데 좋고, ALU Op 코드의 처리 속도를 높여준다. [FP16 사용시 실제로 성능적 이득을 얻을 수 있는지 여부](https://twitter.com/MartinJIFuller/status/1485181350881763330?s=20)는 단일 스레드내에서 2배의 데이터를 병렬로 처리할 수 있는지에 따라, 오랜 기간 동안 FP16 명령어 세트 내의 머물렀는지에 따라 다를 것이다. 또한 암시적으로 FP16에서 FP32로 변환되지 않는지 주의해야한다.
+14. [16비트 부동 소수점(FP16)](https://therealmjp.github.io/posts/shader-fp16/) VGPR 사용을 줄이는데 좋고, ALU Op 코드의 처리 속도를 높여준다. [FP16 사용시 실제로 성능적 이득을 얻을 수 있는지 여부](https://twitter.com/MartinJIFuller/status/1485181350881763330?s=20)는 단일 스레드내에서 2배의 데이터를 병렬로 처리할 수 있는지에 따라, 오랜 기간 동안 FP16 명령어 세트 내의 머물렀는지에 따라 다를 것이다. 또한 암시적으로 FP16에서 FP32로 변환되지 않는지 주의해야한다.
 ```
 16비트 부동 소수점 타입을 사용한다고 항상 성능이 향상되는 것은 아니다. FP16 타입 사용시 쉐이더 코드내에서 2배의 데이터를 병렬처리할 수 있는 코드가 존재하는지 그리고 FP16 명령어를 연속적으로 사용("FP16으로 처리하다 FP32로 처리 다시 FP16으로 처리, 다시 FP32로 처리" 이렇게 FP16과 FP32를 왔다 갔다하지 않고 일관적으로 연속되게 FP16 명령어를 사용해야한다는 것이다. FP16과 FP32를 왔다갔다 하는 경우 중간 중간에 암시적으로 FP16이 FP32으로 변환되어야 하는 등등으로 인해 FP16이 저장된 레지스터를 그대로 활용하지 못하게되어 성능적으로 오히려 손해를 볼 수 있다.)하는지에 따라 성능 향상이 없을 수도 있다.
 그리고 필자가 알기로는 기본적으로 PC GPU에서는 일부 최신 GPU를 제외하고는 FP16을 지원하지 않는 것으로 알고 있다. ( 쉐이더 코드에서 FP16 타입을 사용하여도 쉐이더 컴파일 과정에서 FP16으로 교체됨 )  
 references : https://sungjjinkang.github.io/half_precision
 ```
-15.  "[Context rolls](https://gpuopen.com/learn/understanding-gpu-context-rolls/)"이 중요할 수 있다(특히 작은 드로우 콜들의 경우). 그러니 렌더 State를 기준으로 드로우 콜들을 Batch해라.       
+15. "[Context rolls](https://gpuopen.com/learn/understanding-gpu-context-rolls/)"이 중요할 수 있다(특히 작은 드로우 콜들의 경우). 그러니 렌더 State를 기준으로 드로우 콜들을 Batch해라.
 ```
 드로우 콜들 사이에 렌더 스테이트를 자주 바꾸는 것은 좋지 않다.
 그래서 언리얼 엔진4를 보면 MeshDrawCommandSortKey 생성시 최대한 렌더 스테이트가 변경되지 않도록(PSO기준, Masekd 여부에 따라) Sort를 한다.
@@ -114,7 +114,6 @@ FMeshDrawCommandSortKey CalculateBasePassMeshStaticSortKey(EDepthDrawingMode Ear
 	}
 	return SortKey;
 }
-
 ```
 16. 더 빠른 명령어, 데이터 접근을 위해 가능하다면 [Scalar, Wave Operation](https://twitter.com/KostasAAA/status/1063075770761916416)들을 사용하라.
 ```
