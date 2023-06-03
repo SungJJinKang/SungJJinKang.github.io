@@ -42,7 +42,8 @@ VGPR이란 : https://sungjjinkang.github.io/shader_occupancy
 아마 다른 대부분의 아키텍처에서도 동일하게 레지스터 할당이 없지 않을까 싶다.
 ```
 7. 스케줄링에서의 성능 향상을 위해, 텍스처를 읽을 때 부분적으로 Loop Unroll을 고려하라. ( EX. Loop 횟수를 절반으로 줄이는 대신 한 Iteration에서 두 번의 텍스처 샘플링을 수행하라 )          
-```
+
+```                   
 for(int i = 0 ; i < 10 ; i++)
 {
     float3 Color = g_MeshTexture[i].Sample(MeshTextureSampler, In.TextureUV);
@@ -58,7 +59,7 @@ for(int i = 0 ; i < 10 ; i += 2)
     float3 Color2 = g_MeshTexture[i + 1].Sample(MeshTextureSampler, In.TextureUV);
     DoSomething(Color2);
 }
-```
+```            
 8. 위의 7번 사례의 정반대로 하는 것은 쉐이더에서의 VGPR 감소에 도움을 주고, Shader Occupancy 향상에 도움을 줄 수도 있다.            
 ```
 결국 프로파일링을 통해 둘을 비교/검증해보라는 얘기인 것 같다.
@@ -75,7 +76,7 @@ for (uint VertexIndex = 0; VertexIndex < 3; VertexIndex++)
     OutStream.Append(Output);
 }
 ```
-10.  Linear(선형) 컴퓨트 쉐이더 스레드 인덱싱시 인덱스가 텍스처 좌표로 사용되는 경우 캐시 동기화 측면에서 성능적으로 손해를 볼 수 있다. [스레드 ID를 Swizzling](https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/)하는 것이 텍스처 샘플링시 공강적 지역성을 높여 캐시 히트율을 높일 수 있다.        
+10. Linear(선형) 컴퓨트 쉐이더 스레드 인덱싱시 인덱스가 텍스처 좌표로 사용되는 경우 캐시 동기화 측면에서 성능적으로 손해를 볼 수 있다. [스레드 ID를 Swizzling](https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/)하는 것이 텍스처 샘플링시 공강적 지역성을 높여 캐시 히트율을 높일 수 있다.        
 ```
 GPU가 텍스처를 저장할 때 메모리 상에서 왼쪽 끝에서 오른쪽 끝으로 차례대로 저장한다고 생각할 수 있지만, 실제로는 그렇지 않다. GPU는 텍스처를 저장할 떄 Sampling시 캐시 히트율을 높이기 위해 어떤 특정 방식으로 텍스처를 저장한다.
 https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout, morton curve, 힐베르트 커브 등등의 방식이 있다.
