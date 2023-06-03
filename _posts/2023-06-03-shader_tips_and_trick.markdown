@@ -42,7 +42,7 @@ VGPR이란 : https://sungjjinkang.github.io/shader_occupancy
 아마 다른 대부분의 아키텍처에서도 동일하게 레지스터 할당이 없지 않을까 싶다.
 ```
 7. 스케줄링에서의 성능 향상을 위해, 텍스처를 읽을 때 부분적으로 Loop Unroll을 고려하라. ( EX. Loop 횟수를 절반으로 줄이는 대신 한 Iteration에서 두 번의 텍스처 샘플링을 수행하라)
-```                   
+```
 for(int i = 0 ; i < 10 ; i++)
 {
     float3 Color = g_MeshTexture[i].Sample(MeshTextureSampler, In.TextureUV);
@@ -58,7 +58,7 @@ for(int i = 0 ; i < 10 ; i += 2)
     float3 Color2 = g_MeshTexture[i + 1].Sample(MeshTextureSampler, In.TextureUV);
     DoSomething(Color2);
 }
-```            
+```
 8. 위의 7번 사례의 정반대로 하는 것은 쉐이더에서의 VGPR 감소에 도움을 주고, Shader Occupancy 향상에 도움을 줄 수도 있다.            
 ```
 결국 프로파일링을 통해 둘을 비교/검증해보라는 얘기인 것 같다.
