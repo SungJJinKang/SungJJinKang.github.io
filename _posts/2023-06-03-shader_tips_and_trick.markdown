@@ -2,7 +2,7 @@
 layout: post
 title:  "SHADER TIPS AND TRICKS(번역)"
 date:   2023-06-03
-tags: [ComputerGraphics, Recommend]
+tags: [ComputerGraphics, Recommend, UE]
 ---          
              
 이 글은 [SHADER TIPS AND TRICKS](https://interplayoflight.wordpress.com/2022/01/22/shader-tips-and-tricks/)를 번역한 글입니다. 약간의 의역이 있을 수 있습니다.        
