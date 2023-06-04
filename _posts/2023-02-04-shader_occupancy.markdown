@@ -1,11 +1,14 @@
 ---
 layout: post
-title:  "Shader Occupancy"
+title:  "Shader Occupancy란 무엇이고, 왜 그것에 관심을 기울여야 하는가(번역)"
 date:   2023-02-04
 tags: [ComputerGraphics, Recommend]
 ---         
   
-Xcode GPU Frame Capture를 보던 중 Occupancy라는 데이터가 있어 이것이 뭔지 궁금해서 찾아보았다.         
+Xcode GPU Frame Capture를 보던 중 Occupancy라는 데이터가 있어 이것이 뭔지 궁금해서 찾아보았다.       
+이 글은 [WHAT IS SHADER OCCUPANCY AND WHY DO WE CARE ABOUT IT?](https://interplayoflight.wordpress.com/2020/11/11/what-is-shader-occupancy-and-why-do-we-care-about-it/)을 번역한 글입니다. 약간의 의역이 포함되어 있습니다.
+
+-----------------------               
 
 
 GPU는 64개 혹은 32개의 픽셀 혹은 버텍스들을 [Warp](https://developer.nvidia.com/content/life-triangle-nvidias-logical-pipeline) 단위로 묶어서 실행한다. ( 정확히는 64개 혹은 32개의 스레드들을 묶은 것이 Warp다. GPU는 이 32개의 스레드를 묶어 동시에 병렬적으로 처리를한다. GPU의 특성상 Warp 내의 스레드들은 모두 동시점에 동일한 명령어를 수행하여야 한다. ) GPU 코어가 메모리로부터 데이터를 읽어올 때(쉐이더에서 메모리를 읽는 명령어를 실행하는 경우) 상당한 Latency가 발생한다. 즉 메모리로부터 데이터를 읽어오는 명령어를 실행하고 실제 데이터가 GPU 코어에 도착하기까지 상당한 시간이 걸린다는 것이다. GPU 캐시에 데이터가 있다면 다행이지만 없다면 비디오 메모리에 접근하여야 하니 Latency는 더 커진다. 이렇게 데이터가 도착하기를 기다리는 동안 GPU는 Stall될 수 있다. ( 당연히 GPU를 갈구지 못하고 Stall되게 한다는 것은 성능상 좋지 않다... )         
