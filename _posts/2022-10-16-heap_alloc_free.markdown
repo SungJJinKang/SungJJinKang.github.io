@@ -31,7 +31,6 @@ tags: [ComputerScience, Recommend]
 각 사이즈의 스몰 사이즈 풀의 메모리가 부족하면 최소 64KB의 연속된 메모리를 왕창 할당 받아서 이걸 해당 스몰 사이즈 풀에서 쪼개서 사용
 ex) 16 바이트용 풀에 메모리가 부족하다? → 일단 64KB를 할당 받고 이 64KB를 쪼개서 16 바이트씩 유저에게 반환해줌. ( FMallocBinned2::MallocExternalSmall 참고 )
 64KB를 할당 받을 때 안드로이드 기준 "FPooledVirtualMemoryAllocator" 여기서 할당을 받아옴.
-
 64KB의 연속된 메모리를 OS로부터 할당받으면 맨 앞 16바이트는 이 64KB짜리 FreeBlock의 헤더로 사용
 그럼 어떻게 특정 주소가 Free되었을 때 그 주소가 어느 사이즈의 Pool에 속하였는지 확인하나? ( 스몰 사이즈 풀에 속하는 경우 )
  Free된 주소보다 작으면서, Free된 주소에 가장 가까운 64KB에 Align되어 있는 주소를 구함. ( FMallocBinned2::GetPoolHeaderFromPointer 함수 참고 )
