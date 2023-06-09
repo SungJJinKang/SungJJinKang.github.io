@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "안드로이드 Tombstone에서 함수의 이름을 찾는법?"
-date:   2022-09-21
+date:   2024-09-21
 tags: [ComputerScience]
 ---         
 
