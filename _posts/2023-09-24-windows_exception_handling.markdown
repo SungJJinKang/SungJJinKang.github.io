@@ -60,11 +60,53 @@ EngineUnhandledExceptionFilter의 주석 자세히 읽어보면 좋을 듯
 [SetUnhandledExceptionFilter](https://learn.microsoft.com/ko-kr/windows/win32/api/errhandlingapi/nf-errhandlingapi-setunhandledexceptionfilter)         
 
 ---------------------
+
 UE4 Crash Report
 SetUnhandledExceptionFilter로 UnhandledException Handling Function(함수명 : EngineUnhandledExceptionFilter) 등록
 
 FCrashReportingThread 생성해서 CrashEvent 기다림
 Exception 발생시 해당 스레드가 UnhandledException Handling Function 실행 -> UnhandledException Handling Function에서 CrashEvent 등록 후 FCrashReportingThread가 Report를 완료하기를 대기함
-CrashEvent 등록되면 FCrashReportingThread는 그 이벤트를 받아서 Crash Report 수행(혹시나 Crash Report 동작 코드에서 크래시가 날 수 있으니 해당 코드들은 SEH로 감싸져있음)
+CrashEvent 등록되면 FCrashReportingThread는 그 이벤트를 받아서 Crash Report 수행(혹시나 Crash Report 동작 코드에서 크래시가 날 수 있으니 해당 코드들은 SEH로 감싸져있음)       
+Crash Report 동작은 별도 CrashReportClient 프로세스를 생성해서 크래시 관련 데이터를 해당 프로세스에 전달해서 CrashReportClient가 Report를 수행
+
+에디터는 CrashReportClient가 에디터 시작 시점부터 계속돔(USE_CRASH_REPORTER_MONITOR=1)
+ReportCrashForMonitor 확인
  
+-----------------------
+
+크래시 발생시 GMalloc은 FGenericPlatformMallocCrash로 대체됨
+```c++
+void* FGenericPlatformMallocCrash::Malloc( SIZE_T Size, uint32 Alignment )
+{
+	const uint32 Size32 = (uint32)Size;
+	if( Alignment > 16 )
+	{
+		UE_DEBUG_BREAK();
+		FPlatformMisc::LowLevelOutputDebugString( TEXT( "Alignment > 16 is not supported\n" ) );
+	}
+
+	if( IsOnCrashedThread() )
+	{
+
+	...
+	...
+	...
+}
+
+bool FGenericPlatformMallocCrash::IsOnCrashedThread() const
+{
+	// Suspend threads other than the crashed one to prevent serious memory errors.
+	// Only the crashed thread can do anything meaningful from here anyway.
+	if( CrashedThreadId == FPlatformTLS::GetCurrentThreadId() )
+	{
+		return true;
+	}
+	else
+	{
+		FPlatformProcess::SleepInfinite(); // 크래시가 발생한 스레드 외의 스레드
+		return false;
+	}
+}
+```
+
 references : [https://stackoverflow.com/questions/4573536/msvc-ehsc-vs-eha-synchronous-vs-asynchronous-exception-handling](https://stackoverflow.com/questions/4573536/msvc-ehsc-vs-eha-synchronous-vs-asynchronous-exception-handling), [https://learn.microsoft.com/en-us/cpp/build/reference/eh-exception-handling-model?view=msvc-170#set-the-option-in-visual-studio-or-programmatically](https://learn.microsoft.com/en-us/cpp/build/reference/eh-exception-handling-model?view=msvc-170#set-the-option-in-visual-studio-or-programmatically)
