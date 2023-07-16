@@ -11,9 +11,8 @@ tags: [ComputerScience, UE]
              
 사전 지식           
               
-C++ Exception : "throw std::exception("")와 같은 C++ Exception들을 말함         
-Asynchronous Exceptions : "Floating point exceptions", "Access Violation"이나 "Division by zero"와 같은 하드웨어에서 throw하는 Exception                   
-"Structured Exception Handling(SEH) :  Asynchronous Exceptions을 Handling하는 것             
+C++ Exception : "throw std::exception("")와 같은 소프트웨어에서 의도적으로 throw한 Exception들을 말함                 
+"Structured Exception Handling(SEH) : "Floating point exceptions", "Access Violation"이나 "Division by zero"와 같은 하드웨어에서 throw하는 Exception    을 Handling하는 것             
                
 --------------------------         
 
