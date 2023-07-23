@@ -261,7 +261,7 @@ world
 ```
 각각의 코드에 대한 자세한 설명은 [여기](https://learn.microsoft.com/ko-kr/cpp/cpp/try-except-statement?view=msvc-170)를 참고해주시면 됩니다.        
 
-앞에서 언리얼 엔진은 기본적으로 C++ Exception에 대한 Handling을 수행하지 않는다고 말했는데 그 이유는 여러가지가 있는데 코드 유지보수(언리얼 엔진의 코드가 워낙 방대하다보니 Exception 발생시 이를 일일이 처리/대응 코드를 유지 보수하기 어려움, 언리얼 엔진은 그냥 프로그램을 종료시킴), Exception Handling 코드로 인한 바이너리 사이즈가 커짐등이 대표적입니다. 그리고 Exception 발생이 이를 Handling하는 것보다는 그냥 바로 죽여서 원인을 찾고 픽스하는 것이 코드 유지보수 차원에서 더 유리할 수 있습니다.                
+앞에서 언리얼 엔진은 기본적으로 C++ Exception에 대한 Handling을 수행하지 않는다고 말했는데 그 이유는 여러가지가 있는데 코드 유지보수(언리얼 엔진의 코드가 워낙 방대하다보니 Exception 발생시 이를 일일이 처리/대응 코드를 유지 보수하기 어려움, 언리얼 엔진은 그냥 프로그램을 종료시킴)의 어려움이 대표적입니다. Exception 발생했을 떄 이를 Handling하는 것보다는 그냥 바로 죽여서 원인을 찾고 픽스하는 것이 코드 유지보수 차원에서 더 유리할 수 있습니다.                
 위의 이유들로 언리얼 엔진은 Exception Handling보다는 check, ensure문으로 문제를 곧 바로 알려주는 방식을 사용합니다.       
              
 간혹 Exception Handling을 수행하는 경우 그렇지 않은 경우에 비해 성능적으로 느리다는 얘기가 있는데, 정확히는 "Exception 발생시"에 상대적으로 느리다가 맞습니다.       
@@ -674,4 +674,4 @@ bool FGenericPlatformMallocCrash::IsOnCrashedThread() const
 }
 ```
 
-references : [https://learn.microsoft.com/en-us/cpp/build/reference/eh-exception-handling-model?view=msvc-170#set-the-option-in-visual-studio-or-programmatically](https://learn.microsoft.com/en-us/cpp/build/reference/eh-exception-handling-model?view=msvc-170#set-the-option-in-visual-studio-or-programmatically), [https://stackoverflow.com/a/16785259](https://stackoverflow.com/a/16785259), [https://stackoverflow.com/a/4574319](https://stackoverflow.com/a/4574319), [https://stackoverflow.com/a/7249442](https://stackoverflow.com/a/7249442), [https://learn.microsoft.com/en-us/cpp/cpp/structured-exception-handling-c-cpp?view=msvc-170](https://learn.microsoft.com/en-us/cpp/cpp/structured-exception-handling-c-cpp?view=msvc-170), [https://kuaaan.tistory.com/435](https://kuaaan.tistory.com/435), [https://stackoverflow.com/a/7049836](https://stackoverflow.com/a/7049836)
+references : [https://learn.microsoft.com/en-us/cpp/build/reference/eh-exception-handling-model?view=msvc-170#set-the-option-in-visual-studio-or-programmatically](https://learn.microsoft.com/en-us/cpp/build/reference/eh-exception-handling-model?view=msvc-170#set-the-option-in-visual-studio-or-programmatically), [https://stackoverflow.com/a/16785259](https://stackoverflow.com/a/16785259), [https://stackoverflow.com/a/4574319](https://stackoverflow.com/a/4574319), [https://stackoverflow.com/a/7249442](https://stackoverflow.com/a/7249442), [https://learn.microsoft.com/en-us/cpp/cpp/structured-exception-handling-c-cpp?view=msvc-170](https://learn.microsoft.com/en-us/cpp/cpp/structured-exception-handling-c-cpp?view=msvc-170), [https://kuaaan.tistory.com/435](https://kuaaan.tistory.com/435), [https://stackoverflow.com/a/7049836](https://stackoverflow.com/a/7049836), [https://preshing.com/20110807/the-cost-of-enabling-exception-handling/](https://preshing.com/20110807/the-cost-of-enabling-exception-handling/)
