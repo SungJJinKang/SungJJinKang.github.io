@@ -21,7 +21,7 @@ tags: [ComputerScience]
 조금 더 자세히 알아보면요..        
         
 아래 사진은 스레드가 한 동안 동작을 한 후 스택의 상황입니다. 메모리 다이어그램에서 관례적으로 높은 주소가 위에 위치해 있는데, 이는 스택이 아래쪽(낮은 주소로)으로 커져간다는 것을 의미합니다.      
-![guard page1](https://github.com/SungJJinKang/SungJJinKang.github.io/assets/33873804/c67aaf41-bd62-485a-ad08-24ba1fcb7b36)            
+<img class="guard page1" src="/assets/images/guard page1.PNG">             
 보통의 커밋(각주 : 피지컬 메모리가 할당된, [참고](https://sungjjinkang.github.io/Window_Memory))된 페이지는 프로그램이 지금껏 사용해온 모든 스택 메모리를 감쌉니다. 지금 당장 그 메모리 모두를 사용하지는 않을 수 있습니다. [red zone](https://devblogs.microsoft.com/oldnewthing/20190111-00/?p=100685) 너머의 메모리는 프로그램의 한계를 벗어난겁니다. 스택 포인터가 스택의 한계까지 갔다가 다시 돌아올 때(각주 : 스택 사이즈에도 제한이 있는데, 스택 포인터가 그 제한 사이즈까지 커졌다가 다시 쪼그라들때), 남아 있는 페이지(각주 : 스택 공간이 커지면서 사용했었지만, 다시 스택 공간이 줄어들면서 사용되지 않을 페이지들을 의미함)들은 decommit되지 않는다.(각주 : 피지컬 메모리가 free되지 않는다)           
          
 스택 포인터의 한계점 너머의 페이지는 "guard page"라고 알려진 특별한 타입의 커밋된 페이지이다. guard page는 처음 접근될 때 "STATUS_GUARD_PAGE_VIOLATION" exception을 발생시키는 페이지를 말한다.     
