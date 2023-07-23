@@ -28,7 +28,7 @@ tags: [ComputerScience]
      
 스택 포인터가 guard page로 이동했다는 것은, 그 스레드가 스택 공간을 한 페이지 더 요구한다는 것을 의미한다.           
          
-스레드가 guard page에 속하는 주소에 접근하는 순간, 시스템은 ("PAGE_GUARD" 플래그를 제거함으로서) guard page를 보통의 커밋된 페이지로 바꾸고 "STATUS_GUARD_PAGE_VIOLATION" exception을 발생시킨다. 디폴트 exception 핸들러는 그 주소가 현재 스택의 guard page에 속하는지를 봄으로서 exception을 다루는데, 만약 그 주소가 현재 스택의 guard page에 속한 경우 그 다음 예약된 페이지를 guard 페이지로 바꾸고 프로그램을 계속 실행한다.         
+스레드가 guard page에 속하는 주소에 접근하는 순간, 시스템은 ("PAGE_GUARD" 플래그를 제거함으로서) guard page를 보통의 커밋된 페이지로 바꾸고 "STATUS_GUARD_PAGE_VIOLATION" exception을 발생시킨다. 디폴트 exception 핸들러는 그 주소가 현재 스택의 guard page에 속하는지를 봄으로서 exception을 다루는데, 만약 그 주소가 현재 스택의 guard page에 속한 경우 그 다음 예약(각주 : Virtual address 페이지를 확보해둠, [참고](https://sungjjinkang.github.io/Window_Memory))된 페이지를 guard 페이지로 바꾸고 프로그램을 계속 실행한다.         
 ![guard page2](https://github.com/SungJJinKang/SungJJinKang.github.io/assets/33873804/a85971ce-4372-4eca-bdcb-9a0f2a62335c)             
         
 guard page에 접근할 때 "PAGE_GUARD" 플래그를 초기화하는 것은 "일단 너가 그 guard page에 접근하면, 그 페이지는 더 이상 guard page가 아니라는 것"을 의미한다. 이는 guard page가 오직 첫 번째 접근에 대해서만 guard page excepion을 발생시킨다는 것을 의미한다. 그래서 만약 너가 guard page exception에 대한 행동을 취하는 것을 실패한다면, 시스템은 그것을 무시할 것이고, 너는 guard page exception에 대해 무언가를 할 수 있는 단 한번은 기회를 날린 것이다      
@@ -39,7 +39,10 @@ guard page에 접근할 때 "PAGE_GUARD" 플래그를 초기화하는 것은 "�
                
 만약 하나의 스레드가 또 다른 스레드의 guard page에 접근하는 경우(아마도 버퍼 오버플로우 떄문에, 혹은 단시 초기화되지 않은 포인터에 접근하여)도 마찬가지로 guard page exception을 발생시킬 것이다. 해당 guard page가 속한 스택을 소유한 스레드가 아닌, 다른 스레드에 의해 exception이 발생한 것이다. 만약 guard page exception이 현재 스레드의 스택에 속하지 않은 guard page에 대한 접근으로 인해 발생한 것이라고 판단되면, 디폴트 exception 핸들러는 이 exception을 무시한다.           
 ```
-이론적으로, 디폴트 exception 핸들러는 프로세스의 모든 스레드를 훓고, 그 주소가 어떤 스레드의 guard page에 속했는지를 알 수 있지만, 그렇게 하지 않습니다. 이유 중 하나로, 이러한 동작히 너가 갑작스럽게 접근한 guard page가 속한 스택의 스레드(+ 동시에 그 guard page에 접근할 가능성이 있는 다른 모든 스레드들과의)와의 스레드간 통신을 요구하기 때문입니다. 그러나 더 큰 이유는 그러한 상황(다른 스레드의 guard page에 접근하는 상황) 자체가 버그이기 때문입니다. 그러한 (프로그램이 하지 말아야 할) 비정상적인 상황을 다루기 위해 시스템을 느리게한다는 것이 의미 없는 행동이기 때문입니다.
+이론적으로, 디폴트 exception 핸들러는 프로세스의 모든 스레드를 훓고, 그 주소가 어떤 스레드의 guard page에 속했는지를 알 수 있지만, 그렇게 하지 않습니다.      
+이유 중 하나로, 이러한 동작히 너가 갑작스럽게 접근한 guard page가 속한 스택의 스레드(+ 동시에 그 guard page에 접근할 가능성이 있는 다른 모든 스레드들과의)와의 스레드간 통신을 요구하기 때문입니다.             
+그러나 더 큰 이유는 그러한 상황(다른 스레드의 guard page에 접근하는 상황) 자체가 버그이기 때문입니다.      
+그러한 (프로그램이 하지 말아야 할) 비정상적인 상황을 다루기 위해 시스템을 느리게한다는 것이 의미 없는 행동이기 때문입니다.
 ```
                                  
 축하합니다. guard page가 사라졌기 때문에. 여러분의 스택은 corrupt되었습니다.               
