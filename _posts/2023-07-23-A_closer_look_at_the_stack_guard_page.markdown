@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "A closer look at the stack guard page (번역)"
+title:  "A closer look at the stack guard page(번역)"
 date:   2023-07-23
 tags: [ComputerScience]
 ---
