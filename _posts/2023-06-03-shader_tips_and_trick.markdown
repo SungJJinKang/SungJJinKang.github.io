@@ -202,7 +202,7 @@ Early Stencil Culling : https://stackoverflow.com/questions/18740841/early-stenc
 ```
 39. 픽셀 쉐이더에서 "SV_Position"를 컴퓨트 쉐이더에서 모방하기 위해 "SV_DispatchThreadID"를 사용할 때, 픽셀 사이즈의 절반만큼을 더해줘라. 그렇지 않으면 에러(오차)를 얻을 것이다. ( EX. TAA를 할 때 World Position reconstruction(재생성) mismatch(불일치) ) 픽셀 쉐이더에서 "SV_Position"은 이미 픽셀 사이즈의 절반만큼이 더해져서 픽셀 쉐이더에 전달된다.
 40. 상수 버퍼에서 [Packoffsets](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-variable-packoffset)는 [연속적이거나 순서대로, 혹은 심지어 0부터 시작할 필요가 없다.](https://shader-playground.timjones.io/df2b371902ad92cb2f3aedc50cf772a1). 만약 너의 쉐이더 리플랙션 데이터가 이것(연속적이지 않거나, 순서대로 쓰지 않았거나, 0부터 시작하지 않은 경우)을 인지하지 못한다면, 디버깅할 때 고생을 좀 할 것이다.
-41. LDS 읽기가 메모리 읽기 명령어들의 Latency를 높일 수 있는 경우 그것들을 연속되게 배치하기 때문에 ["Bank conflicts"](https://on-demand.gputechconf.com/gtc/2018/presentation/s81006-volta-architecture-and-performance-optimization.pdf)가 발생한다.
+41. LDS(ex. groupshared 변수)를 읽을 때 ["Bank conflicts"](https://on-demand.gputechconf.com/gtc/2018/presentation/s81006-volta-architecture-and-performance-optimization.pdf)가 발생하면 LDS 읽기 요청을 순차적으로 처리하기 때문에 메모리 읽기 레이턴시가 높아지게 된다.
 42. Vertex Position 중 하나를 NaN으로 셋팅하는 것은 버텍스 쉐이더에서 삼각형을 컬하는 좋은 방법이다. GPU에 따라  ["0/0 쓰기" 혹은 "asfloat(0X7fc00000)"](https://twitter.com/longbool/status/1484984001634971655?s=20)를 통해서도 버텍스 쉐이더에서 삼각형을 컬할 수 있다.
 43. HLSL에서 "asfloat(0X7F800000)"는 "무한대"를 표현하는데 사용될 수 있다. 예를 들면 [Far plane을 셋팅하는 경우](https://link.springer.com/chapter/10.1007/978-1-4842-7185-8_3)에 말이다.
 44. "GetDimensions"는 텍스처 명령어로 분류된다. 그냥 상수 버퍼로 텍스처 Dimension을 직접 전달하는 것이 성능상 유리하다.
