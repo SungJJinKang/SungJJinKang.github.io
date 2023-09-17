@@ -74,11 +74,11 @@ for (uint VertexIndex = 0; VertexIndex < 3; VertexIndex++)
     OutStream.Append(Output);
 }
 ```
-10. Linear(선형) 컴퓨트 쉐이더 스레드 인덱싱시 인덱스가 텍스처 좌표로 사용되는 경우 캐시 동기화 측면에서 성능적으로 손해를 볼 수 있다. [스레드 ID를 Swizzling](https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/)하는 것이 텍스처 샘플링시 공강적 지역성을 높여 캐시 히트율을 높일 수 있다.
+10. Linear(선형) 컴퓨트 쉐이더 스레드 인덱싱시 인덱스가 텍스처 좌표로 사용되는 경우 캐시 동기화 측면에서 성능적으로 손해를 볼 수 있다. [스레드 그룹 ID를 Swizzling](https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/)하는 것이 텍스처 샘플링시 공강적 지역성을 높여 캐시 히트율을 높일 수 있다.
 ```
 GPU가 텍스처를 저장할 때 메모리 상에서 왼쪽 끝에서 오른쪽 끝으로 차례대로 저장한다고 생각할 수 있지만, 실제로는 그렇지 않다. GPU는 텍스처를 저장할 떄 Sampling시 캐시 히트율을 높이기 위해 어떤 특정 방식으로 텍스처를 저장한다.
 https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout, morton curve, 힐베르트 커브 등등의 방식이 있다.         
-그래서 컴퓨터 쉐이더 Thread Group내의 Thread들간의 캐시 히트율을 높이기 위해 "왼쪽 끝에서 오른쪽 끝으로 차례대로" 텍스처를 읽는 것이 아닌 위의 "GPU가 텍스처를 저장하는 방식"에 최적화된 순서로 텍스처를 읽는 것이 좋다는 의미이다.       
+그래서 컴퓨터 쉐이더 Thread Group들간의 캐시 히트율을 높이기 위해 "왼쪽 끝에서 오른쪽 끝으로 차례대로" 텍스처를 읽는 것이 아닌 위의 "GPU가 텍스처를 저장하는 방식"에 최적화된 순서로 텍스처를 읽는 것이 좋다는 의미이다.       
 ```
 11. 특정 GPU에 적절한 버퍼 타입(Constant, Structured, ByteAddressed 등등)을 선택하라. 예를 들면 [인텔 GPU는 Byte Addressed Buffer를 사용하는 것이 성능적으로 유리](https://www.intel.com/content/www/us/en/developer/articles/guide/developer-and-optimization-guide-for-intel-processor-graphics-gen11-api.html)하다.
 12. 프로그램에 적절한 Input, Output 데이터 타입을 선택해라. ( EX. 렌더타겟에는 RGBA16 대신 R11G11B10를 사용하라 ) 이것이 대역폭, VGPR 사용을 줄여준다.             
