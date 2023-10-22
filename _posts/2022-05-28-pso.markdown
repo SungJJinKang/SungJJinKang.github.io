@@ -1,0 +1,1708 @@
+---
+layout: post
+title:  "언리얼 엔진4 PSO(Pipeline State Object) Cache ( OpenGL 위주로 )"
+date:   2022-05-28
+tags: [UE, Recommend]
+---
+
+PSO란 하나의 Draw를 위해 필요한 여러 렌더링의 상태들을 말한다.          
+모든 셰이더 바이트 코드, Blend 스테이트, Rasterizer 스테이트, DepthStencil 스테이트, Multi-sampling 정보 등등이 PSO에 속한다.            
+
+Draw가 바뀔 때마다 PSO도 달라질 가능성이 높다.            
+PSO가 달라질 때마다 PSO를 새로 생성하는 것은 매우 느려터진 동작이다.             
+그러니 한번 생성해두었던 PSO는 캐싱해두고 다음 번에 다시 사용한다.          
+UE4는 런타임에 생성한 PSO를 버리지 않고 캐싱해두었다가, 다시 사용한다.             
+
+UE4 여기서 더 나아가 이러한 PSO를 디스크에 써두었다가, 게임 시작시 미리 컴파일해둔다.     
+개발사가 미리 수집하여 배포한 PSO를 유저가 게임 시작이 컴파일하여 런타임에 사용할 각 API에 맞는 PSO 오브젝트를 생성해서 캐싱해두는 것이다.             
+D3D12 / Vulkan / Metal의 경우 렌더 스테이트와, 쉐이더 스테이트들에 대한 캐싱을 지원한다. 또한 PSO를 통해 렌더 스테이트와, 쉐이더 스테이트를 일괄적으로 한번에 갱신할 수 있다.                  
+반면 OpenGL의 경우에는 바운드된 쉐이더 스테이트(BSS)에 대한 캐싱만을 지원하고, 렌더 스테이트와, 쉐이더 스테이트를 각각 따로 갱신해야한다.    
+
+자세한건 [이 자료](https://unrealsummit16.cafe24.com/replay/pdf/USM20190514_1_5_How%20to%20use%20shader%20pipeline%20cache.pdf)를 참고하자.
+
+
+-------------------------------
+
+이제 OpenGL의 PSO 캐시를 위주로 살펴보겠다.        
+위에서 말했듯이 **OpenGL은 바운드된 쉐이더 스테이트(BSS, FRHIBoundShaderState)에 대한 캐싱만 지원**한다.          
+**바운드된 쉐이더 스테이트에는 각 Stage별 쉐이더 코드들과 그 조합들**이 들어 있다.          
+개발사에서 PSO를 수집하며 한번이라도 사용되었던 쉐이더 코드를 BSS에 담아 배포시 함께 배포한 후 유저는 개발사에서 배포한 PSO에 담겨 있는 쉐이더 코드를 Pre Compile하여 아래에 나올 Program Binary의 형태로 보관하거나 미리 Program 오브젝트를 만들어 두는 것이다.             
+               
+**OpenGL의 경우 컴파일한 쉐이더를 드라이버에서 관리하는 Program 객체에 Link한 후 바인딩해서 Draw에 사용**한다.        
+**바운드된 쉐이더 스테이트(BSS)는 이 Program 객체에 플랫폼 독립적인 버전**이다.       
+           
+Draw에 사용 될 각 Stage의 모든 쉐이더 ( 버텍스 쉐이더, 픽셀 쉐이더, Hull 쉐이더 등등.... )를 하나의 Program 객체에 Link한 후 이 Program 객체를 바인딩하는 것이다. OpenGL은 Global State로 렌더링, 쉐이더를 관리하기 때문에 쉐이더가 바뀌면 그때 그때마다 새로운 Program을 바인딩 해주어야한다.       
+( PC에서는 [Seperate Shader Object](https://www.khronos.org/opengl/wiki/Shader_Compilation#Separate_programs)라는 개념을 지원해서, 각 Stage별 쉐이더를 별개의 Program에 링크하여 사용할 수 있게 지원한다. 어느 특정 Stage에 링크된 Program를 조합하여 사용할 수 있는 것이다. )         
+            
+OpenGL은 [이렇게 쉐이어들이 링크된 Program 객체를 바이너리 형태로 보관](https://www.khronos.org/opengl/wiki/Shader_Compilation#Binary_upload)할 수 있게 지원해준다.        
+           
+Program 객체를 바이너리 형태로 메모리나, 디스크에 보관해두었다가, 이 바이너리 데이터를 가지고 GPU 드라이버에 Program 객체를 생성해줄 것을 요청할 수 있다. Program 오브젝트에 일일이 쉐이더를 링크하는 것에 비해 훨씬 빠르다.                 
+이 Program 객체의 포맷은 GPU Vendor마다 다르고, GPU 드라이버마다 다르고, 휴대폰마다 달라서 개발사에서 배포할 수는 없다. 심지어는 같은 휴대폰으로도 휴대폰 업데이트 후 Program 객체의 포맷이 달라져서 기존의 Program 바이너리를 재사용할 수 없는 경우도 생긴다.             
+그래서 **UE4에서는 개발사에서 배포한 PSO에 담긴 바운드된 쉐이더 스테이트를 가지고 PreCompile하여 그 과정에서 Program 오브젝트를 생성하고 쉐이더를 링크한 후 Program Binary를 디스크에 보관한다. 이미 디스크에 Program Binary가 존재하는 경우 이 Program Binary로부터 곧 바로 Program 오브젝트를 생성**해낸다.          
+**바운드된 쉐이더 스테이트(PSO 캐시)는 개발사에서 수집하여 앱 배포시 함께 배포하지만, Program 오브젝트의 Binary는 유저의 기기에서 직접 생성하여 보관**해두는 것이다.          
+             
+또한 Program 오브젝트 자체도 매번 새로 생성하는 것이 아니라 캐싱을 해두는데, 문제는 모바일 디바이스에서 GPU에 따라서 너무 많은 Program 오브젝트를 생성한 경우 문제가 될 수 도 있다는 것이다.       
+일부 모바일 GPU의 경우 쉐이더 메모리 ( 위에서 말했듯이 Program 오브젝트는 드라이버에서 관리한다. )가 작기 때문에 너무 많은 Program 오브젝트를 생성하면 텍스쳐가 깨지는 등의 문제가 발생한다.          
+그래서 UE4는 Program 오브젝트에 대한 LRU 정책을 지원한다. 생성한 Program 오브젝트의 사이즈가 일정 사이즈보다 커지는 경우 사용하지 않은지 오래된 Program 오브젝트를 파괴하는 것이다. ( r.OpenGL.EnableProgramLRUCache ). LRU 정책으로 인해 Program 오브젝트가 파괴되고 Evict되더라도 파괴 전 해당 Program 오브젝트의 Binary 데이터는 메모리에 보관해둔다. ( 쉐이더 메모리가 아닌 일반 메모리에 말이다. 모바일의 경우 그 둘이 물리적으로는 같지만..... ). 그리고 이후 해당 Program 오브젝트가 필요하면 그 Binary 데이터로부터 바로 Program 오브젝트를 만든다. 이렇게 Program 오브젝트의 Binary로부터 Program을 만드는 경우와 아무것도 없이 처음부터 Program 오브젝트를 생성해 Link를 것은 성능면에서 차이가 매우 크다. 테스트 결과 Program 오브젝트의 Binary 데이터로부터 Program 오브젝트를 만들었을 때 10 ~ 20배 가량 빨랐다.                          
+           
+요약하자면          
+           
+1. 개발사는 PSO 수집을 하며 한번이라도 사용된 쉐이더 조합 ( 한 Program 오브젝트에 같이 링크된 쉐이더들의 조합 )을 BSS의 형태로 PSO 캐시 파일에 담아 유저들에게 배포한다.
+2. 유저들은 최초 앱 구동시 PSO에 담긴 BSS 데이터를 가지고 쉐이더들을 컴파일하고, Program 오브젝트 생성 후 링크시켜서 하나의 온전한 Program 오브젝트를 만든다. 그리고 이 Program 오브젝트의 Binary 데이터를 유저의 기기 디스크에 저장해둔다. ( Program Binary는 위에서 말했듯 기기마다 포맷이 다르기 때문에 개발사가 배포할 수 없고 유저 기기에서 직접 만들어서 보관해두어야한다. ) 그리고 이를 PreCompile한다고 말한다. ( Program Binary를 디스크에 쓰는 동작은 개발사가 배포한 PSO에 대해서만 이루어지며, 최초 한번만 디스크에 쓴 후 이후 재사용한다. 개발사에서 배포한 PSO의 GUID가 달라진 경우에는 Program Binary를 재생성하여 새로 디스크에 쓴다. ProgramBinaryCache 폴더에서 확인할 수 있다. 그렇기 때문에 PSO PreCompile을 하는 동안 최초 앱 실행의 경우에는 Link Program으로 인한 Hitch가 매우 크지만, 이후 앱을 실행할 때는 디스크에 써둔 Program Binary에서 Program 오브젝트를 생성하기 때문에 상대적으로 Hitch가 적다. 후자의 경우 CreateProgramFromBinaryTime라는 Stat 데이터를 확인할 수 있을 것이다. )
+3. 유저가 이후 앱을 구동할 때는 앱 시작시 최초 구동 때 디스크에 저장해두었던 Program Binary로부터 곧 바로 Program 오브젝트를 생성한다. 당연히 이 Program 오브젝트는 캐싱해두었다가 게임을 플레이하는 동안 가져와서 사용한다. ( 런타임에 Program 오브젝트를 생성하고 링크하는 비용이 들지 않는 것이다. )
+4. 또한 유저가 플레이하면서 새로운 ( 캐싱되어 있지 않은 ) 쉐이더 조합 ( Program 오브젝트 )을 발견하면 이 Program 오브젝트의 Binary 또한 디스크에 캐싱을 해둔다.
+               
+```cpp
+// ⭐⭐⭐⭐⭐⭐⭐
+// 디스크에서 읽어온 PSO를 PreCompile한다.
+bool FShaderPipelineCache::Precompile(FRHICommandListImmediate& RHICmdList, EShaderPlatform Platform, FPipelineCacheFileFormatPSO const& PSO)
+// ⭐⭐⭐⭐⭐⭐⭐
+{
+	INC_DWORD_STAT(STAT_PreCompileShadersTotal);
+	INC_DWORD_STAT(STAT_PreCompileShadersNum);
+    
+    uint64 StartTime = FPlatformTime::Cycles64();
+
+	bool bOk = false;
+	
+	if(PSO.Verify())
+	{
+		if(FPipelineCacheFileFormatPSO::DescriptorType::Graphics == PSO.Type)
+		{
+            // ⭐
+            // FGraphicsPipelineStateInitializer는 플랫폼에 의존적이지 않은 PSO 데이터 객체이다.
+			FGraphicsPipelineStateInitializer GraphicsInitializer;
+            // ⭐
+			
+			FRHIVertexDeclaration* VertexDesc = PipelineStateCache::GetOrCreateVertexDeclaration(PSO.GraphicsDesc.VertexDescriptor);
+			GraphicsInitializer.BoundShaderState.VertexDeclarationRHI = VertexDesc;
+			
+			FVertexShaderRHIRef VertexShader;
+			if (PSO.GraphicsDesc.VertexShader != FSHAHash())
+			{
+				VertexShader = FShaderCodeLibrary::CreateVertexShader(Platform, PSO.GraphicsDesc.VertexShader);
+				GraphicsInitializer.BoundShaderState.VertexShaderRHI = VertexShader;
+			}
+
+	#if PLATFORM_SUPPORTS_TESSELLATION_SHADERS
+			FHullShaderRHIRef HullShader;
+			if (PSO.GraphicsDesc.HullShader != FSHAHash())
+			{
+				HullShader = FShaderCodeLibrary::CreateHullShader(Platform, PSO.GraphicsDesc.HullShader);
+				GraphicsInitializer.BoundShaderState.HullShaderRHI = HullShader;
+			}
+
+			FDomainShaderRHIRef DomainShader;
+			if (PSO.GraphicsDesc.DomainShader != FSHAHash())
+			{
+				DomainShader = FShaderCodeLibrary::CreateDomainShader(Platform, PSO.GraphicsDesc.DomainShader);
+				GraphicsInitializer.BoundShaderState.DomainShaderRHI = DomainShader;
+			}
+	#endif
+			FPixelShaderRHIRef FragmentShader;
+			if (PSO.GraphicsDesc.FragmentShader != FSHAHash())
+			{
+				FragmentShader = FShaderCodeLibrary::CreatePixelShader(Platform, PSO.GraphicsDesc.FragmentShader);
+				GraphicsInitializer.BoundShaderState.PixelShaderRHI = FragmentShader;
+			}
+
+	#if PLATFORM_SUPPORTS_GEOMETRY_SHADERS
+			FGeometryShaderRHIRef GeometryShader;
+			if (PSO.GraphicsDesc.GeometryShader != FSHAHash())
+			{
+				GeometryShader = FShaderCodeLibrary::CreateGeometryShader(Platform, PSO.GraphicsDesc.GeometryShader);
+				GraphicsInitializer.BoundShaderState.GeometryShaderRHI = GeometryShader;
+			}
+	#endif
+			auto BlendState = GetOrCreateBlendState(PSO.GraphicsDesc.BlendState);
+			GraphicsInitializer.BlendState = BlendState;
+			
+			auto RasterState = GetOrCreateRasterizerState(PSO.GraphicsDesc.RasterizerState);
+			GraphicsInitializer.RasterizerState = RasterState;
+			
+			auto DepthState = GetOrCreateDepthStencilState(PSO.GraphicsDesc.DepthStencilState);
+			GraphicsInitializer.DepthStencilState = DepthState;
+
+			for (uint32 i = 0; i < MaxSimultaneousRenderTargets; ++i)
+			{
+				GraphicsInitializer.RenderTargetFormats[i] = PSO.GraphicsDesc.RenderTargetFormats[i];
+				GraphicsInitializer.RenderTargetFlags[i] = PSO.GraphicsDesc.RenderTargetFlags[i];
+			}
+			
+			GraphicsInitializer.RenderTargetsEnabled = PSO.GraphicsDesc.RenderTargetsActive;
+			GraphicsInitializer.NumSamples = PSO.GraphicsDesc.MSAASamples;
+
+			GraphicsInitializer.SubpassHint = (ESubpassHint)PSO.GraphicsDesc.SubpassHint;
+			GraphicsInitializer.SubpassIndex = PSO.GraphicsDesc.SubpassIndex;
+			
+			GraphicsInitializer.DepthStencilTargetFormat = PSO.GraphicsDesc.DepthStencilFormat;
+			GraphicsInitializer.DepthStencilTargetFlag = PSO.GraphicsDesc.DepthStencilFlags;
+			GraphicsInitializer.DepthTargetLoadAction = PSO.GraphicsDesc.DepthLoad;
+			GraphicsInitializer.StencilTargetLoadAction = PSO.GraphicsDesc.StencilLoad;
+			GraphicsInitializer.DepthTargetStoreAction = PSO.GraphicsDesc.DepthStore;
+			GraphicsInitializer.StencilTargetStoreAction = PSO.GraphicsDesc.StencilStore;
+			
+			GraphicsInitializer.PrimitiveType = PSO.GraphicsDesc.PrimitiveType;
+			GraphicsInitializer.bFromPSOFileCache = true;
+			
+            // ⭐
+            // PSO PreCompile에서 SetGraphicsPipelineState를 호출한다는 것을 명시한다.
+			// This indicates we do not want a fatal error if this compilation fails
+			// (ie, if this entry in the file cache is bad)
+			GraphicsInitializer.bFromPSOFileCache = 1;
+            // ⭐
+			
+            // ⭐⭐⭐⭐⭐⭐⭐
+            // PSO PreCompile은 그냥 PSO를 한번 셋팅함으로서 이루어진다.
+			// Use SetGraphicsPipelineState to call down into PipelineStateCache and also handle the fallback case used by OpenGL.
+			SetGraphicsPipelineState(RHICmdList, GraphicsInitializer, EApplyRendertargetOption::DoNothing, false);
+            // ⭐⭐⭐⭐⭐⭐⭐
+
+			bOk = true;
+		}
+		else if(FPipelineCacheFileFormatPSO::DescriptorType::Compute == PSO.Type)
+		{
+			FComputeShaderRHIRef ComputeInitializer = FShaderCodeLibrary::CreateComputeShader(Platform, PSO.ComputeDesc.ComputeShader);
+			if(ComputeInitializer.IsValid())
+			{
+				FComputePipelineState* ComputeResult = PipelineStateCache::GetAndOrCreateComputePipelineState(RHICmdList, ComputeInitializer);
+				bOk = ComputeResult != nullptr;
+			}
+		}
+		else
+		{
+			check(false);
+		}
+	}
+
+    // All read dependencies have given the green light - always update task counts
+    // Otherwise we end up with outstanding compiles that we can't progress or external tools may think this has not been completed and may run again.
+    {
+        uint64 TimeDelta = FPlatformTime::Cycles64() - StartTime;
+        FPlatformAtomics::InterlockedIncrement(&TotalCompleteTasks);
+        FPlatformAtomics::InterlockedAdd(&TotalPrecompileTime, TimeDelta);
+    }
+	
+	return bOk;
+}
+```
+
+
+```cpp
+virtual void RHISetGraphicsPipelineState(FRHIGraphicsPipelineState* GraphicsState, bool bApplyAdditionalState) final override
+	{
+		FRHIGraphicsPipelineStateFallBack* FallbackGraphicsState = static_cast<FRHIGraphicsPipelineStateFallBack*>(GraphicsState);
+
+		auto& PsoInit = FallbackGraphicsState->Initializer;
+
+        // ⭐⭐⭐⭐⭐⭐⭐
+        // 바운딩된 쉐이더 스테이트 ( BSS )를 생성한다.
+        // 개발사가 수집해서 유저들에게 배포하는 PSO 캐시가 이것이다.
+        // 
+		RHISetBoundShaderState(
+			RHICreateBoundShaderState_internal(
+				PsoInit.BoundShaderState.VertexDeclarationRHI,
+				PsoInit.BoundShaderState.VertexShaderRHI,
+				TESSELLATION_SHADER(PsoInit.BoundShaderState.HullShaderRHI),
+				TESSELLATION_SHADER(PsoInit.BoundShaderState.DomainShaderRHI),
+				PsoInit.BoundShaderState.PixelShaderRHI,
+				GEOMETRY_SHADER(PsoInit.BoundShaderState.GeometryShaderRHI),
+
+                // ⭐
+                // 위에서 1로 셋팅했다.
+				PsoInit.bFromPSOFileCache
+                // ⭐
+			).GetReference()
+		);
+        // ⭐⭐⭐⭐⭐⭐⭐
+
+		RHISetDepthStencilState(FallbackGraphicsState->Initializer.DepthStencilState, 0);
+		RHISetRasterizerState(FallbackGraphicsState->Initializer.RasterizerState);
+		RHISetBlendState(FallbackGraphicsState->Initializer.BlendState, FLinearColor(1.0f, 1.0f, 1.0f));
+		if (GSupportsDepthBoundsTest)
+		{
+			RHIEnableDepthBoundsTest(FallbackGraphicsState->Initializer.bDepthBounds);
+		}
+
+		if (bApplyAdditionalState)
+		{
+			ApplyGlobalUniformBuffers(PsoInit.BoundShaderState.VertexShaderRHI, ResourceCast(PsoInit.BoundShaderState.VertexShaderRHI));
+			ApplyGlobalUniformBuffers(PsoInit.BoundShaderState.HullShaderRHI, ResourceCast(PsoInit.BoundShaderState.HullShaderRHI));
+			ApplyGlobalUniformBuffers(PsoInit.BoundShaderState.DomainShaderRHI, ResourceCast(PsoInit.BoundShaderState.DomainShaderRHI));
+			ApplyGlobalUniformBuffers(PsoInit.BoundShaderState.GeometryShaderRHI, ResourceCast(PsoInit.BoundShaderState.GeometryShaderRHI));
+			ApplyGlobalUniformBuffers(PsoInit.BoundShaderState.PixelShaderRHI, ResourceCast(PsoInit.BoundShaderState.PixelShaderRHI));
+		}
+
+		// Store the PSO's primitive (after since IRHICommandContext::RHISetGraphicsPipelineState sets the BSS)
+		PrimitiveType = PsoInit.PrimitiveType;
+	}
+```
+
+이제 RHI 레이어를 지나 OpenGL용 코드이다.
+
+```cpp
+FBoundShaderStateRHIRef FOpenGLDynamicRHI::RHICreateBoundShaderState_OnThisThread(
+	FRHIVertexDeclaration* VertexDeclarationRHI,
+	FRHIVertexShader* VertexShaderRHI,
+	FRHIHullShader* HullShaderRHI,
+	FRHIDomainShader* DomainShaderRHI,
+	FRHIPixelShader* PixelShaderRHI,
+	FRHIGeometryShader* GeometryShaderRHI,
+    // ⭐
+    // PSO PreCompile에서 호출된 경우 1이다
+	bool bFromPSOFileCache
+    // ⭐
+	)
+{
+	check(IsInRenderingThread() || IsInRHIThread());
+
+	FScopeLock Lock(&GProgramBinaryCacheCS);
+
+	VERIFY_GL_SCOPE();
+
+	SCOPE_CYCLE_COUNTER(STAT_OpenGLCreateBoundShaderStateTime);
+
+	if (!PixelShaderRHI)
+	{
+		// use special null pixel shader when PixelShader was set to NULL
+		PixelShaderRHI = TShaderMapRef<FNULLPS>(GetGlobalShaderMap(GMaxRHIFeatureLevel)).GetPixelShader();
+	}
+    
+	auto CreateConfig = [VertexShaderRHI, HullShaderRHI, DomainShaderRHI, PixelShaderRHI, GeometryShaderRHI]()
+	{
+		FOpenGLVertexShader* VertexShader = ResourceCast(VertexShaderRHI);
+		FOpenGLPixelShader* PixelShader = ResourceCast(PixelShaderRHI);
+		FOpenGLHullShader* HullShader = ResourceCast(HullShaderRHI);
+		FOpenGLDomainShader* DomainShader = ResourceCast(DomainShaderRHI);
+		FOpenGLGeometryShader* GeometryShader = ResourceCast(GeometryShaderRHI);
+
+		FOpenGLLinkedProgramConfiguration Config;
+
+		check(VertexShader);
+		check(PixelShader);
+
+		// Fill-in the configuration
+		Config.Shaders[CrossCompiler::SHADER_STAGE_VERTEX].Bindings = VertexShader->Bindings;
+		Config.Shaders[CrossCompiler::SHADER_STAGE_VERTEX].Resource = VertexShader->Resource;
+		Config.ProgramKey.ShaderHashes[CrossCompiler::SHADER_STAGE_VERTEX] = VertexShaderRHI->GetHash();
+
+		if (FOpenGL::SupportsTessellation())
+		{
+			if (HullShader)
+			{
+				check(VertexShader);
+				BindShaderStage(Config, CrossCompiler::SHADER_STAGE_HULL, HullShader, HullShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_VERTEX, VertexShader);
+			}
+			if (DomainShader)
+			{
+				check(HullShader);
+				BindShaderStage(Config, CrossCompiler::SHADER_STAGE_DOMAIN, DomainShader, DomainShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_HULL, HullShader);
+			}
+		}
+
+		if (GeometryShader)
+		{
+			check(DomainShader || VertexShader);
+			if (DomainShader)
+			{
+				BindShaderStage(Config, CrossCompiler::SHADER_STAGE_GEOMETRY, GeometryShader, GeometryShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_DOMAIN, DomainShader);
+			}
+			else
+			{
+				BindShaderStage(Config, CrossCompiler::SHADER_STAGE_GEOMETRY, GeometryShader, GeometryShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_VERTEX, VertexShader);
+			}
+		}
+
+		check(DomainShader || GeometryShader || VertexShader);
+		if (DomainShader)
+		{
+			BindShaderStage(Config, CrossCompiler::SHADER_STAGE_PIXEL, PixelShader, PixelShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_DOMAIN, DomainShader);
+		}
+		else if (GeometryShader)
+		{
+			BindShaderStage(Config, CrossCompiler::SHADER_STAGE_PIXEL, PixelShader, PixelShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_GEOMETRY, GeometryShader);
+		}
+		else
+		{
+			BindShaderStage(Config, CrossCompiler::SHADER_STAGE_PIXEL, PixelShader, PixelShaderRHI->GetHash(), CrossCompiler::SHADER_STAGE_VERTEX, VertexShader);
+		}
+		return Config;
+	};
+
+    // ⭐
+    // 미리 캐싱해둔 BoundShaderState에서 매칭되는 BoundShaderState가 있는지 확인한다.
+    //
+	// Check for an existing bound shader state which matches the parameters
+	FCachedBoundShaderStateLink* CachedBoundShaderStateLink = GetCachedBoundShaderState(
+		VertexDeclarationRHI,
+		VertexShaderRHI,
+		PixelShaderRHI,
+		HullShaderRHI,
+		DomainShaderRHI,
+		GeometryShaderRHI
+		);
+    // ⭐
+
+	if(CachedBoundShaderStateLink)
+	{
+		// If we've already created a bound shader state with these parameters, reuse it.
+		FOpenGLBoundShaderState* BoundShaderState = ResourceCast(CachedBoundShaderStateLink->BoundShaderState);
+		FOpenGLLinkedProgram* LinkedProgram = BoundShaderState->LinkedProgram;
+		GetOpenGLProgramsCache().Touch(LinkedProgram);
+
+		if (!LinkedProgram->bConfigIsInitalized)
+		{
+			// touch has unevicted the program, set it up.
+			FOpenGLLinkedProgramConfiguration Config = CreateConfig();
+			LinkedProgram->SetConfig(Config);
+			// We now have the config for this program, we must configure the program for use.
+			ConfigureGLProgramStageStates(LinkedProgram);
+		}
+		return CachedBoundShaderStateLink->BoundShaderState;
+	}
+	else
+	{
+		FOpenGLLinkedProgramConfiguration Config = CreateConfig();
+
+		// Check if we already have such a program in released programs cache. Use it, if we do.
+		FOpenGLLinkedProgram* LinkedProgram = 0;
+
+        // ⭐
+        // LRU 정책을 사용하지 않거나, 사용하더라도 아직 Evict하지 않아도 되는 경우
+        // 파괴할 Program 오브젝트를 파괴하지 않고 StaticLastReleasedPrograms에 LAST_RELEASED_PROGRAMS_CACHE_COUNT 개수만큼까지는 보관해둔다.
+        // FOpenGLBoundShaderState::~FOpenGLBoundShaderState() 함수 참고.
+		int32 Index = StaticLastReleasedProgramsIndex;
+		for( int CacheIndex = 0; CacheIndex < LAST_RELEASED_PROGRAMS_CACHE_COUNT; ++CacheIndex )
+		{
+			FOpenGLLinkedProgram* Prog = StaticLastReleasedPrograms[Index];
+			if( Prog && Prog->Config == Config )
+			{
+				StaticLastReleasedPrograms[Index] = 0;
+				LinkedProgram = Prog;
+				GetOpenGLProgramsCache().Touch(LinkedProgram);
+				break;
+			}
+			Index = (Index == LAST_RELEASED_PROGRAMS_CACHE_COUNT-1) ? 0 : Index+1;
+		}
+        // ⭐
+
+		if (!LinkedProgram)
+		{
+			bool bFindAndCreateEvictedProgram = true;
+			// If this is this a request from the PSOFC then do not create an evicted program.
+			if (bFromPSOFileCache && GetOpenGLProgramsCache().IsUsingLRU())
+			{
+				bFindAndCreateEvictedProgram = false;
+			}
+
+            // ⭐
+            // Program 오브젝트도 캐싱해둔다.
+            // Probram Binary의 개념이랑은 다르다.
+            // 여기서 말하는 캐싱은 그냥 생성했던 Program 오브젝트를 사용 후 곧 바로 파괴하지 않고 쉐이더 메모리에 보관해둔다는 개념이다.
+			//
+			// PSO PreCompile 중인 경우, Evict된 Program Binary에서 Program 오브젝트를 생성하지 않는다. ( 이후 필요할 때 생성해서 사용할 예정이다. )
+			//
+			FOpenGLLinkedProgram* CachedProgram = GetOpenGLProgramsCache().Find(Config.ProgramKey, bFindAndCreateEvictedProgram);
+			if (!CachedProgram)
+			{
+				// ensure that pending request for this program has been completed before
+				if (FOpenGLProgramBinaryCache::CheckSinglePendingGLProgramCreateRequest(Config.ProgramKey))
+				{
+					CachedProgram = GetOpenGLProgramsCache().Find(Config.ProgramKey, bFindAndCreateEvictedProgram);
+				}
+			}
+            // ⭐
+
+			if (CachedProgram)
+			{
+				LinkedProgram = CachedProgram;
+				if (!LinkedProgram->bConfigIsInitalized && bFindAndCreateEvictedProgram)
+				{
+					LinkedProgram->SetConfig(Config);
+					// We now have the config for this program, we must configure the program for use.
+					ConfigureGLProgramStageStates(LinkedProgram);
+				}
+			}
+            // ⭐
+            // 캐싱해둔 Program 오브젝트에서 원하는 Program 오브젝트를 못 찾은 경우 Program 오브젝트를 생성한다.
+			else
+            // ⭐
+			{
+				FOpenGLVertexShader* VertexShader = ResourceCast(VertexShaderRHI);
+				FOpenGLPixelShader* PixelShader = ResourceCast(PixelShaderRHI);
+				FOpenGLHullShader* HullShader = ResourceCast(HullShaderRHI);
+				FOpenGLDomainShader* DomainShader = ResourceCast(DomainShaderRHI);
+				FOpenGLGeometryShader* GeometryShader = ResourceCast(GeometryShaderRHI);
+		
+				// Make sure we have OpenGL context set up, and invalidate the parameters cache and current program (as we'll link a new one soon)
+				GetContextStateForCurrentContext().Program = -1;
+				MarkShaderParameterCachesDirty(PendingState.ShaderParameters, false);
+				PendingState.LinkedProgramAndDirtyFlag = nullptr;
+
+                // ⭐⭐⭐⭐⭐⭐⭐
+                // 위에서 말한 쉐이더들을 프로그램에 링크하는 부분이다.
+                // Program Binary 캐시에 알맞은 Program Binary가 있는 경우, Program Binary에서 Program 오브젝트를 생성하고,
+                // 그렇지 않은 경우에는 Program 오브젝트를 생성해서 일일이 쉐이더를 링크한다.
+                //
+				// Link program, using the data provided in config
+				LinkedProgram = LinkProgram(Config, bFromPSOFileCache);
+                // ⭐⭐⭐⭐⭐⭐⭐
+
+				if (LinkedProgram == NULL)
+				{
+#if DEBUG_GL_SHADERS
+					if (VertexShader)
+					{
+						UE_LOG(LogRHI, Error, TEXT("Vertex Shader:\n%s"), ANSI_TO_TCHAR(VertexShader->GlslCode.GetData()));
+					}
+					if (PixelShader)
+					{
+						UE_LOG(LogRHI, Error, TEXT("Pixel Shader:\n%s"), ANSI_TO_TCHAR(PixelShader->GlslCode.GetData()));
+					}
+					if (GeometryShader)
+					{
+						UE_LOG(LogRHI, Error, TEXT("Geometry Shader:\n%s"), ANSI_TO_TCHAR(GeometryShader->GlslCode.GetData()));
+					}
+					if (FOpenGL::SupportsTessellation())
+					{
+						if (HullShader)
+						{
+							UE_LOG(LogRHI, Error, TEXT("Hull Shader:\n%s"), ANSI_TO_TCHAR(HullShader->GlslCode.GetData()));
+						}
+						if (DomainShader)
+						{
+							UE_LOG(LogRHI, Error, TEXT("Domain Shader:\n%s"), ANSI_TO_TCHAR(DomainShader->GlslCode.GetData()));
+						}
+					}
+#endif //DEBUG_GL_SHADERS
+					FName LinkFailurePanic = bFromPSOFileCache ? FName("FailedProgramLinkDuringPrecompile") : FName("FailedProgramLink");
+					RHIGetPanicDelegate().ExecuteIfBound(LinkFailurePanic);
+					UE_LOG(LogRHI, Fatal, TEXT("Failed to link program [%s]. Current total programs: %d, precompile: %d"), *Config.ProgramKey.ToString(), GNumPrograms, (uint32)bFromPSOFileCache);
+				}
+
+				GetOpenGLProgramsCache().Add(Config.ProgramKey, LinkedProgram);
+
+				// if building the cache file and using the LRU then evict the last shader created. this will reduce the risk of fragmentation of the driver's program memory.
+				if (bFindAndCreateEvictedProgram == false && FOpenGLProgramBinaryCache::IsBuildingCache())
+				{
+					GetOpenGLProgramsCache().EvictMostRecent();
+				}
+			}
+		}
+
+		check(VertexDeclarationRHI);
+		
+		FOpenGLVertexDeclaration* VertexDeclaration = ResourceCast(VertexDeclarationRHI);
+
+        // ⭐
+        // 생성한 Program 오브젝트를 보관할 BoundShaderState를 생성한다.
+        // BoundShaderState 생성과 동시에 CachedBoundShaderState에 캐싱되어 위의 GetCachedBoundShaderState에서 가져올 수 있다.
+        // FOpenGLBoundShaderState는 플랫폼 Independent한 FRHIBoundShaderState를 상속한다.
+		FOpenGLBoundShaderState* BoundShaderState = new FOpenGLBoundShaderState(
+			LinkedProgram,
+			VertexDeclarationRHI,
+			VertexShaderRHI,
+			PixelShaderRHI,
+			GeometryShaderRHI,
+			HullShaderRHI,
+			DomainShaderRHI
+			);
+        // ⭐
+
+		return BoundShaderState;
+	}
+}
+```
+
+```cpp
+static FOpenGLLinkedProgram* LinkProgram( const FOpenGLLinkedProgramConfiguration& Config, bool bFromPSOFileCache)
+{
+	ANSICHAR Buf[32] = {0};
+
+	SCOPE_CYCLE_COUNTER(STAT_OpenGLShaderLinkTime);
+	VERIFY_GL_SCOPE();
+
+	// ensure that compute shaders are always alone
+	check( (Config.Shaders[CrossCompiler::SHADER_STAGE_VERTEX].Resource == 0) != (Config.Shaders[CrossCompiler::SHADER_STAGE_COMPUTE].Resource == 0));
+	check( (Config.Shaders[CrossCompiler::SHADER_STAGE_PIXEL].Resource == 0) != (Config.Shaders[CrossCompiler::SHADER_STAGE_COMPUTE].Resource == 0));
+
+	TArray<uint8> CachedProgramBinary;
+	GLuint Program = 0;
+	bool bShouldLinkProgram = true;
+	if (FOpenGLProgramBinaryCache::IsEnabled())
+	{
+        // ⭐⭐⭐⭐⭐⭐⭐
+        // ProgramKey를 해쉬 값으로 캐싱되어 있는 Program Binary 중 알맞은 Program Binary를 찾아 Program 오브젝트를 생성한다. 
+        // 알맞은 Program Binary를 찾아 Program 오브젝트를 생성한 경우 밑에서 쉐이더를 링크할 필요도 없다.        
+        //
+		// Try to create program from a saved binary
+		bShouldLinkProgram = !FOpenGLProgramBinaryCache::UseCachedProgram(Program, Config.ProgramKey, CachedProgramBinary);
+        // ⭐⭐⭐⭐⭐⭐⭐
+
+		if (bShouldLinkProgram)
+		{
+			// In case there is no saved binary in the cache, compile required shaders we have deferred before
+			FOpenGLProgramBinaryCache::CompilePendingShaders(Config);
+		}
+	}
+
+	if (Program == 0)
+	{
+        // ⭐
+        // Program Binary가 Disable되어 있거나, 알맞은 Program Binary를 찾을 수 없어서, Program 객체가 아직 생성되지 않은 경우,
+        // 드라이버에 요청해서 Program 오브젝트를 생성해준다.
+		FOpenGL::GenProgramPipelines(1, &Program);
+        // ⭐
+	}
+
+	if (bShouldLinkProgram)
+	{
+		if (Config.Shaders[CrossCompiler::SHADER_STAGE_VERTEX].Resource)
+		{
+			FOpenGL::UseProgramStages(Program, GL_VERTEX_SHADER_BIT, Config.Shaders[CrossCompiler::SHADER_STAGE_VERTEX].Resource);
+		}
+		if (Config.Shaders[CrossCompiler::SHADER_STAGE_PIXEL].Resource)
+		{
+			FOpenGL::UseProgramStages(Program, GL_FRAGMENT_SHADER_BIT, Config.Shaders[CrossCompiler::SHADER_STAGE_PIXEL].Resource);
+		}
+		if (Config.Shaders[CrossCompiler::SHADER_STAGE_GEOMETRY].Resource)
+		{
+			FOpenGL::UseProgramStages(Program, GL_GEOMETRY_SHADER_BIT, Config.Shaders[CrossCompiler::SHADER_STAGE_GEOMETRY].Resource);
+		}
+		if (Config.Shaders[CrossCompiler::SHADER_STAGE_HULL].Resource)
+		{
+			FOpenGL::UseProgramStages(Program, GL_TESS_CONTROL_SHADER_BIT, Config.Shaders[CrossCompiler::SHADER_STAGE_HULL].Resource);
+		}
+		if (Config.Shaders[CrossCompiler::SHADER_STAGE_DOMAIN].Resource)
+		{
+			FOpenGL::UseProgramStages(Program, GL_TESS_EVALUATION_SHADER_BIT, Config.Shaders[CrossCompiler::SHADER_STAGE_DOMAIN].Resource);
+		}
+		if (Config.Shaders[CrossCompiler::SHADER_STAGE_COMPUTE].Resource)
+		{
+			FOpenGL::UseProgramStages(Program, GL_COMPUTE_SHADER_BIT, Config.Shaders[CrossCompiler::SHADER_STAGE_COMPUTE].Resource);
+		}
+	
+		if( !FOpenGL::SupportsSeparateShaderObjects() )
+		{
+			if(FOpenGLProgramBinaryCache::IsEnabled() || GetOpenGLProgramsCache().IsUsingLRU())
+			{
+				FOpenGL::ProgramParameter(Program, PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE);
+			}
+
+            // ⭐⭐⭐⭐⭐⭐⭐
+			// Link.
+			glLinkProgram(Program);
+            // ⭐⭐⭐⭐⭐⭐⭐
+		}
+	}
+
+	if (VerifyProgramPipeline(Program))
+	{
+		if(bShouldLinkProgram && !FOpenGL::SupportsSeparateShaderObjects())
+		{
+			SetNewProgramStats(Program);
+
+			if (FOpenGLProgramBinaryCache::IsEnabled())
+			{
+				check(CachedProgramBinary.Num() == 0);
+
+                // ⭐
+                // Seperate Shader Object를 지원하지 않는 경우, 알맞은 Program Binary가 없어서 새롭게 Program 오브젝트를 생성하고 링크한 경우,
+                // 링크된 Program 오브젝트의 Binary를 캐싱한다. ( 디스크에 쓴다 )
+				FOpenGLProgramBinaryCache::CacheProgram(Program, Config.ProgramKey, CachedProgramBinary);
+                // ⭐
+			}
+		}
+	}
+	else
+	{
+		return nullptr;
+	}
+	
+    // ⭐
+    // 생성한 Program 오브젝트를 바인딩한다.
+	FOpenGL::BindProgramPipeline(Program);
+    // ⭐
+
+	bool bUsingTessellation = Config.Shaders[CrossCompiler::SHADER_STAGE_HULL].Resource && Config.Shaders[CrossCompiler::SHADER_STAGE_DOMAIN].Resource;
+	FOpenGLLinkedProgram* LinkedProgram = new FOpenGLLinkedProgram(Config, Program, bUsingTessellation);
+
+	if (GetOpenGLProgramsCache().IsUsingLRU() && CVarLRUKeepProgramBinaryResident.GetValueOnAnyThread() && CachedProgramBinary.Num())
+	{
+		// Store the binary data in LRUInfo, this avoids requesting a program binary from the driver when this program is evicted.
+		INC_MEMORY_STAT_BY(STAT_OpenGLShaderLRUProgramMemory, CachedProgramBinary.Num());
+
+        // ⭐
+        // CVarLRUKeepProgramBinaryResident
+        // : Program 바이너리를 버리지 말고 메모리에 보관해둘지. 이 경우 메모리 사용량은 증가하나, Program 오브젝트를 다시 생성할 때 빠르게 생성할 수 있다. ( 디스크에서 읽어 오지 않고.. )
+		LinkedProgram->LRUInfo.CachedProgramBinary = MoveTemp(CachedProgramBinary);
+        // ⭐
+	}
+	ConfigureStageStates(LinkedProgram);
+
+#if ENABLE_UNIFORM_BUFFER_LAYOUT_VERIFICATION
+	VerifyUniformBufferLayouts(Program);
+#endif // #if ENABLE_UNIFORM_BUFFER_LAYOUT_VERIFICATION
+	return LinkedProgram;
+}
+```
+
+Program Binary를 캐싱하는 부분도 살펴보자.          
+
+```cpp
+void FOpenGLProgramBinaryCache::CacheProgram(GLuint Program, const FOpenGLProgramKey& ProgramKey, TArray<uint8>& CachedProgramBinaryOUT)
+{
+	if (CachePtr)
+	{
+		CachePtr->AppendGLProgramToBinaryCache(ProgramKey, Program, CachedProgramBinaryOUT);
+	}
+}
+
+// Called when a new program has been created by OGL RHI, creates the binary cache if it's invalid and then appends the new program details to the file and runtime containers.
+void FOpenGLProgramBinaryCache::AppendGLProgramToBinaryCache(const FOpenGLProgramKey& ProgramKey, GLuint Program, TArray<uint8>& CachedProgramBinaryOUT)
+{
+	if (IsBuildingCache_internal() == false)
+	{
+		return;
+	}
+
+	FScopeLock Lock(&GProgramBinaryCacheCS);
+
+	AddUniqueGLProgramToBinaryCache(BinaryCacheWriteFileHandle, ProgramKey, Program, CachedProgramBinaryOUT);
+}
+
+// Add the program to the binary cache if it does not already exist.
+void FOpenGLProgramBinaryCache::AddUniqueGLProgramToBinaryCache(FArchive* FileWriter, const FOpenGLProgramKey& ProgramKey, GLuint Program, TArray<uint8>& CachedProgramBinaryOUT)
+{
+	// Add to runtime and disk.
+	const FOpenGLProgramKey& ProgramHash = ProgramKey;
+
+	// Check we dont already have this: Something could be in the cache but still reach this point if OnSharedShaderCodeRequest(s) have not occurred.
+	if (!ProgramToBinaryMap.Contains(ProgramHash))
+	{
+		uint32 ProgramBinaryOffset = 0, ProgramBinarySize = 0;
+
+		FOpenGLProgramKey SerializedProgramKey = ProgramKey;
+
+        // ⭐
+        // Program 오브젝트로부터 Binary 데이터를 추출하여 CachedProgramBinaryOUT에 저장한다.
+		if (ensure(GetProgramBinaryFromGLProgram(Program, CachedProgramBinaryOUT)))
+        // ⭐
+		{
+			AddProgramBinaryDataToBinaryCache(*FileWriter, CachedProgramBinaryOUT, ProgramKey);
+		}
+		else
+		{
+			// we've encountered a problem with this program and there's nothing to write.
+			// This likely means the device will never be able to use this program.
+			// Panic!
+			RHIGetPanicDelegate().ExecuteIfBound(FName("FailedBinaryProgramWrite"));
+			UE_LOG(LogRHI, Fatal, TEXT("AppendProgramBinaryFile Binary program returned 0 bytes!"));
+			// Panic!
+		}
+	}
+}
+
+// Serialize out the program binary data and add to runtime structures.
+void FOpenGLProgramBinaryCache::AddProgramBinaryDataToBinaryCache(FArchive& Ar, TArray<uint8>& BinaryProgramData, const FOpenGLProgramKey& ProgramKey)
+{
+    // ⭐
+    // Program Binary를 디스크에 써서 보관해둔다.
+	// Serialize to output file:
+	FOpenGLProgramKey SerializedProgramKey = ProgramKey;
+	uint32 ProgramBinarySize = (uint32)BinaryProgramData.Num();
+	Ar << SerializedProgramKey;
+	uint32 ProgramBinaryOffset = Ar.Tell();
+	Ar << ProgramBinarySize;
+	Ar.Serialize(BinaryProgramData.GetData(), ProgramBinarySize);
+    // ⭐
+
+    // ⭐
+    // Program Binary를 압축하여 디스크에 써둘 수도 있다.         
+	if(CVarStoreCompressedBinaries.GetValueOnAnyThread())
+	{
+		static uint32 TotalUncompressed = 0;
+		static uint32 TotalCompressed = 0;
+
+		FCompressedProgramBinaryHeader* Header = (FCompressedProgramBinaryHeader*)BinaryProgramData.GetData();
+		TotalUncompressed += Header->UncompressedSize;
+		TotalCompressed += BinaryProgramData.Num();
+
+		UE_LOG(LogRHI, Verbose, TEXT("AppendProgramBinaryFile: total Uncompressed: %d, total Compressed %d, Total saved so far: %d"), TotalUncompressed, TotalCompressed, TotalUncompressed - TotalCompressed);
+	}
+    // ⭐
+
+	FGLProgramBinaryFileCacheEntry* NewIndexEntry = new FGLProgramBinaryFileCacheEntry();
+	ProgramEntryContainer.Emplace(TUniquePtr<FGLProgramBinaryFileCacheEntry>(NewIndexEntry));
+
+	// Store the program file descriptor in the runtime program/shader container:
+	NewIndexEntry->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramStored;
+	NewIndexEntry->FileInfo.ProgramOffset = ProgramBinaryOffset;
+	NewIndexEntry->FileInfo.ProgramSize = ProgramBinarySize;
+	NewIndexEntry->ProgramIndex = ProgramToBinaryMap.Num();
+	NewIndexEntry->FileInfo.ShaderHasheSet = ProgramKey;
+	AddProgramFileEntryToMap(NewIndexEntry);
+}
+```
+
+Program Binary로부터 Program 오브젝트를 생성하는 부분도 보자.
+
+```cpp
+bool FOpenGLProgramBinaryCache::UseCachedProgram(GLuint& ProgramOUT, const FOpenGLProgramKey& ProgramKey, TArray<uint8>& CachedProgramBinaryOUT)
+{
+	if (CachePtr)
+	{
+		return CachePtr->UseCachedProgram_internal(ProgramOUT, ProgramKey, CachedProgramBinaryOUT);
+	}
+	return false;
+}
+
+bool FOpenGLProgramBinaryCache::UseCachedProgram_internal(GLuint& ProgramOUT, const FOpenGLProgramKey& ProgramKey, TArray<uint8>& CachedProgramBinaryOUT)
+{
+	SCOPE_CYCLE_COUNTER(STAT_OpenGLUseCachedProgramTime);
+	
+	FGLProgramBinaryFileCacheEntry** ProgramBinRefPtr = nullptr;
+
+	FScopeLock Lock(&GProgramBinaryCacheCS);
+
+	ProgramBinRefPtr = ProgramToBinaryMap.Find(ProgramKey);
+
+    // ⭐
+    // 이전에 디스크의 Program Binary를 로드하여 Program 오브젝트까지 생성해둔 경우.
+	if (ProgramBinRefPtr)
+    // ⭐
+	{
+		FGLProgramBinaryFileCacheEntry* FoundProgram = *ProgramBinRefPtr;
+		check(FoundProgram->FileInfo.ShaderHasheSet == ProgramKey);
+
+		TSharedPtr<IAsyncReadRequest, ESPMode::ThreadSafe> LocalReadRequest = FoundProgram->ReadRequest.Pin();
+		bool bHasReadRequest = LocalReadRequest.IsValid();
+		check(!bHasReadRequest);
+
+		// by this point the program must be either available or no attempt to load from shader library has occurred.
+		checkf(FoundProgram->GLProgramState == FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramStored
+			|| FoundProgram->GLProgramState == FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramAvailable,
+			TEXT("Unexpected program state:  (%s) == %d"), *ProgramKey.ToString(), (int32)FoundProgram->GLProgramState);
+
+		if (FoundProgram->GLProgramState == FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramAvailable)
+		{
+			UE_LOG(LogRHI, Log, TEXT("UseCachedProgram : Program (%s) GLid = %x is ready!"), *ProgramKey.ToString(), FoundProgram->GLProgramId);
+
+            // ⭐
+            // Program Binary로부터 미리 생성해둔 Program 오브젝트를 반환다.
+			ProgramOUT = FoundProgram->GLProgramId;
+            // ⭐
+
+			// GLProgram has been handed over.
+			FoundProgram->GLProgramId = 0;
+			FoundProgram->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramComplete;
+			return true;
+		}
+		else
+		{
+			UE_LOG(LogRHI, Log, TEXT("UseCachedProgram : %s was not ready when needed!! (state %d)"), *ProgramKey.ToString(), (uint32)FoundProgram->GLProgramState);
+		}
+	}
+    // ⭐
+    // 디스크의 Program Binary를 미리 메모리에 로드해두지 않은 경우
+	else if (BinaryFileState == EBinaryFileState::BuildingCacheFileWithMove)
+    // ⭐
+	{
+		// We're building the new cache using the original cache to warm:
+		TUniquePtr<FGLProgramBinaryFileCacheEntry>* FoundExistingBinary = PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Find(ProgramKey);
+		if (FoundExistingBinary)
+		{
+            // ⭐
+            // 디스크로부터 Program Binary를 읽어 Program 오브젝트를 생성한다. 
+            //
+			TUniquePtr<FGLProgramBinaryFileCacheEntry>& ExistingBinary = *FoundExistingBinary;
+			// read old binary:
+			CachedProgramBinaryOUT.SetNumUninitialized(ExistingBinary->FileInfo.ProgramSize);
+			PreviousBinaryCacheInfo.OldCacheArchive->Seek(ExistingBinary->FileInfo.ProgramOffset);
+			PreviousBinaryCacheInfo.OldCacheArchive->Serialize(CachedProgramBinaryOUT.GetData(), ExistingBinary->FileInfo.ProgramSize);
+			bool bSuccess = CreateGLProgramFromBinary(ProgramOUT, CachedProgramBinaryOUT);
+            // ⭐
+
+			if (!bSuccess)
+			{
+				UE_LOG(LogRHI, Log, TEXT("[%s, %d, %d]"), *ProgramKey.ToString(), ProgramOUT, CachedProgramBinaryOUT.Num());
+				RHIGetPanicDelegate().ExecuteIfBound(FName("FailedBinaryProgramCreateFromOldCache"));
+				UE_LOG(LogRHI, Fatal, TEXT("UseCachedProgram : Failed to create GL program from binary data while BuildingCacheFileWithMove! [%s]"), *ProgramKey.ToString());
+			}
+			SetNewProgramStats(ProgramOUT);
+
+            // ⭐
+            // 디스크로부터 읽어온 Program Binary는 이후 캐싱을 위해 다시 파일에 쓴다.
+			// Now write to new cache, we're returning true here so no attempt will be made to add it back to the cache later.
+			AddProgramBinaryDataToBinaryCache(*BinaryCacheWriteFileHandle, CachedProgramBinaryOUT, ProgramKey);
+            // ⭐
+
+			PreviousBinaryCacheInfo.NumberOfOldEntriesReused++;
+			return true;
+		}
+	}
+	return false;
+}
+```
+
+위에서 OpenGL는 바운딩된 쉐이더 스테이트(BSS)에 대한 캐싱만을 지원한다고 했는데 이는 코드에서도 확인할 수 있다.
+
+```cpp
+void FPipelineFileCache::CacheGraphicsPSO(uint32 RunTimeHash, FGraphicsPipelineStateInitializer const& Initializer)
+{
+	if(IsPipelineFileCacheEnabled() && (LogPSOtoFileCache() || ReportNewPSOs()))
+	{
+		FRWScopeLock Lock(FileCacheLock, SLT_ReadOnly);
+	
+		if(FileCache)
+		{
+			FPSOUsageData* PSOUsage = RunTimeToPSOUsage.Find(RunTimeHash);
+			if(PSOUsage == nullptr || !IsReferenceMaskSet(FPipelineFileCache::GameUsageMask, PSOUsage->UsageMask))
+			{
+				Lock.ReleaseReadOnlyLockAndAcquireWriteLock_USE_WITH_CAUTION();
+				PSOUsage = RunTimeToPSOUsage.Find(RunTimeHash);
+				
+				if(PSOUsage == nullptr)
+				{
+					FPipelineCacheFileFormatPSO NewEntry;
+					bool bOK = FPipelineCacheFileFormatPSO::Init(NewEntry, Initializer);
+					check(bOK);
+					
+					uint32 PSOHash = GetTypeHash(NewEntry);
+					FPSOUsageData CurrentUsageData(PSOHash, 0, 0);
+					
+					if (!FileCache->IsPSOEntryCached(NewEntry, &CurrentUsageData))
+					{
+						bool bActuallyNewPSO = !NewPSOHashes.Contains(PSOHash);
+						
+						// ⭐
+						// OpenGL은 BSS가 동일한지만을 가지고 전달된 PSO가 새로운 PSO인지를 확인한다.
+						if (bActuallyNewPSO && IsOpenGLPlatform(GMaxRHIShaderPlatform)) // OpenGL is a BSS platform and so we don't report BSS matches as missing.
+						{
+							bActuallyNewPSO = !FileCache->IsBSSEquivalentPSOEntryCached(NewEntry);
+						}
+						// ⭐
+
+						if (bActuallyNewPSO)
+						{
+							CSV_EVENT(PSO, TEXT("Encountered new graphics PSO"));
+							UE_LOG(LogRHI, Display, TEXT("Encountered a new graphics PSO: %u"), PSOHash);
+							if (GPSOFileCachePrintNewPSODescriptors > 0)
+							{
+								UE_LOG(LogRHI, Display, TEXT("New Graphics PSO (%u) Description: %s"), PSOHash, *NewEntry.GraphicsDesc.ToString());
+							}
+							if (LogPSOtoFileCache())
+							{
+								NewPSOs.Add(NewEntry);
+								INC_MEMORY_STAT_BY(STAT_NewCachedPSOMemory, sizeof(FPipelineCacheFileFormatPSO) + sizeof(uint32) + sizeof(uint32));
+							}
+							NewPSOHashes.Add(PSOHash);
+
+							NumNewPSOs++;
+							INC_DWORD_STAT(STAT_NewGraphicsPipelineStateCount);
+							INC_DWORD_STAT(STAT_TotalGraphicsPipelineStateCount);
+							
+							if (ReportNewPSOs() && PSOLoggedEvent.IsBound())
+							{
+								PSOLoggedEvent.Broadcast(NewEntry);
+							}
+						}
+					}
+					
+					// Only set if the file cache doesn't have this Mask for the PSO - avoid making more entries and unnessary file saves
+					if(!IsReferenceMaskSet(FPipelineFileCache::GameUsageMask, CurrentUsageData.UsageMask))
+					{
+						CurrentUsageData.UsageMask |= FPipelineFileCache::GameUsageMask;
+						RegisterPSOUsageDataUpdateForNextSave(CurrentUsageData);
+					}
+					
+					// Apply the existing file PSO Usage mask and current to our "fast" runtime check
+					RunTimeToPSOUsage.Add(RunTimeHash, CurrentUsageData);
+				}
+				else if(!IsReferenceMaskSet(FPipelineFileCache::GameUsageMask, PSOUsage->UsageMask))
+				{
+					PSOUsage->UsageMask |= FPipelineFileCache::GameUsageMask;
+					RegisterPSOUsageDataUpdateForNextSave(*PSOUsage);
+				}
+			}
+		}
+	}
+}
+```
+
+-------------------------
+
+PSO에 쉐이더 정보가 어떻게 담기는지도 보겠다.            
+사실 PSO가 직접 쉐이더 코드를 가지고 있지 않다.              
+**PSO에는 특정 쉐이더에 대한 해쉬 값을 가지고 있고 그 해쉬 값을 가지고 FShaderCodeLibrary에서 원하는 쉐이더를 찾는 것**이다.      
+FShaderCodeLibrary에는 온갖 쉐이더 Permutation으로 생성된 쉐이더 코드들이 들어 있다. FShaderCodeLibrary에 들어가는 데이터는 쿠킹시 모두 결정된다.          
+
+**개발사가 배포하는 PSO 파일에는 쉐이더 코드가 아닌 쉐이더에 대한 Hash 값이 들어 있고 그 조합들이 들어 있는 것**이다.                      
+         
+잠시 PSO를 PreCompile하는 부분에서 쉐이더를 컴파일하는 부분을 보자.           
+ 
+```cpp
+bool FShaderPipelineCache::Precompile(FRHICommandListImmediate& RHICmdList, EShaderPlatform Platform, FPipelineCacheFileFormatPSO const& PSO)
+{
+	INC_DWORD_STAT(STAT_PreCompileShadersTotal);
+	INC_DWORD_STAT(STAT_PreCompileShadersNum);
+    
+    uint64 StartTime = FPlatformTime::Cycles64();
+
+	bool bOk = false;
+	
+	if(PSO.Verify())
+	{
+		if(FPipelineCacheFileFormatPSO::DescriptorType::Graphics == PSO.Type)
+		{
+			FGraphicsPipelineStateInitializer GraphicsInitializer;
+			
+			FRHIVertexDeclaration* VertexDesc = PipelineStateCache::GetOrCreateVertexDeclaration(PSO.GraphicsDesc.VertexDescriptor);
+			GraphicsInitializer.BoundShaderState.VertexDeclarationRHI = VertexDesc;
+			
+			FVertexShaderRHIRef VertexShader;
+			if (PSO.GraphicsDesc.VertexShader != FSHAHash())
+			{
+				// ⭐⭐⭐⭐⭐⭐⭐
+				// 쉐이더를 컴파일하고 그 컴파일한 쉐이더를 추상화한 오브젝트를 VertexShader 저장한다.
+				VertexShader = FShaderCodeLibrary::CreateVertexShader(Platform, PSO.GraphicsDesc.VertexShader);
+				// ⭐⭐⭐⭐⭐⭐⭐
+				GraphicsInitializer.BoundShaderState.VertexShaderRHI = VertexShader;
+			}
+
+			...
+			...
+			...
+		}
+
+		...
+		...
+		...
+	}
+
+	...
+	...
+	...
+}
+```
+
+PSO.GraphicsDesc.VertexShader 변수가 쉐이더의 코드 문자열 데이터 같아 보이지만 그렇지 않다.
+
+
+```cpp
+struct RHI_API FPipelineCacheFileFormatPSO
+{
+	struct RHI_API ComputeDescriptor
+	{
+		FSHAHash ComputeShader;
+
+		FString ToString() const;
+		static FString HeaderLine();
+		void FromString(const FStringView& Src);
+	};
+	struct RHI_API GraphicsDescriptor
+	{
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 그냥 쉐이더 코드에 대한 Hash 데이터이다!
+		FSHAHash VertexShader;
+		FSHAHash FragmentShader;
+		FSHAHash GeometryShader;
+		FSHAHash HullShader;
+		FSHAHash DomainShader;
+		// ⭐⭐⭐⭐⭐⭐⭐
+
+		...
+		...
+		...
+	}
+
+	...
+	...
+	...
+
+	DescriptorType Type;
+	ComputeDescriptor ComputeDesc;
+	GraphicsDescriptor GraphicsDesc;
+	FPipelineFileCacheRayTracingDesc RayTracingDesc;
+
+	...
+	...
+	...
+}
+
+```
+
+그럼 이 쉐이더의 해쉬 값을 가지고 어떻게 쉐이더를 컴파일하는지 보겠다.         
+
+
+```cpp
+
+FVertexShaderRHIRef FShaderCodeLibrary::CreateVertexShader(EShaderPlatform Platform, const FSHAHash& Hash)
+{
+	if (FShaderLibrariesCollection::Impl)
+	{
+		return FVertexShaderRHIRef(FShaderLibrariesCollection::Impl->CreateShader(SF_Vertex, Hash));
+	}
+	return nullptr;
+}
+
+TRefCountPtr<FRHIShader> FShaderLibrariesCollection::CreateShader(EShaderFrequency Frequency, const FSHAHash& Hash)
+{
+	int32 ShaderIndex = INDEX_NONE;
+	FShaderLibraryInstance* LibraryInstance = FindShaderLibraryForShader(Hash, ShaderIndex);
+	if (LibraryInstance)
+	{
+		// ⭐
+		TRefCountPtr<FRHIShader> Shader = LibraryInstance->GetOrCreateShader(ShaderIndex);
+		// ⭐
+		check(Shader->GetFrequency() == Frequency);
+		return Shader;
+	}
+	return TRefCountPtr<FRHIShader>();
+}
+
+TRefCountPtr<FRHIShader> FShaderLibraryInstance::GetOrCreateShader(int32 ShaderIndex)
+{
+	const int32 LockIndex = ShaderIndex % NumShaderLocks;
+	TRefCountPtr<FRHIShader> Shader;
+	{
+		FRWScopeLock Locker(ShaderLocks[LockIndex], SLT_ReadOnly);
+		Shader = RHIShaders[ShaderIndex];
+	}
+	if (!Shader)
+	{
+		FRWScopeLock Locker(ShaderLocks[LockIndex], SLT_Write);
+		// ⭐
+		// 찾고자 하는 쉐이더가 아직 컴파일이 안되어 있는 경우
+		Shader = Library->CreateShader(ShaderIndex);
+		// ⭐
+		RHIShaders[ShaderIndex] = Shader;
+	}
+	return Shader;
+}
+
+TRefCountPtr<FRHIShader> FShaderCodeArchive::CreateShader(int32 Index)
+{
+	LLM_SCOPE(ELLMTag::Shaders);
+	TRefCountPtr<FRHIShader> Shader;
+
+	FMemStackBase& MemStack = FMemStack::Get();
+	FMemMark Mark(MemStack);
+
+	const FShaderCodeEntry& ShaderEntry = SerializedShaders.ShaderEntries[Index];
+	FShaderPreloadEntry& ShaderPreloadEntry = ShaderPreloads[Index];
+
+	void* PreloadedShaderCode = nullptr;
+	{
+		const bool bNeededToWait = WaitForPreload(ShaderPreloadEntry);
+		if (bNeededToWait)
+		{
+			UE_LOG(LogShaderLibrary, Warning, TEXT("Blocking wait for shader preload, NumRefs: %d, FramePreloadStarted: %d"), ShaderPreloadEntry.NumRefs, ShaderPreloadEntry.FramePreloadStarted);
+		}
+
+		FWriteScopeLock Lock(ShaderPreloadLock);
+		if (ShaderPreloadEntry.NumRefs > 0u)
+		{
+			check(!ShaderPreloadEntry.PreloadEvent || ShaderPreloadEntry.PreloadEvent->IsComplete());
+			ShaderPreloadEntry.PreloadEvent.SafeRelease();
+
+			ShaderPreloadEntry.NumRefs++; // Hold a reference to code while we're using it to create shader
+			PreloadedShaderCode = ShaderPreloadEntry.Code;
+			check(PreloadedShaderCode);
+		}
+	}
+
+	// ⭐
+	// 쉐이더 코드를 가져온다.
+	const uint8* ShaderCode = (uint8*)PreloadedShaderCode;
+	if (!ShaderCode)
+	{
+		UE_LOG(LogShaderLibrary, Warning, TEXT("Blocking shader load, NumRefs: %d, FramePreloadStarted: %d"), ShaderPreloadEntry.NumRefs, ShaderPreloadEntry.FramePreloadStarted);
+
+		FGraphEventArray ReadCompleteEvents;
+		EAsyncIOPriorityAndFlags DontCache = GShaderCodeLibraryAsyncLoadingAllowDontCache ? AIOP_FLAG_DONTCACHE : AIOP_MIN;
+		IMemoryReadStreamRef LoadedCode = FileCacheHandle->ReadData(ReadCompleteEvents, LibraryCodeOffset + ShaderEntry.Offset, ShaderEntry.Size, AIOP_CriticalPath | DontCache);
+		if (ReadCompleteEvents.Num() > 0)
+		{
+			FTaskGraphInterface::Get().WaitUntilTasksComplete(ReadCompleteEvents);
+		}
+		void* LoadedShaderCode = MemStack.Alloc(ShaderEntry.Size, 16);
+		LoadedCode->CopyTo(LoadedShaderCode, 0, ShaderEntry.Size);
+		ShaderCode = (uint8*)LoadedShaderCode;
+	}
+
+	if (ShaderEntry.UncompressedSize != ShaderEntry.Size)
+	{
+		void* UncompressedCode = MemStack.Alloc(ShaderEntry.UncompressedSize, 16);
+		const bool bDecompressResult = FCompression::UncompressMemory(ShaderLibraryCompressionFormat, UncompressedCode, ShaderEntry.UncompressedSize, ShaderCode, ShaderEntry.Size);
+		check(bDecompressResult);
+		ShaderCode = (uint8*)UncompressedCode;
+	}
+	// ⭐
+
+	const auto ShaderCodeView = MakeArrayView(ShaderCode, ShaderEntry.UncompressedSize);
+	const FSHAHash& ShaderHash = SerializedShaders.ShaderHashes[Index];
+	switch (ShaderEntry.Frequency)
+	{
+		// ⭐⭐⭐⭐⭐⭐⭐
+		// 쉐이더 코드를 그래픽스 API에 전달하여 컴파일한다..
+		case SF_Vertex: Shader = RHICreateVertexShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Pixel: Shader = RHICreatePixelShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Geometry: Shader = RHICreateGeometryShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Hull: Shader = RHICreateHullShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Domain: Shader = RHICreateDomainShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		case SF_Compute: Shader = RHICreateComputeShader(ShaderCodeView, ShaderHash); CheckShaderCreation(Shader, Index); break;
+		// ⭐⭐⭐⭐⭐⭐⭐
+
+	case SF_RayGen: case SF_RayMiss: case SF_RayHitGroup: case SF_RayCallable:
+#if RHI_RAYTRACING
+		if (GRHISupportsRayTracing)
+		{
+			Shader = RHICreateRayTracingShader(ShaderCodeView, ShaderHash, ShaderEntry.GetFrequency());
+			CheckShaderCreation(Shader, Index);
+		}
+#endif // RHI_RAYTRACING
+		break;
+	default: checkNoEntry(); break;
+	}
+
+	// Release the refernece we were holding
+	if (PreloadedShaderCode)
+	{
+		FWriteScopeLock Lock(ShaderPreloadLock);
+		check(ShaderPreloadEntry.NumRefs > 1u); // we shouldn't be holding the last ref here
+		--ShaderPreloadEntry.NumRefs;
+		PreloadedShaderCode = nullptr;
+	}
+
+	if (Shader)
+	{
+		Shader->SetHash(ShaderHash);
+	}
+
+	return Shader;
+}
+```
+              
+캐싱되어 있지 않은 PSO를 만나면 왜 Hitch가 발생하는지 다 확인해보았다.            
+**캐싱되어 있지 않은 PSO를 만나면, 경우에 따라서는 쉐이더를 컴파일 해야 할 수도 있다, 또한 컴파일한 쉐이더를 가지고 Program 오브젝트를 만들어야한다.**          
+                
+조금 더 디테일한 얘기를 해보자면.....         
+기본적으로 PSO는 런타임에 메모리에 캐싱을 한다. OpenGL은 Program 오브젝트가 그것이다. IOS Metal도 마찬가지로 PSO를 런타임에 캐싱한다. 한번 발생한 PSO Hitch는 다시 해당 PSO에 대한 요청이 들어왔을 때 캐싱해둔 PSO를 사용하기 때문에 Hitch가 발생하지 않는다. ( 적어도 앱을 껏다 키지 않는 경우에는 말이다..... )               
+다만 이 캐싱한 PSO를 디스크에 쓰는 것은 LogPSO 옵션이 켜져있는 경우에만 해당한다. 그렇기 때문에 개발사에서 배포한 PSO에 들어 있지 않아 PSO Hitch가 발생한 경우 앱을 껏다 킨 후 다시 해당 구간에서 똑같은 PSO Hitch가 발생한다. 그리고 LogPSO로 PSO를 디스크에 쓴 경우에도 이를 개발사에서 수집하여 배포하는 경우가 아닌 이상 마찬가지로 PSO Hitch가 발생한다. LogPSO로 수집한 PSO를 직접 활용할 수는 없다는 말이다. ( 아래에서 설명하겠지만 IOS Metal에 경우에는 조금 다르다.... )        
+        
+그리고 OpenGL의 경우 Program 오브젝트들의 Binary를 디스크에 쓰는데 ( ProgramBinaryCache 폴더에서 확인 가능하다... ) 이는 위에서 말했듯이 개발사에서 배포한 PSO에서 나온 Program 오브젝트들에 대해서만 해당한다. 처음 앱을 실행했을 때 PSO PreCompile 과정에서 Program Binary 캐시를 디스크에 쓴 후 이후 앱 실행에서 PSO PreCompile을 할 때는 이전에 디스크에 써둔 Program Binary에서 곧 바로 Program 오브젝트를 생성해내어 상대적으로 PSO PreCompile로 인한 Hitch가 덜하다.                   
+                 
+조금 더 추가로 말하면 AOS OpenGL의 경우 PSO Hitch가 발생했던 구간을 앱을 껏다 킨 후 다시 플레이하면 해당 구간에서 다시 PSO Hitch가 발생한다.         
+개발사가 배포한 PSO 캐시에 없는 PSO를 만나 PSO를 런타임에 생성하고 캐싱을 한 경우, 메모리에만 캐싱만 하지 디스크에 캐싱을 하지 않는다. ( LogPSO를 켜 디스크에 쓴 PSO 캐시도 마찬가지로 유저 기기에서 활용하지는 못한다. 개발사가 가공해서 배포를 하여야만 PSO PreCompile에 포함된다. UserCache를 사용하는 옵션이 있지만 이는 기본적으로 Disabled 되어 있고, Shipping Build에서 LogPSO는 기본적으로 수행되지 않고, 수행시 큰 Hitch가 발생할 가능성이 있다. ) 그래서 앱을 껏다 키면 해당 구간에서 다시 PSO Hitch가 발생하는 것이다.          
+                  
+반면 IOS Metal은 그렇지 않다. IOS Metal의 경우 쉐이더를 컴파일하면 컴파일된 쉐이더 기계 코드를 OS단에서 캐싱을 해준다. 앱을 종료해도 OS단에서 캐싱해둔 쉐이더 기계 코드는 살아 있다. 그래서 IOS에서 게임을 플레이하면서 PSO Hitch가 한번 발생한 부분은 앱을 껏다 킨 후 동일한 구간을 플레이 했을 때 해당 PSO가 언리얼 엔진단에서는 캐싱이 되어 있지 않았어도, 엔진에서 PSO를 생성하면서 쉐이더를 컴파일 할 때 캐싱해둔 쉐이더 기계 코드를 가져다가 사용하기 때문에 Hitch가 거의 발생하지 않는다. ( 단 휴대폰을 껏다 키는 경우에는 다시 동일한 구간에서 PSO Hitch가 발생한다. ) ( reference : https://developer.apple.com/forums/thread/659856?page=2, http://geekfaner.com/shineengine/WWDC2020_BuildGPUbinarieswithMetal.html )                         
+
+
+---------------------------
+              
+             
+그럼 언제 쿠킹된 쉐이더 코드들이 FShaderCodeLibrary에 추가되는지 보자.             
+
+```cpp
+int32 FEngineLoop::PreInitPostStartupScreen(const TCHAR* CmdLine)
+{
+	SCOPED_BOOT_TIMING("FEngineLoop::PreInitPostStartupScreen");
+
+	...
+	...
+	...
+
+#if WITH_ENGINE
+	{
+		...
+		...
+		...
+
+		//Now that our EarlyStartupScreen is finished, lets take the necessary steps to mount paks, apply .ini cvars, and open the shader libraries if we installed content we expect to handle
+		//If using a bundle manager, assume its handling all this stuff and that we don't have to do it.
+		if (BundleManager == nullptr || BundleManager->IsNullInterface())
+		{
+			// ⭐
+			// Content 폴더에 있는 pak 파일들을 mount한다.
+			// mount는 pak 내의 에셋들의 데이터를 메모리에 올리는 것은 아니고, pak 파일 내의 에셋들에 대한 메타 데이터 ( 오프셋, ... )들을 로드하는 과정이다. 원하는 에셋을 바로 읽어올 수 있게 말이다.    
+			// Mount Paks that were installed during EarlyStartupScreen
+			if (FCoreDelegates::OnMountAllPakFiles.IsBound() && FPaths::HasProjectPersistentDownloadDir() )
+			{
+				SCOPED_BOOT_TIMING("MountPaksAfterEarlyStartupScreen");
+
+				FString InstalledGameContentDir = FPaths::Combine(*FPaths::ProjectPersistentDownloadDir(), TEXT("InstalledContent"), FApp::GetProjectName(), TEXT("Content"), TEXT("Paks"));
+				FPlatformMisc::AddAdditionalRootDirectory(FPaths::Combine(*FPaths::ProjectPersistentDownloadDir(), TEXT("InstalledContent")));
+
+				TArray<FString> PakFolders;
+				PakFolders.Add(InstalledGameContentDir);
+				FCoreDelegates::OnMountAllPakFiles.Execute(PakFolders);
+
+				// Look for any plugins installed during EarlyStartupScreen
+				IPluginManager::Get().RefreshPluginsList();
+				IPluginManager::Get().LoadModulesForEnabledPlugins(ELoadingPhase::PreEarlyLoadingScreen);
+			}
+			// ⭐
+
+			DumpEarlyReads(bDumpEarlyConfigReads, bDumpEarlyPakFileReads, bForceQuitAfterEarlyReads);
+
+			//Reapply CVars after our EarlyLoadScreen
+			if(bWithConfigPatching)
+			{
+				SCOPED_BOOT_TIMING("ReapplyCVarsFromIniAfterEarlyStartupScreen");
+				HandleConfigReload(bWithConfigPatching);
+			}
+
+			//Handle opening shader library after our EarlyLoadScreen
+			{
+				LLM_SCOPE(ELLMTag::Shaders);
+				SCOPED_BOOT_TIMING("FShaderCodeLibrary::OpenLibrary");
+
+				// ⭐⭐⭐⭐⭐⭐⭐
+				// 쿠킹한 컨텐츠들에서 매터리얼 쉐이더 코드들을 읽어 FShaderCodeLibrary에 데이터를 채운다.
+				// Open the game library which contains the material shaders.
+				FShaderCodeLibrary::OpenLibrary(FApp::GetProjectName(), FPaths::ProjectContentDir());
+				for (const FString& RootDir : FPlatformMisc::GetAdditionalRootDirectories())
+				{
+					FShaderCodeLibrary::OpenLibrary(FApp::GetProjectName(), FPaths::Combine(RootDir, FApp::GetProjectName(), TEXT("Content")));
+				}
+				// ⭐⭐⭐⭐⭐⭐⭐
+
+				// ⭐⭐⭐⭐⭐⭐⭐
+				// 매터리얼 쉐이더 코드들을 FShaderCodeLibrary에 채웠으니, PSO 캐시 파일을 읽어서 PreCompile 할 준비를 한다.
+				//
+				// Now our shader code main library is opened, kick off the precompile, if already initialized
+				FShaderPipelineCache::OpenPipelineFileCache(GMaxRHIShaderPlatform);
+				// ⭐⭐⭐⭐⭐⭐⭐
+			}
+		}
+	...
+	...
+	...
+}
+
+bool FShaderCodeLibrary::OpenLibrary(FString const& Name, FString const& Directory)
+{
+	bool bResult = false;
+	if (FShaderLibrariesCollection::Impl)
+	{
+		bResult = FShaderLibrariesCollection::Impl->OpenLibrary(Name, Directory);
+	}
+	return bResult;
+}
+
+bool FShaderLibrariesCollection::OpenLibrary(FString const& Name, FString const& Directory)
+{
+	using namespace UE::ShaderLibrary::Private;
+
+	bool bResult = false;
+
+	if (IsLibraryInitializedForRuntime())
+	{
+		LLM_SCOPE(ELLMTag::Shaders);
+		FRWScopeLock WriteLock(NamedLibrariesMutex, SLT_Write);
+
+		// create a named library if one didn't exist
+		TUniquePtr<FNamedShaderLibrary>* LibraryPtr = NamedLibrariesStack.Find(Name);
+		FNamedShaderLibrary* Library = LibraryPtr ? LibraryPtr->Get() : nullptr;
+		const bool bAddNewNamedLibrary(Library == nullptr);
+		if (bAddNewNamedLibrary)
+		{
+			Library = new FNamedShaderLibrary(Name, ShaderPlatform, Directory);
+		}
+
+		// ⭐
+		// 쉐이더 코드를 읽어온다.
+		//
+		// if we're able to open the library by name, it's not chunked
+		if (Library->OpenShaderCode(Directory, Name))
+		{
+			bResult = true;
+
+			// Attempt to open the shared-cooked override code library if there is one.
+			// This is probably not ideal, but it should get shared-cooks working.
+			Library->OpenShaderCode(Directory, Name + TEXT("_SC"));
+		}
+		else // attempt to open a chunked library
+		{
+			int32 PrevNumComponents = Library->GetNumComponents();
+
+			{
+				FScopeLock KnownPakFilesLocker(&FMountedPakFileInfo::KnownPakFilesAccessLock);
+				for (TSet<FMountedPakFileInfo>::TConstIterator Iter(FMountedPakFileInfo::KnownPakFiles); Iter; ++Iter)
+				{
+					Library->OnPakFileMounted(*Iter);
+				}
+			}
+
+			bResult = (Library->GetNumComponents() > PrevNumComponents);
+		
+		// ⭐
+
+#if UE_SHADERLIB_SUPPORT_CHUNK_DISCOVERY // SHUPPING 빌드에서는 0
+			
+			...
+			...
+			...
+
+#endif // UE_SHADERLIB_SUPPORT_CHUNK_DISCOVERY
+		}
+
+		if (bResult)
+		{
+			if (bAddNewNamedLibrary)
+			{
+				UE_LOG(LogShaderLibrary, Display, TEXT("Logical shader library '%s' has been created, components %d"), *Name, Library->GetNumComponents());
+				NamedLibrariesStack.Emplace(Name, Library);
+			}
+
+			// Inform the pipeline cache that the state of loaded libraries has changed
+			FShaderPipelineCache::ShaderLibraryStateChanged(FShaderPipelineCache::Opened, ShaderPlatform, Name);
+		}
+	}
+
+	...
+	...
+	...
+	
+	return bResult;
+}
+```
+
+
+
+---------------------------------------------------------
+
+추가로 CVarRestartAndroidAfterPrecompile 옵션에 대해 얘기해보겠다.      
+기본적으로 안드로이드의 경우 최초 앱 실행시 ( Program 오브젝트들의 Binary 데이터를 모아둔 파일이 존재하지 않는 경우 ) 혹은 ( Program 오브젝트들의 Binary 데이터를 모아둔 파일이 존재하지만 ) Program 오브젝트의 Binary 데이터의 포맷이 변경 된 경우 PSO PreCompile을 완료 후 앱을 재시작해야한다.           
+```cpp
+TAutoConsoleVariable<int32> FOpenGLProgramBinaryCache::CVarRestartAndroidAfterPrecompile(
+	TEXT("r.ProgramBinaryCache.RestartAndroidAfterPrecompile"),
+	1,	// Enabled by default on Android.
+	TEXT("If true, Android apps will restart after precompiling the binary program cache. Enabled by default only on Android"),
+	ECVF_ReadOnly | ECVF_RenderThreadSafe
+	);
+```
+이 옵션을 끈 경우 재시작하지 않아도 된다....      
+그럼 왜 UE4는 재시작 하는 옵션을 기본적으로 Enable해두었을까?             
+결론부터 말하면 위에서 말한 Program Binary 파일을 새로 만들어야 할 때는 결국 Program 오브젝트의 Binary 데이터를 얻기 위해서 Program 오브젝트를 만들어서 GPU에 올려야한다. 이 의미는 실제로 런타임에 ( PSO PreCompile 중이 아닌 ) 사용되지 않은 Program 오브젝트도 일단은 Program 오브젝트를 만들어서 GPU 메모리에 올려야한다는 것이다. ( 참고로 Program Binary 파일은 PSO PreCompile 중 생긴 Program 오브젝트들에 대한 바이너리 데이터를 하나의 파일에 저장한 파일이다. )            
+이 때 앱을 재시작하지 않은 경우, GPU 메모리에는 당장 사용하지도 않을 Program 오브젝트들로 가득차 있는 것이다. 이렇게 불필요한 Program 오브젝트들로 GPU 메모리를 채운채로 게임을 시작하는 것은 분명 이상적인 상황은 아니다....        
+         
+반면 이미 Program Binary 파일이 존재하는 경우 ( 포맷도 일치하는 경우 )는 어떨까? 이 경우에는 Program 오브젝트를 미리 생성할 필요가 없다. 진짜로 Program 오브젝트가 필요할 때만 ( PSO PreCompile 중이 아닌 ) Program 오브젝트를 생성하면 된다. (LRU 정책을 사용하는 경우) Program Binary 파일에서 Program Binary를 메모리에 올려만 두고 Program 오브젝트를 생성하지는 않는다. 실제로 사용 할 때 생성한다. ( Program Binary에서 Program 오브젝트를 생성하는 것은 매우 빠르다. )              
+             
+
+
+
+
+```cpp
+
+void FOpenGLProgramBinaryCache::ScanProgramCacheFile(const FGuid& ShaderPipelineCacheVersionGuid)
+{
+	UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile"));
+	FScopeLock Lock(&GProgramBinaryCacheCS);
+	FString ProgramCacheFilename = GetProgramBinaryCacheFilePath();
+	FString ProgramCacheFilenameTemp = GetProgramBinaryCacheFilePath() + TEXT(".scan");
+
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+	check(BinaryFileState == EBinaryFileState::Uninitialized);
+
+	bool bBinaryFileIsValid = false;
+	bool bBinaryFileIsValidAndGuidMatch = false;
+
+	// Try to move the file to a temporary filename before the scan, so we won't try to read it again if it's corrupted
+	PlatformFile.DeleteFile(*ProgramCacheFilenameTemp);
+	PlatformFile.MoveFile(*ProgramCacheFilenameTemp, *ProgramCacheFilename);
+
+	TUniquePtr<FArchive> FileReader(IFileManager::Get().CreateFileReader(*ProgramCacheFilenameTemp));
+
+	// ⭐
+	// Program Binary 파일이 존재하는 경우 ( 이전에 PSO PreCompile을 한 적이 있는 경우 ProgramBinaryCache라는 폴더를 확인할 수 있을 것이다. )
+	if (FileReader)
+	// ⭐
+	{
+		UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile : Opened %s"), *ProgramCacheFilenameTemp);
+		FArchive& Ar = *FileReader;
+		uint32 Version = 0;
+		Ar << Version;
+		if(Version == GBinaryProgramFileVersion)
+		{
+			FGuid BinaryCacheGuid;
+			Ar << BinaryCacheGuid;
+			bool bCacheUsesCompressedBinaries;
+			Ar << bCacheUsesCompressedBinaries;
+
+			const bool bUseCompressedProgramBinaries = CVarStoreCompressedBinaries.GetValueOnAnyThread() != 0;
+
+			// ⭐
+			// Program Binary 파일이 존재하는 경우
+			bBinaryFileIsValid = (bUseCompressedProgramBinaries == bCacheUsesCompressedBinaries);
+			// ⭐
+
+			// ⭐
+			// Program Binary 파일이 존재하지만 휴대폰의 업데이트 등으로 Program 오브젝트의 Binary 데이터의 포맷이 바뀐 경우, 바뀐 포맷에 맞게 Program Binary 파일을 새로 Write 해주어야한다.
+			bBinaryFileIsValidAndGuidMatch = bBinaryFileIsValid && (!ShaderPipelineCacheVersionGuid.IsValid() || ShaderPipelineCacheVersionGuid == BinaryCacheGuid);
+			// ⭐
+			
+			if (CVarUseExistingBinaryFileCache.GetValueOnAnyThread() == 0 && bBinaryFileIsValidAndGuidMatch == false)
+			{
+				// If we dont want to use the existing binary cache and the guids have changed then rebuild the binary file.
+				bBinaryFileIsValid = false;
+			}
+		}
+		
+		if (bBinaryFileIsValid)
+		{
+			const uint32 ProgramBinaryStart = Ar.Tell();
+
+			// Search the file for the end record.
+			bool bFoundEndRecord = false;
+			int32 ProgramIndex = 0;
+			while (!Ar.AtEnd())
+			{
+				check(bFoundEndRecord == false); // There should be no additional data after the eof record.
+
+				FOpenGLProgramKey ProgramKey;
+				uint32 ProgramBinarySize = 0;
+				Ar << ProgramKey;
+				Ar << ProgramBinarySize;
+				uint32 ProgramBinaryOffset = Ar.Tell();
+				if (ProgramBinarySize == 0)
+				{
+					if (ProgramKey == FOpenGLProgramKey())
+					{
+						bFoundEndRecord = true;
+					}
+					else
+					{
+						// Note: This should not happen with new code. We can no longer write out records with 0 program size. see AppendProgramBinaryFile.
+						UE_LOG(LogRHI, Warning, TEXT("FOpenGLProgramBinaryCache::ScanProgramCacheFile : encountered 0 sized program during binary program cache scan"));
+					}
+				}
+				Ar.Seek(ProgramBinaryOffset + ProgramBinarySize);
+			}
+
+			if(bFoundEndRecord)
+			{
+				Ar.Seek(ProgramBinaryStart);
+				while (!Ar.AtEnd())
+				{
+					// ⭐
+					// Program 오브젝트 Binary 발견!
+					FOpenGLProgramKey ProgramKey;
+					uint32 ProgramBinarySize = 0;
+					Ar << ProgramKey;
+					Ar << ProgramBinarySize;
+					// ⭐
+
+					if (ProgramBinarySize > 0)
+					{
+						FGLProgramBinaryFileCacheEntry* NewEntry = new FGLProgramBinaryFileCacheEntry();
+						NewEntry->FileInfo.ShaderHasheSet = ProgramKey;
+						NewEntry->ProgramIndex = ProgramIndex++;
+
+						uint32 ProgramBinaryOffset = Ar.Tell();
+						NewEntry->FileInfo.ProgramSize = ProgramBinarySize;
+						NewEntry->FileInfo.ProgramOffset = ProgramBinaryOffset;
+
+						if (bBinaryFileIsValidAndGuidMatch)
+						{
+							ProgramEntryContainer.Emplace(TUniquePtr<FGLProgramBinaryFileCacheEntry>(NewEntry));
+
+							// check to see if any of the shaders are already loaded and so we should serialize the binary
+							bool bAllShadersLoaded = true;
+							for (int32 i = 0; i < CrossCompiler::NUM_SHADER_STAGES && bAllShadersLoaded; i++)
+							{
+								bAllShadersLoaded = ProgramKey.ShaderHashes[i] == FSHAHash() || ShaderIsLoaded(ProgramKey.ShaderHashes[i]);
+							}
+							if (bAllShadersLoaded)
+							{
+								FPlatformMisc::LowLevelOutputDebugStringf(TEXT("*** All shaders for %s already loaded\n"), *ProgramKey.ToString());
+								NewEntry->ProgramBinaryData.AddUninitialized(ProgramBinarySize);
+								Ar.Serialize(NewEntry->ProgramBinaryData.GetData(), ProgramBinarySize);
+								NewEntry->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramLoaded;
+								
+								// ⭐⭐⭐⭐⭐⭐⭐
+								// Program Binary 파일을 성공적으로 로드한 경우
+								CompleteLoadedGLProgramRequest_internal(NewEntry);
+								// ⭐⭐⭐⭐⭐⭐⭐
+							}
+							else
+							{
+								NewEntry->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramStored;
+							}
+							AddProgramFileEntryToMap(NewEntry);
+						}
+						else
+						{
+							check(!PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Contains(ProgramKey));
+							PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Emplace(ProgramKey, TUniquePtr<FGLProgramBinaryFileCacheEntry>(NewEntry));
+						}
+						Ar.Seek(ProgramBinaryOffset + ProgramBinarySize);
+					}
+				}
+
+				if (bBinaryFileIsValidAndGuidMatch)
+				{
+					UE_LOG(LogRHI, Log, TEXT("Program Binary cache: Found %d cached programs, end record found: %d"), ProgramIndex, (uint32)bFoundEndRecord);
+					FileReader->Close();
+					// Rename the file back after a successful scan.
+					PlatformFile.MoveFile(*ProgramCacheFilename, *ProgramCacheFilenameTemp);
+				}
+				else
+				{
+					UE_LOG(LogRHI, Log, TEXT("Program Binary cache: ShaderPipelineCache changed, regenerating for new pipeline cache. Existing cache contains %d programs, using it to populate."), PreviousBinaryCacheInfo.ProgramToOldBinaryCacheMap.Num());
+					// Not closing the scan source file, we're using it to move shaders from the old cache.
+					PreviousBinaryCacheInfo.OldCacheArchive = MoveTemp(FileReader);
+					PreviousBinaryCacheInfo.OldCacheFilename = ProgramCacheFilenameTemp;
+				}
+			}
+			else
+			{
+				// failed to find sentinel record, the file was not finalized.
+				UE_LOG(LogRHI, Warning, TEXT("ScanProgramCacheFile - incomplete binary cache file encountered. Rebuilding binary program cache."));
+				FileReader->Close();
+				bBinaryFileIsValid = false;
+				bBinaryFileIsValidAndGuidMatch = false;
+			}
+		}
+		
+		if(!bBinaryFileIsValid)
+		{
+			UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile : binary file version invalid"));
+		}
+
+		if (bBinaryFileIsValidAndGuidMatch)
+		{
+			OpenAsyncReadHandle();
+			BinaryFileState = EBinaryFileState::ValidCacheFile;
+		}
+	}
+	else
+	{
+		UE_LOG(LogRHI, Log, TEXT("OnShaderScanProgramCacheFile : Failed to open %s"), *ProgramCacheFilename);
+	}
+
+	if (!bBinaryFileIsValid)
+	{
+		// Attempt to remove any existing binary cache or temp files (eg for different driver version)
+		UE_LOG(LogRHI, Log, TEXT("Deleting binary program cache folder: %s"), *CachePath);
+		PlatformFile.DeleteDirectoryRecursively(*CachePath);
+
+		// Create
+		if (!PlatformFile.CreateDirectoryTree(*CachePath))
+		{
+			UE_LOG(LogRHI, Warning, TEXT("Failed to create directory for a program binary cache. Cache will be disabled: %s"), *CachePath);
+			return;
+		}
+	}
+
+	if(!bBinaryFileIsValid || !bBinaryFileIsValidAndGuidMatch)
+	{
+		if (OpenWriteHandle())
+		{
+			BinaryFileState = bBinaryFileIsValid && !bBinaryFileIsValidAndGuidMatch ? EBinaryFileState::BuildingCacheFileWithMove : EBinaryFileState::BuildingCacheFile;
+
+			// save header
+			FArchive& Ar = *BinaryCacheWriteFileHandle;
+			uint32 Version = GBinaryProgramFileVersion;
+			Ar << Version;
+			FGuid BinaryCacheGuid = ShaderPipelineCacheVersionGuid;
+			Ar << BinaryCacheGuid;
+			bool bWritingCompressedBinaries = (CVarStoreCompressedBinaries.GetValueOnAnyThread() != 0);
+			Ar << bWritingCompressedBinaries;
+		}
+		else
+		{
+			// Binary cache file cannot be used, failed to open output file.
+			BinaryFileState = EBinaryFileState::Uninitialized;
+			RHIGetPanicDelegate().ExecuteIfBound(FName("FailedBinaryProgramArchiveOpen"));
+			UE_LOG(LogRHI, Fatal, TEXT("ScanProgramCacheFile - Failed to open binary cache."));
+		}
+	}
+}
+
+void FOpenGLProgramBinaryCache::CompleteLoadedGLProgramRequest_internal(FGLProgramBinaryFileCacheEntry* PendingGLCreate)
+{
+	VERIFY_GL_SCOPE();
+
+	check(PendingGLCreate->GLProgramState == FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramLoaded);
+
+	PendingGLCreate->ReadRequest = nullptr;
+
+	FOpenGLProgramKey& ProgramKey = PendingGLCreate->FileInfo.ShaderHasheSet;
+	const bool bProgramExists = GetOpenGLProgramsCache().Find(ProgramKey, false) != nullptr;
+
+	if (GetOpenGLProgramsCache().IsUsingLRU())
+	{
+		if (!bProgramExists)
+		{
+			// ⭐⭐⭐⭐⭐⭐⭐
+			// Always add programs as evicted, 1st use will create them as programs.
+			// This will reduce pressure on driver by ensuring only used programs
+			// are created.
+			// In this case do not create the GL program.
+			//
+			// Program 오브젝트를 바로 생성하지 않고, Program Binary 파일에서 읽어온 Program 오브젝트의 Binary 데이터만 저장해둔다.
+			// 이후 필요할 때 이 Program Binary 데이터에서 Program 오브젝트를 생성해서 사용할 것이다. ( 이 경우 매우 빠르게 Program 오브젝트를 생성할 수 있다. )             
+			//
+			GetOpenGLProgramsCache().AddAsEvicted(ProgramKey, MoveTemp(PendingGLCreate->ProgramBinaryData));
+			// ⭐⭐⭐⭐⭐⭐⭐
+		}
+		else
+		{
+			// The program is already in use, discard the binary data.
+			PendingGLCreate->ProgramBinaryData.Empty();
+		}
+
+		// Ownership transfered to OpenGLProgramsCache.
+		PendingGLCreate->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramComplete;
+	}
+	else
+	{
+		if(!bProgramExists)
+		{
+			bool bSuccess = CreateGLProgramFromBinary(PendingGLCreate->GLProgramId, PendingGLCreate->ProgramBinaryData);
+			if (!bSuccess)
+			{
+				UE_LOG(LogRHI, Log, TEXT("[%s, %d, %d]"), *ProgramKey.ToString(), PendingGLCreate->GLProgramId, PendingGLCreate->ProgramBinaryData.Num());
+				RHIGetPanicDelegate().ExecuteIfBound(FName("FailedBinaryProgramCreateLoadRequest"));
+				UE_LOG(LogRHI, Fatal, TEXT("CompleteLoadedGLProgramRequest_internal : Failed to create GL program from binary data! [%s]"), *ProgramKey.ToString());
+			}
+			FOpenGLLinkedProgram* NewLinkedProgram = new FOpenGLLinkedProgram(ProgramKey, PendingGLCreate->GLProgramId);
+			GetOpenGLProgramsCache().Add(ProgramKey, NewLinkedProgram);
+			SetNewProgramStats(PendingGLCreate->GLProgramId);
+		}
+
+		// Finished with binary data.
+		PendingGLCreate->GLProgramState = FGLProgramBinaryFileCacheEntry::EGLProgramState::ProgramAvailable;
+		PendingGLCreate->ProgramBinaryData.Empty();
+	}
+}
+```
+                   
+-------------------------------------
+                
+새로운 PSO인지 판단하는 기준은?          
+               
+![-3](https://user-images.githubusercontent.com/33873804/180615266-a873e5a6-a438-459e-923c-e01248c8d8bd.png)         
+![-2](https://user-images.githubusercontent.com/33873804/180615267-016fd446-fb83-4d1c-b1e9-d91e6a1142af.png)         
+![-1](https://user-images.githubusercontent.com/33873804/180615269-a1e138d6-a5a3-4ae4-afec-12b15bf1f743.png)           
+                 
+----------------------------------------
+             
+그럼 쉐이더 코드 Hash값은 어떻게 결정될까? ( PSO 캐시에서 사용됨, OpenGL의 경우 쉐이더 코드 Hash가 다르면 다른 PSO이다. )             
+             
+![0-1](https://user-images.githubusercontent.com/33873804/179546915-1730a6db-7f10-40cb-8fd5-32b391c52243.PNG)              
+![1](https://user-images.githubusercontent.com/33873804/179546920-80f2f6a0-b878-4502-a493-34a966e07ac0.PNG)             
+![2](https://user-images.githubusercontent.com/33873804/179546922-944eba17-1a77-4bf9-b076-caaab74cea1f.PNG)             
+![3](https://user-images.githubusercontent.com/33873804/179546923-b1b7ca1d-9669-4e00-aa40-2038e6befa3e.PNG)             
+![4](https://user-images.githubusercontent.com/33873804/179546924-a9a04663-90dd-404a-a32a-ea8145b80ba5.PNG)               
+![Hash0](https://user-images.githubusercontent.com/33873804/180616688-3d608950-3037-43d7-be22-3157ca755c3f.png)               
+![7](https://user-images.githubusercontent.com/33873804/179546935-0566d39f-8c73-4620-9411-7b6708fd7082.PNG)             
+![8](https://user-images.githubusercontent.com/33873804/179546936-2e5258ce-9f30-43bf-a39d-58633d260d85.PNG)             
+![9](https://user-images.githubusercontent.com/33873804/179546939-3c0b6ab8-e040-4a0a-adac-ce3a49d27fa1.PNG)             
+![10](https://user-images.githubusercontent.com/33873804/179789814-1b54ebcb-1ab2-4f1d-9014-1984970ac522.png)             
+![11](https://user-images.githubusercontent.com/33873804/179789813-98986f2a-bb8e-4ee7-8ef8-87d9182823e2.png)             
+![12](https://user-images.githubusercontent.com/33873804/179789804-46a2be76-023e-4b39-b4f2-7afdf7b3857d.png)             
+

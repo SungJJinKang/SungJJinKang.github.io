@@ -1,0 +1,144 @@
+---
+layout: post
+title:  "SFINAE와 enable_if에 대한 이해"
+date:   2021-05-27
+tags: [C++, Recommend]
+---
+
+
+
+```cpp
+void foo(unsigned int i) { std::cout << "unsigned " << i << "\n"; }
+
+
+template <typename T>void foo(const T& t) {
+  std::cout << "template " << t << "\n";
+}
+```
+
+foo(42)를 호출 했을 때 위의 함수가 호출될 까? 아래의 함수가 호출 될까?       
+답은 "밑은 함수가 호출 된다"        
+왜냐하면 42는 기본적으로 부호가 있는 signed 정수가 되는데 위의 함수는 signed에서 unsigned로 타입 변환이 필요하지만 아래의 템플릿함수는 그냥 int를 끼워넣으면 타입 변환이 필요없기 때문에 타입변환이 필요없는 밑의 함수가 호출되는 것이다.         
+
+----------------------------------------
+
+**SFINAE** : Substitution Failure is not an error. 치환 실패는 오류가 아니다. = **템플릿 인자 치환에 실패할 경우 컴파일러는 이 오류를 무시하고, 그냥 오버로딩 후보에서 제외하면 된다.**     
+
+```cpp
+int negate(int i) { return -i; }
+
+template <typename T>
+typename T::value_type negate(const T& t) 
+{
+  return -T(t);
+}
+```
+
+이 경우를 보면 negate(42)를 호출 했을 때 당연히 위의 함수가 호출될 것이다. int로 타입변환이 필요없이 딱 들어맞기 떄문이다.          
+
+그러나 컴파일러는 밑의 함수도 괜찮은지 확인을 해보아야한다. 밑의 함수가 위의 함수보다 더 나은 함수일수도 있기 때문이다.          
+그러므로 밑의 함수에 대한 코드도 생성해본다.          
+
+
+```cpp
+int::value_type negate(const int& t) {
+  /* ... */
+}
+```
+말도 안되는 함수가 호출된다.      
+
+이 경우 컴파일러는 어떻게 반응할까? 컴파일러 오류를 호출할까??
+아니다. 위의 함수를 선택하면 되는데 밑의 함수가 괜찮은지 확인하는 과정에서 나오는 오류까지 컴파일러 오류를 방출해버리면 우리는 템플릿을 사용하기 너무 어려울(번거러울) 것이다. ( 이 경우 밑의 템플릿을 아예 지워야함 )    
+그래서 컴파일러는 이 **어떤 함수를 택할지 확인 하는 과정에서 생기는 템플릿 인자 치환의 실패 경우에 대해서는 오류를 무시하고 그냥 오버로딩 후보에서 제외만을 시킨다. 그럼 밑의 템플릿은 원칙적으로는 잘못된 코드이지만 위의 함수를 선택하면 되므로 무사히 컴파일 할 수 있게 된다.**          
+
+----------------------------------------
+
+번외로 
+
+```cpp
+template <typename T>
+void negate(const T& t) 
+{
+  typename T::value_type n = -t();
+}
+```
+
+이 경우는 SFINAE 원칙에서 제외된다.
+**SFINAE는 즉각적인 맥락(immediate context)의 경우에만 해당**된다.      
+즉각적인 맥락은 **템플릿 argument 선언부나 함수의 선언부만**을 의미한다.      
+밑의 int::value_type 이 부분은 함수의 몸통(정의) 부 이므로 SFINAE 원칙에 제외되어서 컴파일러는 컴파일 오류를 뛰운다.           
+
+----------------------------------------
+
+이 SFINAE를 잘 활용하는 stl 기능이 std::enable_if이다.       
+std::enable_if<bool B, class T>는 B가 true인 경우에는 내부에 type이라는 type alis를 가진 struct enable_if로 치환되고 B가 false인 경우에는 내부에 type이라는 typealis를 가지지 않는 struct enable_if로 치환된다.          
+
+```cpp
+template <class T, typename std::enable_if<std::is_integral<T>::value, T>::type* = nullptr>
+void do_stuff(T& t) 
+{
+  std::cout << "do_stuff integral\n";
+  // 정수 타입들을 받는 함수 (int, char, unsigned, etc.)
+}
+
+template <class T, typename std::enable_if<std::is_class<T>::value, T>::type* = nullptr>
+void do_stuff(T& t) 
+{
+  // 일반적인 클래스들을 받음
+}
+```
+
+이 경우를 보면 do_stuff( int 변수 ) 로 함수를 호출하면 위의 함수가 호출된다.        
+그렇게 되면 밑의 함수의 경우에는 std::enable_if<std::is_class<T>::value, T>::type 이 부분에서 type이라는 typealis를 가지고 있지 않는 std::enable_if로 치환되므로 존재하니 않는 type인 "type"의 포인터 타입에 nullptr를 대입하는 연산을 하므로 일반적인 경우였다면 컴파일 오류를 방출했을 것이다. 그치만 위에서 배운 SFINAE 원칙에 따라 immediate context에서는 컴파일러가 오류를 띄우지 않고 조용히 오버로딩 후보에서만 제외시키게 된다.                
+
+이렇게 std::enable_if는 SFINAE라는 원칙을 적절히 활용하여 오버로딩 된 함수들 중 하나를 선택할 때 컴파일 오류 없이 적절한 함수를 선택하게 해준다.                  
+
+자 그럼 이 경우는 한번 보자
+```cpp
+template <typename T>
+class vector 
+{
+  vector(size_type n, const T val);
+
+  template <class InputIterator>
+  vector(InputIterator first, InputIterator last);
+  ...
+}
+```
+
+vector a{4,8} 을 호출한 경우 어떤 함수가 호출 될까?      
+당연히 프로그래머는 위의 함수를 생각했을 것이다.       
+밑의 함수는 vector a{ vector1.begin(), vector2.begin() } 과 같이 iterator을 넣어서 사용하려 만든 함수이니 말이다.                 
+그치만 vector a {4, 8}을 호출하면 밑의 함수가 호출된다. 어차피 InputIterator은 이름만 iterator일 뿐 어떤 타입도 들어갈 수 있다.        
+
+그럼 이러한 일을 막을려면 어떻게 해야할까?        
+std::enable_if를 사용하면 된다.      
+
+```cpp
+template <class _InputIterator>
+vector(_InputIterator __first, typename enable_if<__is_input_iterator<_InputIterator>::value && !__is_forward_iterator<_InputIterator>::value && /* ... more conditions... */ _InputIterator>::type __last);
+```
+
+이렇게 되면 enable_if 부분에서 '8' 같은 int 타입은 iterator가 아니므로 type치환 실패해서 오버로딩 함수 선택 후보에서 탈락하고 위의 함수가 선택되게된다.      
+물론 SFINAE 원칙에 따라 밑의 함수 경우에도 컴파일에러는 안뜨고 조용히 오버로딩 함수 선택 후보에서만 탈락한다.     
+
+```cpp
+template <class T> typename std::enable_if<std::is_arithmetic<T>, bool>::type signbit(T x) {
+  // implementation
+}
+```
+
+이 경우도 마찬가지다.         
+is_arithmetic<T>가 false 인 경우에는 type 이라는 typealise 도 존재하지 않으므로 즉 타입 치환에 실패해 오버로딩 후보에서 탈락하게 된다.           
+만약 다른 오버로딩 후보가 존재하지 않는 경우에는 결국 컴파일 에러로 선택할 함수가 없다는 것을 알려준다.    
+
+
+만약 적절히 std::enable_if를 넣을 곳이 없다면 아래와 같이 사용해도 된다.        
+```
+template<typename T, typename std::enable_if_t<std::is_arithmetic_v<T>> = true>
+constexpr T Lerp(T value)
+{
+
+
+}
+```

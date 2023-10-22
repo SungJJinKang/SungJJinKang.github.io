@@ -1,0 +1,100 @@
+---
+layout: post
+title:  "언리얼 엔진4 모바일 렌더링"
+date:   2022-02-26
+tags: [UE]
+---
+
+references : [언리얼 엔진 4 모바일 렌더링 개요](https://youtu.be/qvRyBWxTAAo)            
+
+-----------------------------       
+
+- 모바일 환경은 파편화가 심함 ( 어떤 휴대폰은 OpenGL ES3.1을 지원하는데 어떤 휴대폰은 지원 안함.... )                 
+- **Unified Shader Architecture** : GPU 내부의 쉐이더 코어가 어떤 종류의 쉐이더든 처리 가능. ( Vertex Shader Bound하든, Pixel Shader Bound하든 쉐이더 코어를 전부 활용 )           
+<img width="573" alt="20220226181500" src="https://user-images.githubusercontent.com/33873804/155837536-0fcb3748-cdae-4291-b0ac-03231edcbe13.png">          
+- **Unified Memory Architure** : CPU와 GPU가 물리 메모리를 공유. CPU와 GPU의 MMU ( 가상 주소를 물리적 주소로 변환해주는 하드웨어 장치. [참고](https://sungjjinkang.github.io/virtualmemoryaddress) ) 가 같은 물리적 주소 공간을 사용. CPU -> GPU로의 메모리 복사가 필요없음. 그냥 GPU에서 바로 주소 참조해서 접근하면 된다.          
+- 배터리 : 메모리 사용량 높아지면 그 만큼 배터리도 많이 사용 -> 배터리 많이 사용하면 발열로 인한 쓰로틀링이 걸림 -> CPU, GPU 성능 저하.      
+
+--------------------------------
+
+- 위의 한계를 극복하기 위한 것들로 Tile-Based GPU, Early Z Testing 사용.      
+- Tile-Based GPU : 전체 화면을 일정 크기의 타일로 나누어서 타일 단위로 렌더링을 수행. ( 더 자세한 내용은 [이 글](https://scahp.tistory.com/33?category=837896)을 참고 )                      
+- 한 타일을 그리기 위한 리소스들을 GPU의 In-chip 메모리에 올려둠. In-Chip 메모리로의 접근은 상대적으로 빠름. ( Tile-Based 방식이 아닌 경우 전체 프레임 버퍼에 접근해야하는데 너무 커서 In-Chip에 안들어감 -> DRAM으로 접근해야함 -> 느림 )                         
+![model-imr](https://user-images.githubusercontent.com/33873804/155837856-d12931c9-202f-4f0a-9eb4-3de95da4e615.png)           
+![model-tbr](https://user-images.githubusercontent.com/33873804/155837858-9f862719-8e44-4161-979f-c8f897212b19.png)          
+            
+- Early Z-Test : Fragment Shading 전 단계에서 Blending 안될 Fragment들은 아예 Fragment Shading을 하지 말아버리자.         
+![Mali_Shader_Core](https://user-images.githubusercontent.com/33873804/155837933-828e4670-5c44-4673-90f0-dcefb36778e9.png)         
+
+----------------------------          
+
+- 모바일의 메모리 대역폭, 메모리 사용량등의 문제로 모바일 환경에서는 기본적으로 Forward Rendering을 사용.       
+- IOS의 경우 특별하게 Desktop-Class Forward Renderer를 사용. 데스크톱용 쉐이더를 사용.        
+<img width="658" alt="20220226184746" src="https://user-images.githubusercontent.com/33873804/155838485-82bc5aa5-2965-44db-8477-5886341cf55c.png">       
+
+------------------------                
+
+- **InitViews** : 그려질 Geometry를 선별.
+- Triangle이 아닌 객체 단위로 선별.    
+- 모바일에서는 Distance Culling, Frustum Culling, Precomputed Visiblity를 지원.        
+- Distance Culling : 카메라와 오브젝트의 거리에 따라 객체를 그릴지를 결정. 조그만한 오브젝트는 멀리 있으면 어차피 티도 안나니 그냥 드로우콜도 안 날림. ( 나도 예전에 병렬로 처리해서 개인엔진에 구현해보았다. 0.1ms 미만으로 시간 소요되었었음. 매우 가벼운 연산이지만 얻어지는 성능 효과는 매우 크다. GPU Bound한 상황에서 유용 [코드](https://github.com/SungJJinKang/EveryCulling#distance-culling-from-unreal-engine--100-) )               
+- Frustum Culling : 카메라 절두체 내부의 오브젝트만 그림. ( 이것도 구현해봄. 배틀필드의 엔진인 프로스트바이트 엔진에서 참고. [코드](https://github.com/SungJJinKang/EveryCulling#view-frustum-culling-from-frostbite-engine-of-ea-dice--100-) )          
+- Precomputed Visiblity : 3차원을 그리드로 나누어서 어떤 그리드에서는 어떤 객체들이 보일지를 빌드 타임에 미리 결정에서 빌드에 담음. -> 런타임 오버헤드가 적음.       
+- Occlusion Culling ( 4.20부터 지원. ) : SW Occlusion Culling ( 이것도 구현해봄. [코드](https://github.com/SungJJinKang/EveryCulling#masked-sw--cpu--occlusion-culling-from-intel--100-), 항상 빠르지 않다. Occluder의 Vertex가 너무 많거나 부피가 적어서 Occluder로서의 가치가 적은 경우에는 오히려 Occluder Culling이 성능을 깍아먹을 수 있다. ), HW Occlusion Culling 둘 다 지원.                 
+- "stat initviews" 커맨드로 위의 지표들을 프로파일링 가능.           
+- FreezeRendering으로 Culling을 멈추어두고 카메라를 돌려가며 제대로 컬링이 되었는지를 일일이 확인할 수도 있다.                
+
+------------------------                
+
+- **Mobile Base Pass** : 불투명한 Geometry들을 그림.         
+- 각 Geometry에 대해 라이팅, 그림자도 그림. -> 가장 복잡한 Pass      
+- **Dynamic** Lighting ( Point, Spot Light만 해당 ) : 각 라이트는 라이트 타입 ( Point, Spot Light만 해당 )에 따라 각기 다른 Bound를 가짐. 그 Bound에 속하는 Geometry들만 라이팅 연산을 받음. Geometry Shading 단계에서 각 Geometry가 어떤 라이트에 영향을 받는지를 추가.            
+- Dynamic Shadow : 쉐도우맵 사용.         
+- **Static** Lighting : 빌드 타임에 Lighting 정보를 모두 연산 후 빌드에 넣어둠. 런타임 오버헤드 적음.            
+- **Stationary** Directional Light = Directional Lightmap ( Static ) + Cascade Shadow Map ( Dynamic )                    
+
+- 아래 내용들 잘 모르겠다. 나중에 공부하자.       
+<img width="552" alt="20220226191500" src="https://user-images.githubusercontent.com/33873804/155839334-1c4f0e2c-1d0e-44dc-a6b8-35b693614b87.png">               
+
+<img width="425" alt="20220226191830" src="https://user-images.githubusercontent.com/33873804/155839446-cc43abd5-0fd9-4f58-8114-f13797f3bfa5.png">           
+
+---------------------------
+
+- **Translucency Pass** : 반투명한 오브젝트를 그림. Blending시 Alpha Blending을 수행.          
+
+---------------------------
+
+- **Postprocess** : 후처리 작업. 현재 그려진 프레임 버퍼 가지고 한번더 픽셀 쉐이딩 연산 수행.             
+- Mobile HDR.            
+- 아래는 UE4가 자체 지원하는 모바일용 PostProecess들 ( 모바일에서 돌리기에 비싼 연산들은 빠져있다. )        
+<img width="592" alt="20220226192211" src="https://user-images.githubusercontent.com/33873804/155839581-b1605600-7d5b-45ed-b8da-be55031e3394.png">          
+
+------------------------------                
+
+- UE4는 Metal과 OpenGL ES가 마치 지원되는거처럼 시뮬레이션해주어서 PC 에디터단에서 Metal, OpenGL ES를 사용했을 때의 결과물을 볼 수 있다. ( 시뮬레이션일뿐, 완전히 똑같지는 않다. 성능면이나 퀄리티면에서 약간 다를 수 있다. )                                               
+
+---------------------------        
+
+**모바일에서 최적화 팁**              
+
+- 모바일에서 렌더 타겟 ( 프레임버퍼 ) Read Back은 매우 느리다. ( 렌더링이 다 끝날 때 까지 CPU쪽에서 Block 걸림. ). GPU 리소스 왠만하면 CPU로 읽어오지 말자.                                  
+- 드라이버 레벨 최적화 : 타일 Based 렌더링에서 타일에 어떤 Opaque 오브젝트가 그려지지 않으면 깊이 버퍼 초기화 생략 -> 현재 프레임에 이전 프레임 깊이 버퍼 데이터가 남아 있음. -> 현재 깊이 버퍼 정보 사용하는 렌더링시 문제가 발생할 수도........                  
+- 성능 쓰로틀링 : 모바일에서는 PC와 달리 CPU, GPU를 자주 자주 쉬게 해주어야한다.          
+- 드로우콜 최소화. ( 드로우콜시 메모리 할당, 데이터 복사가 매번 발생. 내 경험상 커맨드 큐가 다 차면 D3D11에서는 백버퍼와 Swap시 CPU쪽에서 Block이 되는 경우가 있었다. ) -> Batching을 최대환 활용하자.               
+- RenderState 변경 최소화 : GPU는 Global한 상태를 기준으로 연산이 돈다. 이 Global 상태를 바꾸면 현재 해당 Global 상태를 기준으로 연산 중인 연산들이 다 끝나기 전까지는 변환 후 연산들이 Block된다. ( 그래서 UE4는 패스별 지오메트리를 특성별로 묶어서 처리한다. 비슷한 RenderState의 연산들끼리 묶어서 같이 처리. )          
+- Vertex Processing : LOD 적극 활용, 노멀맵 활용. 최대한 객체 단위로 컬링을 하려고 해야한다. Triangle 단위 컬링은 너무 연산이 비쌈.         
+- Pixel Processing : 오버드로우 최소화. 너무 비싼 픽셀 쉐이딩을 하지 않으려 노력. 전체 해상도를 줄이는 방법도.              
+- 메모리 대역폭 사용을 최소화하자 : CPU와 GPU가 메모리 버스를 공유하다보니 메모리 통신을 줄이는 것이 좋다. 배터리 사용량도 아껴줌 -> 메모리 내의 리소스들의 크기를 줄여서 캐시 적중률을 높이자. 텍스쳐 밉맵, 텍스쳐 압축, 낮은 정밀도의 Depth 텍스쳐 사용, LOD 사용.           
+
+
+
+                     
+
+
+
+
+
+
+ 
+
+

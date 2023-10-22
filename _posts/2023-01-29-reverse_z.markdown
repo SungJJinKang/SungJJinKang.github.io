@@ -1,0 +1,38 @@
+---
+layout: post
+title:  "Reverse Depth Buffer"
+date:   2023-01-29
+tags: [ComputerGraphics, Recommend]
+---            
+
+GPU가 Depth Buffer를 Write하는 동작을 생각했을 때, 거리에 따라 Near Plane에서 Far Plane 사이의 Depth 값을 0~1로 Linear하게 mapping한다고 생각할 수 있지만 실제로 GPU는 그렇게 동작하지 않는다.                                     
+실제로는 카메라에서부터 픽셀의 거리 값의 역수(1/z)에 비례되게 Depth 값을 Depth Buffer에 쓴다.                
+![graph1](https://user-images.githubusercontent.com/33873804/215312661-3ad15495-da7d-4a7a-b58b-e2510ae3f4d3.jpg)              
+왜 이렇게 동작을 할까?           
+첫 째로는 Perspective Projection 연산에 들어 맞기 때문이다. Perspective Projection 후 Perspective Devide(x, y, z를 w에 나누는 연산)를 수행했을 때 output의 z 값이 자연스럽게 1/z에 비례한다. 아래 사진을 보면 쉽게 이해가 될 것이다.               
+![math2](https://user-images.githubusercontent.com/33873804/215311751-5f662ef7-44bd-43c1-b0ee-23eb7f0972f9.jpg)            
+두 번째로는 1/z은 Screen Space에서 Linear하기 때문에 여러 성능적인 이득을 얻을 수 있따.          
+아래 사진에서 볼 수 있듯이 GPU에서 연산해준 Depth 값(Screen Space에서의 Depth 값, 1/z에 비례한 값)이 Linear하다. 픽셀과 픽셀 사이의 Depth 값의 Delta 값이 고정되어 있기 때문에 레스터라이제이션 과정에서 Depth 값을 interpolate하거나, MSAA시 옆 픽셀과의 Depth 값을 비교하여 고정된 Depth 값의 Delta 값과 다른 경우 해당 픽셀이 외각선에 걸쳤다고 판단하는데 사용하기도 한다.               
+<img width="723" alt="20230129170406" src="https://user-images.githubusercontent.com/33873804/215313467-88045a20-f752-4052-9109-87858553dd68.png">          
+                       
+위의 이점들 위해 GPU에서 결과값으로 Depth Buffer에 쓰는 Depth 값은 카메라에서부터 픽셀의 거리 값의 역수(1/z)에 비례한다.          
+         
+하지만 이 방법에도 단점은 존재한다.           
+아래 사진을 보자.       
+카메라에서부터 픽셀까지의 거리 값의 역수(1/z)를 0(Near)~1(Far)로 매핑한 그래프이다.                 
+![graph4](https://user-images.githubusercontent.com/33873804/215314641-620b5f42-d82d-4c94-9c90-1c6bff5741d6.jpg)            
+부동 소수점은 값이 커질수록 오차 또한 커지는 성질을 같고 있는데, 위의 사진에서 보이듯이 Far Plane에 가까울수록(카메라로부터 멀리 있을수록, Z값이 클수록) 정밀도는 줄어들게 된다.(오차가 커진다) 반면 Near Plane은 충분한(어쩌면 과도한?) 정밀도를 보여준다.                
+Near Plane에서부터 Far Plane까지 정밀도가 균일하지 않고 너무 과도하게 Near Plane에 정밀도가 몰려있기 때문에 멀리 있는 픽셀에서는 정밀도 부족으로 인한 Z-Fighting 현상이 생길 가능성이 높다.         
+아래 사진은 Z-Fighting이 발생하였을 때의 모습을 보여준다.              
+![img](https://user-images.githubusercontent.com/33873804/215314989-983fb555-87c0-4675-93c1-725aef082bc5.png)             
+정밀도 문제로 인해 화면상 동일한 위치에서의 오브젝트의 Depth Test가 일관되지 못한 것을 볼 수 있다.         
+            
+이를 보완하기 위해 나온 기법이 **Reverse Depth** 기법이다.                    
+쉽게 말해 1/z값을 0(Near)~1(Far)로 mapping하는 대신 1(Near)~0(Far)로 mapping 하는 것이다.                   
+![graph5](https://user-images.githubusercontent.com/33873804/215315174-0acb6aed-61ec-4ab2-9d50-0b1164861d1e.jpg)               
+Near Plane에 가까운 Depth 값이 1로 향하도록 mapping 하였다.                
+이를 통해 Near Plane에 몰려 있던 정밀도를 Far Plane에 인접한 넓은 범위에 걸쳐 분배하였다.                
+위의 그래프에서도 보이듯이 Near Plane에서부터 Far Plane까지의 Depth 값이 기존에 비해 상대적으로 균등한 정밀도를 가지게 된 것을 볼 수 있다.          
+Reverse Depth 기법은 GPU의 기본 동작은 아니다. (GPU의 기본 동작은 위에서 본 "카메라에서부터 픽셀의 거리 값의 역수(1/z)에 비례되게 Depth 값을 Depth Buffer에 쓴다."이다.)                           
+             
+references : [Depth Precision Visualized](https://developer.nvidia.com/content/depth-precision-visualized), [http://www.humus.name/index.php?ID=255](http://www.humus.name/index.php?ID=255)             
