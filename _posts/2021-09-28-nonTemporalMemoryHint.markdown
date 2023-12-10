@@ -108,6 +108,13 @@ GPU와 관련해서 Write-Combined 버퍼가 제일 많이 활용되는 것이 G
 
 근데 [Write - Combined 기법이 항상 빠르지는 않다는 글](https://fgiesen.wordpress.com/2013/01/29/write-combining-is-not-your-friend/)도 있다... 고려할 경우의 수가 너무 많다. 궁금하다면 한번 읽어보아라.          
 
+--------------------------
+2023.12.11)       
+D3D12를 공부하면서 알게된 사실:                 
+GPU로 전달할 시스템 메모리쪽 리소스에 Write를 수행할 Write Combining이 사용된다.      
+Write Combined 메모리가 유저 모드 프로그램에 노출되어 있는 프로그램 중 대표적인게 그래픽이라고 한다.        
+Write Combined 메모리에 대한 포인터를 얻는 주된 방법은 3D, GPGPU API에 버퍼나 텍스처 리소스를 메모리에 (write-only) map해달라고 요청하는 것이다. (OpenGL의 glMapBuffer, D3D9의 Lock, D3D1x의 Map 등이 있다고 한다)          
+ 
 참고 글 : [https://megayuchi.com/2021/06/06/ddraw-surface-d3d-dynamic-buffer-%EC%97%90%EC%84%9C%EC%9D%98-write-combine-memory/](https://megayuchi.com/2021/06/06/ddraw-surface-d3d-dynamic-buffer-%EC%97%90%EC%84%9C%EC%9D%98-write-combine-memory/), [https://stackoverflow.com/questions/45623007/wc-vs-wb-memory-other-types-of-memory-on-x86-64/45634024?fbclid=IwAR1XGxliAepTdP4f_uqKB-QFGjGn9bK8Q91NOuSSMu3R4SgiNJS96LgdYHw](https://stackoverflow.com/questions/45623007/wc-vs-wb-memory-other-types-of-memory-on-x86-64/45634024?fbclid=IwAR1XGxliAepTdP4f_uqKB-QFGjGn9bK8Q91NOuSSMu3R4SgiNJS96LgdYHw)               
 
 
