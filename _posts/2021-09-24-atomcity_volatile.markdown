@@ -81,5 +81,9 @@ Write Buffer에 대해서는 [이 글](https://sungjjinkang.github.io/nonTempora
 reference : [std::atomic의 연산이 일반 연산에 비해 상대적으로 느린 이유](https://sungjjinkang.github.io/std_atomic_why_slow), [https://stackoverflow.com/a/51847653](https://stackoverflow.com/a/51847653)          
 
 -----------------------------------------------------
+2023/12/17)         
+[volatile의 이해를 도와주는 글](https://jacking75.github.io/Cpp-28/)         
 
+-----------------------------------------------------             
+        
 references : [https://stackoverflow.com/questions/38447226/atomicity-on-x86/38465341#38465341](https://stackoverflow.com/questions/38447226/atomicity-on-x86/38465341#38465341), [https://stackoverflow.com/questions/39393850/can-num-be-atomic-for-int-num](https://stackoverflow.com/questions/39393850/can-num-be-atomic-for-int-num), [https://stackoverflow.com/questions/67034400/atomic-variable-also-require-lock-on-read-modify-store-operation](https://stackoverflow.com/questions/67034400/atomic-variable-also-require-lock-on-read-modify-store-operation), [https://sungjjinkang.github.io/cachecoherency](https://sungjjinkang.github.io/cachecoherency)                    
