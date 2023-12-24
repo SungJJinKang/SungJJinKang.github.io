@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "lvalue, rvalue의 정확한 개념적 이해"
+title:  "lvalue, rvalue의 개념적 이해"
 date:   2021-08-23
 tags: [C++, Recommend]
 ---
