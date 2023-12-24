@@ -1,8 +1,0 @@
----
-layout: post
-title:  ".lib, .exp 무엇?"
-date:   2022-10-14
-tags: [ComputerScience]
----         
-
-[https://stackoverflow.com/a/2727056](https://stackoverflow.com/a/2727056)
