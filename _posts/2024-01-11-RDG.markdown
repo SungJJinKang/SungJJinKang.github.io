@@ -1,0 +1,7 @@
+---
+layout: post
+title:  "UE5 RDG 이해하기"
+date:   2024-01-11
+tags: [UE, ComputerGraphics, Recommend]
+---            
+[UE5 RDG 이해하기 1탄](https://docs.google.com/presentation/d/1hxuKhSz9rS2DPaIwBzy2WEtbsaw0BOR1yxSKn24gbx8/edit?usp=sharing)
