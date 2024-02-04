@@ -12,7 +12,7 @@ sass:
   sass_dir: _sass
 plainwhite:
   name: SungJin Kang
-  tagline: 개인 기록용 블로그
+  tagline: hour30000@gmail.com
   date_format: "%b %-d, %Y"
   sitemap: true # set to true to generate sitemap.xml content
   search: true # set to true to enable searchbar
