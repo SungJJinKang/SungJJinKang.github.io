@@ -52,7 +52,7 @@ TLB내에는 최근에 변환했던 virtual address와 그 physical address( 정
 virtual memory라는 개념을 들어보았을 건데 메모리의 용량이 부족하다면 컴퓨터는 메모리에서 오래 동안 사용되지 않은 페이지(4KB)를 디스크 내에 paging file에 임시로 저장해 둔다. 이를 page out이라고도 한다. ( page out되도 해당 virtual address 그냥 유지된다. virtual address는 그냥 말그대로 가상의 주소다. 현재 Physical Address에 존재하는 데이터를 가리킬수 있고 아닐 수도 있다. page out된 경우에도 당연히 virtual address는 유효함)            
 이렇게 찾고자 하는 페이지가 page out되어 있는 경우를 page fault라고한다.       
 이 경우에는 disk의 paging file에서 다시 메모리로 page in을 하여 데이터를 disk에 저장되어 있는 페이지를 메모리로 복사해서 가져와야한다. (페이지 단위로 저장하고 로드한다. 대개 4KB이다). ( 이렇게 page in을 하면 해당 physical address에 있던 page는 page out됨 )            
-그럼 이제 디스크에서 불러온 이 페이지의 physical address를 페이지 테이블에 업데이트하고 난 후 이 페이지 주소를 반환한다. ( 여기서 TLB 존재이유가 나온다. TLB가 있으면 이렇게 복잡한 페이지를 찾는 과정을 안거쳐도 되는 것이다. )        
+그럼 이제 디스크에서 불러온 이 페이지의 physical address를 페이지 테이블에 업데이트하고 난 후 이 페이지 주소를 반환한다.        
 
 4. 여기서 중요한건 메모리에서 바로가져오든 page in해서 주소를 가져오든 반드시 TLB에 그 변환 관계(Virtual address -> Page Table Entry)를 기록해야한다. 이 기록을 한 후 MMU는 처음부터 TLB를 뒤진다. 그럼 당연히 방금 전에 TLB에 기록했으니 그 기록을 보고 MMU는 physical memory에 접근한다. ( TLB는 페이지의 Physical address를 저장하는 게 아니라 페이지 테이블 엔트리의 주소를 저장한다!!!! )      
 
